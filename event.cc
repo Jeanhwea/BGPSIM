@@ -1,0 +1,82 @@
+#include "event.h"
+
+using namespace std;
+
+map<Event_t, string> Event::mapEventName = {
+    { BGP_START, "bgp_start" },
+    { BGP_STOP, "bgp_stop" },
+    { BGP_TRANS_CONN_OPEN, "bgp_trans_conn_open" },
+    { BGP_TRANS_CONN_CLOSED, "bgp_trans_conn_closed" },
+    { BGP_TRANS_CONN_OPEN_FAILED, "bgp_trans_conn_open_failed" },
+    { BGP_TRANS_FATAL_ERROR, "bgp_trans_fatal_error" },
+    { CONN_RETRY_TIMER_EXPIRED, "conn_retry_timer_expired" },
+    { HOLD_TIMER_EXPIRED, "hold_timer_expired" },
+    { KEEPALIVE_TIMER_EXPIRED, "keepalive_timer_expired" },
+    { RECV_OPEN_MSG, "recv_open_msg" },
+    { RECV_KEEPALIVE_MSG, "recv_keepalive_msg" },
+    { RECV_UPDATE_MSG, "recv_update_msg" },
+    { RECV_NOTIFICATION_MSG, "recv_notification_msg" }
+};
+
+Event::Event()
+: type(BGP_START)
+{
+
+}
+
+Event::~Event() 
+{
+
+}
+
+// void Event::BgpStart()
+// {
+// }
+
+// void Event::BgpStop()
+// {
+// }
+
+// void Event::BgpTransConnOpen()
+// {
+// }
+
+// void Event::BgpTransConnClosed()
+// {
+// }
+
+// void Event::BgpTransConnOpenFailed()
+// {
+// }
+
+// void Event::BgpTransFatalError()
+// {
+// }
+
+// void Event::ConnRetryTimerExpired()
+// {
+// }
+
+// void Event::HoldTimerExpired()
+// {
+// }
+
+// void Event::KeepaliveTimerExpired()
+// {
+// }
+
+// void Event::RecvOpenMsg()
+// {
+// }
+
+// void Event::RecvKeepaliveMsg()
+// {
+// }
+
+// void Event::RecvUpdateMsg()
+// {
+// }
+
+// void Event::RecvNotificationMsg()
+// {
+// }
