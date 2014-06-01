@@ -3,7 +3,6 @@
 #define MESSAGE_DKT2MXIT
 
 #include "global.h"
-#include "simulator.h"
 
 #define MAX_BACKLOG                 5
 #define INTERVAL_CONNECTRETRY       120
@@ -17,7 +16,6 @@
 #define MSGSIZE_OPEN_MIN            29
 #define MSGSIZE_UPDATE_MIN          23
 #define MSGSIZE_KEEPALIVE           19  /* 19 hdr */
-
 
 typedef enum {
     OPEN = 1,
@@ -57,6 +55,8 @@ typedef enum _capa_codes {
 #pragma pack(push)  /* push current align to stack */
 #pragma pack(1)     /* set alignment to 1 byte */ 
 
+using namespace std;
+
 typedef struct _bgphdr {
     u_char      marker[16];           // Marker
     u_int16_t   length;               // Length
@@ -84,21 +84,27 @@ class Message {
         Message ();
         virtual ~Message ();
 
-        void SetMsgType(message_t ty) { type = ty;}
+        message_t GetMsgType() {
+            return mType;
+        }
+        void SetMsgType(message_t ty) {
+            mType = ty;
+        }
         string MsgToString() {
-            return mapMsgName[type];
+            return mapMsgName[mType];
         }
         
         void InitHeader();
+        void InitHeader(bgphdr & hdr);
         void InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip);
 
-        bool SendMsg(int sockfd);
+        bool SendMsg(sockfd sfd);
         void DumpRawMsg(u_int8_t * buf, ssize_t size);
         void DumpSelf();
 
     private:
-        message_t type;
-        bgphdr hdr;
+        message_t mType;
+        bgphdr mHdr;
         u_int8_t bufMSG[4096];
 
         static std::map<message_t, string> mapMsgName;

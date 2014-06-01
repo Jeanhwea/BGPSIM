@@ -2,8 +2,6 @@
 
 using namespace std;
 
-#define HEAD_LEN (sizeof(bgphdr))
-
 map<message_t, string> Message::mapMsgName = {
     { OPEN, "open" },
     { UPDATE, "update" },
@@ -23,15 +21,20 @@ Message::~Message()
 
 void Message::InitHeader()
 {
-    memset(&hdr.marker, 0xff, 16);
+    InitHeader(mHdr);
+}
+
+void Message::InitHeader(bgphdr & hdr)
+{
+    memset(& hdr.marker, 0xff, 16);
     hdr.length = htons(0);
     hdr.type = 0;
 }
 
 void Message::InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip)
 {
-    openmsg * msg = (openmsg *) (bufMSG + HEAD_LEN);
-    ssize_t msgLen = HEAD_LEN;
+    openmsg * msg = (openmsg *) (bufMSG + MSGSIZE_HEADER);
+    ssize_t msgLen = MSGSIZE_HEADER;
 
     msg->version = 4;
     msg->myas = htons(no);
@@ -42,8 +45,8 @@ void Message::InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip)
     msg->optparamlen = 0;
     msgLen += 1;
 
-    hdr.length = htons(msgLen);
-    hdr.type = OPEN;
+    mHdr.length = htons(msgLen);
+    mHdr.type = OPEN;
 }
 
 bool Message::SendMsg(sockfd sfd)
@@ -51,8 +54,8 @@ bool Message::SendMsg(sockfd sfd)
     ssize_t msgLen;
     ssize_t res;
 
-    msgLen = ntohs(hdr.length);
-    memcpy(bufMSG, &hdr, HEAD_LEN);
+    msgLen = ntohs(mHdr.length);
+    memcpy(bufMSG, &mHdr, MSGSIZE_HEADER);
     res = send(sfd, bufMSG, msgLen, 0);
 
     return (res == msgLen);
@@ -71,6 +74,6 @@ void Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
 void Message::DumpSelf()
 {
     u_int8_t * buf = bufMSG;
-    ssize_t size = ntohs(hdr.length);
+    ssize_t size = ntohs(mHdr.length);
     DumpRawMsg(buf, size);
 }

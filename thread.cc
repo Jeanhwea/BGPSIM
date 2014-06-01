@@ -1,20 +1,20 @@
 #include "thread.h"
 
 Thread::Thread()
-: tid(0), isRunning(false), isDetached(false)
+: mTid(0), isRunning(false), isDetached(false)
 {
 }
 
 Thread::~Thread()
 {
     if (isRunning && (!isDetached) ) 
-        pthread_detach(tid);
+        pthread_detach(mTid);
     if (isRunning)
-        pthread_cancel(tid);
+        pthread_cancel(mTid);
 }
 
 bool Thread::Start() {
-    int res = pthread_create(&tid, NULL, RunThread, this);
+    int res = pthread_create(&mTid, NULL, RunThread, this);
     if (res == 0) isRunning = true;
     return (res == 0);
 }
@@ -22,7 +22,7 @@ bool Thread::Start() {
 bool Thread::Join() {
     int res = -1;
     if (isRunning) {
-        res = pthread_join(tid, NULL);
+        res = pthread_join(mTid, NULL);
         if (res == 0) isDetached = true;
     }
     return (res == 0);
@@ -31,7 +31,7 @@ bool Thread::Join() {
 bool Thread::Detach() {
     int res = -1;
     if (isRunning && (!isDetached) ) {
-        res = pthread_detach(tid);
+        res = pthread_detach(mTid);
         if (res == 0) isDetached = true;
     }
     return (res == 0);
@@ -39,5 +39,5 @@ bool Thread::Detach() {
 
 pthread_t Thread::Self() 
 {
-    return tid;
+    return mTid;
 }

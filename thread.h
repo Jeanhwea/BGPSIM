@@ -16,7 +16,7 @@ class Thread {
         pthread_t Self();
 
     private:
-        pthread_t tid;
+        pthread_t mTid;
         bool isRunning;
         bool isDetached;
 

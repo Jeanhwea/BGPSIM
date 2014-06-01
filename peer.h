@@ -23,9 +23,11 @@ class Peer {
         string PeerStateStr() {
             return mapStateName[mState];
         }
+
         state_t GetPeerState() {
             return mState;
         }
+        
         void SetPeerState(state_t state) {
             mState = state;
         }
