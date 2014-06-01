@@ -5,53 +5,73 @@
 #include "global.h"
 #include "simulator.h"
 
-typedef unsigned char octet;
-typedef unsigned short hexet;
-typedef unsigned int dhexet;
-#define VARMSGLEN 16
-#define MAX_MSG_LEN 2048
+#define MAX_BACKLOG                 5
+#define INTERVAL_CONNECTRETRY       120
+#define INTERVAL_HOLD_INITIAL       240
+#define INTERVAL_HOLD               90
+#define INTERVAL_IDLE_HOLD_INITIAL  30
+#define MAX_IDLE_HOLD               3600
+#define MSGSIZE_HEADER              19
+#define MSGSIZE_HEADER_MARKER       16
+#define MSGSIZE_NOTIFICATION_MIN    21  /* 19 hdr + 1 code + 1 sub */
+#define MSGSIZE_OPEN_MIN            29
+#define MSGSIZE_UPDATE_MIN          23
+#define MSGSIZE_KEEPALIVE           19  /* 19 hdr */
+
 
 typedef enum {
     OPEN = 1,
     UPDATE,
     NOTIFICATION,
     KEEPALIVE
-} Message_t;
+} message_t;
+
+typedef enum _suberr_header {
+    ERR_HDR_SYNC = 1,
+    ERR_HDR_LEN,
+    ERR_HDR_TYPE
+} suberr_header;
+
+typedef enum _suberr_open {
+    ERR_OPEN_VERSION = 1,
+    ERR_OPEN_AS,
+    ERR_OPEN_BGPID,
+    ERR_OPEN_OPT,
+    ERR_OPEN_AUTH,
+    ERR_OPEN_HOLDTIME,
+    ERR_OPEN_CAPA
+} suberr_open;
+
+typedef enum _opt_params {
+    OPT_PARAM_NONE,
+    OPT_PARAM_AUTH,
+    OPT_PARAM_CAPABILITIES
+} opt_params;
+
+typedef enum _capa_codes {
+    CAPA_NONE,
+    CAPA_MP,
+    CAPA_REFRESH
+} capa_codes;
 
 #pragma pack(push)  /* push current align to stack */
 #pragma pack(1)     /* set alignment to 1 byte */ 
 
 typedef struct _bgphdr {
-    octet marker[16];           // Marker
-    hexet length;               // Length
-    octet type;                 // Type
+    u_char      marker[16];           // Marker
+    u_int16_t   length;               // Length
+    u_int8_t    type;                 // Type
 } bgphdr;
 
 typedef struct _openmsg {
-    octet version;              // Version
-    hexet asno;                 // My Autonomous System
-    hexet hold_time;            // Hold Time
-    dhexet bgp_ident;           // BGP Identifier
-    octet op_para_len;          // Optional Parameters Length
-    octet op_para[VARMSGLEN];   // Optional Parameters
+    bgphdr      msghdr;               // Message header
+    u_int8_t    version;              // Version
+    u_int16_t   myas;                 // My Autonomous System
+    u_int16_t   holdtime;             // Hold Time
+    u_int32_t   bgpid;                // BGP Identifier
+    u_int8_t    optparamlen;          // Optional Parameters Length
 } openmsg;
 
-typedef struct _updatemsg {
-    hexet ur_len;               // Unfeasible Routes Length
-    octet wr[VARMSGLEN];        // Withdrawn Routes (variable)
-    hexet tpatt_len;            // Total Path Attribute Length 
-    octet patt[VARMSGLEN];      // Path Attribute (variable)
-    octet info[VARMSGLEN];      // Network layer reachability information (variable)
-} updatemsg;
-
-typedef struct _keepalivemsg {  // keepalivemsg is zero bit defined by rfc1771
-} keepalivemsg;
-
-typedef struct _notificationmsg {
-    octet err;                  // Error code
-    octet err_sub;              // Error subcode
-    octet data[VARMSGLEN];      // Data (variable)
-} notificationmsg;
 
 #pragma pack(pop)   /* restore original alignment */
 
@@ -64,28 +84,24 @@ class Message {
         Message ();
         virtual ~Message ();
 
-        void SetMsgType(Message_t ty) { type = ty;}
+        void SetMsgType(message_t ty) { type = ty;}
         string MsgToString() {
             return mapMsgName[type];
         }
         
         void InitHeader();
-        void InitOpenMsg(hexet no, hexet ht, dhexet id);
-        void InitUpdateMsg(hexet urlen, hexet alen);
-        void InitKeepaliveMsg();
-        void InitNotificationMsg(octet er, octet erb);
+        void InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip);
 
         bool SendMsg(int sockfd);
-        void DumpRawMsg(octet * buf, ssize_t size);
+        void DumpRawMsg(u_int8_t * buf, ssize_t size);
         void DumpSelf();
 
     private:
-        Message_t type;
+        message_t type;
         bgphdr hdr;
-        octet bufMSG[MAX_MSG_LEN];
-        Simulator * sim;
+        u_int8_t bufMSG[4096];
 
-        static std::map<Message_t, string> mapMsgName;
+        static std::map<message_t, string> mapMsgName;
 };
 
 #endif /* end of include guard: MESSAGE_DKT2MXIT */

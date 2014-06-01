@@ -2,7 +2,7 @@
 
 using namespace std;
 
-map<Event_t, string> Event::mapEventName = {
+map<event_t, string> Event::mapEventName = {
     { BGP_START, "bgp_start" },
     { BGP_STOP, "bgp_stop" },
     { BGP_TRANS_CONN_OPEN, "bgp_trans_conn_open" },
@@ -19,7 +19,6 @@ map<Event_t, string> Event::mapEventName = {
 };
 
 Event::Event()
-: type(BGP_START)
 {
 
 }
@@ -28,55 +27,3 @@ Event::~Event()
 {
 
 }
-
-// void Event::BgpStart()
-// {
-// }
-
-// void Event::BgpStop()
-// {
-// }
-
-// void Event::BgpTransConnOpen()
-// {
-// }
-
-// void Event::BgpTransConnClosed()
-// {
-// }
-
-// void Event::BgpTransConnOpenFailed()
-// {
-// }
-
-// void Event::BgpTransFatalError()
-// {
-// }
-
-// void Event::ConnRetryTimerExpired()
-// {
-// }
-
-// void Event::HoldTimerExpired()
-// {
-// }
-
-// void Event::KeepaliveTimerExpired()
-// {
-// }
-
-// void Event::RecvOpenMsg()
-// {
-// }
-
-// void Event::RecvKeepaliveMsg()
-// {
-// }
-
-// void Event::RecvUpdateMsg()
-// {
-// }
-
-// void Event::RecvNotificationMsg()
-// {
-// }

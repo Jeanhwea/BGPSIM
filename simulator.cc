@@ -2,19 +2,9 @@
 
 using namespace std;
 
-map<State_t, string> Simulator::mapStateName = {
-    { IDLE, "idle" },
-    { CONNECT, "connect" },
-    { ACTIVE, "active" },
-    { OPEN_SENT, "open_sent" },
-    { OPEN_CONFIRM, "open_confirm" },
-    { ESTABLISHED, "established" }
-};
 
 Simulator::Simulator()
-: curState(IDLE)
 {
-
 }
 
 Simulator::~Simulator()
@@ -26,77 +16,60 @@ void * Simulator::Run()
     return NULL;
 }
 
-void Simulator::FSM(Event * pEve, Simulator * sim)
+void Simulator::FSM(Peer * pPeer, Event * pEve)
 {
-    switch ( sim->GetCurState() ) {
+    switch ( pPeer->GetPeerState() ) {
         case IDLE:
-            IdleStateHandler(pEve);
+            switch ( pEve->GetEventType() ) { 
+                case BGP_START : 
+                    break;
+                default:
+                    break;
+            }
             break;
         case CONNECT:
-            ConnectStateHandler(pEve);
             break;
         case ACTIVE:
-            ActiveStateHandler(pEve);
             break;
         case OPEN_SENT:
-            OpenSendStateHandler(pEve);
             break;
         case OPEN_CONFIRM:
-            OpenConfirmStateHandler(pEve);
             break;
         case ESTABLISHED:
-            EstablishedStateHandler(pEve);
-            break;
-    }
-}
-
-void Simulator::FSM(Event * pEve)
-{
-    FSM(pEve, this);
-}
-
-void Simulator::IdleStateHandler(Event * event)
-{
-    switch (event->GetEventType()) {
-        case BGP_START:
             break;
         default:
+            // do nothing
             break;
     }
-
 }
 
-void Simulator::ConnectStateHandler(Event * event)
+void Simulator::ChangeState(Peer * pPeer, Event * pEve, state_t state)
 {
-    // switch (event->GetEventType()) { 
-    //     case BGP_START : 
-    //         break;
-    //     default:
-    //         break;
-    // }
-}
-
-void Simulator::ActiveStateHandler(Event * event)
-{
-}
-
-void Simulator::OpenSendStateHandler(Event * event)
-{
-}
-
-void Simulator::OpenConfirmStateHandler(Event * event)
-{
-}
-
-void Simulator::EstablishedStateHandler(Event * event)
-{
+    switch ( pPeer->GetPeerState() ) {
+        case IDLE:
+            break;
+        case CONNECT:
+            break;
+        case ACTIVE:
+            break;
+        case OPEN_SENT:
+            break;
+        case OPEN_CONFIRM:
+            break;
+        case ESTABLISHED:
+            break;
+        default:
+            // do nothing
+            break;
+    }
+    pPeer->SetPeerState(state);
 }
 
 bool Simulator::InitConn()
 {
-    int sockfd;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    assert(sockfd >= 0);
+    sockfd sfd;
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
+    assert(sfd >= 0);
 
     int success;
     struct sockaddr_in ad;
@@ -105,10 +78,10 @@ bool Simulator::InitConn()
     ad.sin_port = htons(BGP_PORT);
     success = inet_pton(AF_INET, "192.168.1.102", &ad.sin_addr);
     assert(success >= 0);
-    success = connect(sockfd, (struct sockaddr *) &ad,sizeof(ad));
+    success = connect(sfd, (struct sockaddr *) &ad,sizeof(ad));
     assert(success >= 0);
 
-    vSockFd.push_back(sockfd);
+    fd = sfd;
 
     return true;
 }
@@ -116,15 +89,15 @@ bool Simulator::InitConn()
 
 void Simulator::SendOpenMsg()
 {
-    int sockfd;
+    sockfd sfd;
 
-    if (vSockFd.empty()) return;
-    sockfd = vSockFd[0];
+    if (fd < 0) return;
+    sfd = fd;
 
-    pMsg = new Message;
-    pMsg->InitOpenMsg(100, 5, 8);
-    pMsg->SendMsg(sockfd);
-    pMsg->DumpSelf();
+    mpMsg = new Message;
+    mpMsg->InitOpenMsg(100, 5, 0xc0a80164);
+    mpMsg->SendMsg(sfd);
+    mpMsg->DumpSelf();
     
-    free(pMsg);
+    free(mpMsg);
 }

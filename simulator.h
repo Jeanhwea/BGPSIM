@@ -3,21 +3,14 @@
 #define SIMULATOR_SQ47GXYM
 
 #include "global.h"
-#include "event.h"
-#include "message.h"
 #include "thread.h"
+#include "event.h"
+#include "peer.h"
+#include "message.h"
 
 using namespace std;
 
-typedef enum {
-    IDLE,
-    CONNECT,
-    ACTIVE,
-    OPEN_SENT,
-    OPEN_CONFIRM,
-    ESTABLISHED
-} State_t;
-
+class Peer;
 class Event;
 class Message;
 
@@ -28,33 +21,20 @@ class Simulator : public Thread {
         
         void * Run();
 
-        void FSM(Event * pEve, Simulator * sim);
-        void FSM(Event * pEve);
-        void IdleStateHandler(Event * event);
-        void ConnectStateHandler(Event * event);
-        void ActiveStateHandler(Event * event);
-        void OpenSendStateHandler(Event * event);
-        void OpenConfirmStateHandler(Event * event);
-        void EstablishedStateHandler(Event * event);
-
-        string CurStateToString() {
-            return mapStateName[curState];
-        }
-        State_t GetCurState() { 
-            return curState; 
-        }
+        void FSM(Peer * pPeer, Event * pEve);
+        void ChangeState(Peer * pPeer, Event * pEve, state_t state);
 
         bool InitConn();
         void SendOpenMsg();
 
     private:
-        State_t curState;
-        Event * pEve;
-        Message * pMsg;
-        vector<int> vSockFd;
-        // time_t hold_timer, connect_timer, keepalive_timer;
+        Peer * mpPeer;
+        Event * mpEve;
 
-        static map<State_t, string> mapStateName;
+        // to remove
+        Message * mpMsg;
+        sockfd fd;
+
 };
 
 

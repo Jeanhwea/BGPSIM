@@ -3,8 +3,6 @@
 #define EVENT_7QDU12AL
 
 #include "global.h"
-#include "simulator.h"
-#include "message.h"
 
 using namespace std;
 
@@ -22,46 +20,29 @@ typedef enum {
     RECV_KEEPALIVE_MSG,
     RECV_UPDATE_MSG,
     RECV_NOTIFICATION_MSG
-} Event_t;
+} event_t;
 
-class Simulator;
-class Message;
 
 class Event {
     public:
         Event ();
         virtual ~Event ();
 
-        // void BgpStart();
-        // void BgpStop();
-        // void BgpTransConnOpen();
-        // void BgpTransConnClosed();
-        // void BgpTransConnOpenFailed();
-        // void BgpTransFatalError();
-        // void ConnRetryTimerExpired();
-        // void HoldTimerExpired();
-        // void KeepaliveTimerExpired();
-        // void RecvOpenMsg();
-        // void RecvKeepaliveMsg();
-        // void RecvUpdateMsg();
-        // void RecvNotificationMsg();
 
-        string EventToString() {
-            return mapEventName[type];
+        string EventTypeStr() {
+            return mapEventName[mType];
         }
-        Event_t GetEventType() { 
-            return type; 
+        event_t GetEventType() { 
+            return mType; 
         }
-        Simulator * GetSimulator() {
-            return sim;
+        void SetEventType(event_t type) {
+            mType = type;
         }
 
     private:
-        Event_t type;
-        Simulator * sim;
-        Message * msg;
+        event_t mType;
 
-        static std::map<Event_t, string> mapEventName;
+        static std::map<event_t, string> mapEventName;
 };
 
 #endif /* end of include guard: EVENT_7QDU12AL */

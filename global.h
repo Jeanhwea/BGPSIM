@@ -27,6 +27,8 @@
 
 #define BGP_PORT 179
 
+typedef int sockfd;
+
 extern int errno;
 extern bool isDebug;
 
