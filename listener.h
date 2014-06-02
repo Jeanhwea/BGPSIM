@@ -24,9 +24,6 @@ class Listener : public Thread {
             return NULL;
         }
 
-        // tips: > ifconfig eth0 promisc # set eth0 to promisc model
-        // tips: > ifconfig eth0 -promisc # set eth0 to none promisc model
-
     private:
         vector<int> vSockFd;
 

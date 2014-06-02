@@ -6,7 +6,6 @@ CFLAG := -g -Wall $(INCPATH) -std=c++0x
 LFLAG := -lpthread
 TARGET := ./runner
 
-
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
