@@ -24,6 +24,7 @@ class Simulator : public Thread {
         void FSM(Peer * pPeer, Event * pEve);
         void ChangeState(Peer * pPeer, Event * pEve, state_t state);
 
+        // to remove
         bool InitConn();
         void SendOpenMsg();
 

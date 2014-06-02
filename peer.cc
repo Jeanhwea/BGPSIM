@@ -11,7 +11,8 @@ map<state_t, string> Peer::mapStateName = {
 
 Peer::Peer()
 {
-    InitTimer();
+    
+    TimerBeZero();
 }
 
 Peer::~Peer()

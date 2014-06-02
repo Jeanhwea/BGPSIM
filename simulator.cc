@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 Simulator::Simulator()
 {
 }
@@ -22,6 +21,7 @@ void Simulator::FSM(Peer * pPeer, Event * pEve)
         case IDLE:
             switch ( pEve->GetEventType() ) { 
                 case BGP_START : 
+                    pPeer->TimerBeZero();
                     break;
                 default:
                     break;

@@ -4,7 +4,7 @@
 
 #include "global.h"
 #include "listener.h"
-
+#include "peer.h"
 #include "simulator.h"
 #include "event.h"
 #include "message.h"

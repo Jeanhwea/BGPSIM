@@ -17,6 +17,8 @@
 #define MSGSIZE_UPDATE_MIN          23
 #define MSGSIZE_KEEPALIVE           19  /* 19 hdr */
 
+#define MSGBUFSIZE                  4096
+
 typedef enum {
     OPEN = 1,
     UPDATE,
@@ -93,9 +95,8 @@ class Message {
         string MsgToString() {
             return mapMsgName[mType];
         }
-        
-        void InitHeader();
-        void InitHeader(bgphdr & hdr);
+
+        void InitHeader(bgphdr & hdr, u_int16_t len, message_t type);
         void InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip);
 
         bool SendMsg(sockfd sfd);
@@ -104,8 +105,7 @@ class Message {
 
     private:
         message_t mType;
-        bgphdr mHdr;
-        u_int8_t bufMSG[4096];
+        u_int8_t bufMSG[MSGBUFSIZE];
 
         static std::map<message_t, string> mapMsgName;
 };

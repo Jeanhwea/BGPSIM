@@ -11,7 +11,6 @@ map<message_t, string> Message::mapMsgName = {
 
 Message::Message()
 {
-    InitHeader();
 }
 
 Message::~Message()
@@ -19,25 +18,20 @@ Message::~Message()
 
 }
 
-void Message::InitHeader()
+void Message::InitHeader(bgphdr & hdr, u_int16_t len, message_t type)
 {
-    InitHeader(mHdr);
+    memset(hdr.marker, 0xff, 16);
+    hdr.length = htons(len);
+    hdr.type = type;
 }
 
-void Message::InitHeader(bgphdr & hdr)
+void Message::InitOpenMsg(u_int16_t as, u_int16_t ht, u_int32_t ip)
 {
-    memset(& hdr.marker, 0xff, 16);
-    hdr.length = htons(0);
-    hdr.type = 0;
-}
-
-void Message::InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip)
-{
-    openmsg * msg = (openmsg *) (bufMSG + MSGSIZE_HEADER);
+    openmsg * msg = (openmsg *) bufMSG;
     ssize_t msgLen = MSGSIZE_HEADER;
 
     msg->version = 4;
-    msg->myas = htons(no);
+    msg->myas = htons(as);
     msg->holdtime = htons(ht);
     msg->bgpid = htonl(ip);
     msgLen += 1 + 2 + 2 + 4;
@@ -45,17 +39,18 @@ void Message::InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip)
     msg->optparamlen = 0;
     msgLen += 1;
 
-    mHdr.length = htons(msgLen);
-    mHdr.type = OPEN;
+    InitHeader(msg->msghdr, msgLen, OPEN);
 }
 
 bool Message::SendMsg(sockfd sfd)
 {
     ssize_t msgLen;
     ssize_t res;
+    bgphdr * hdr = NULL;
 
-    msgLen = ntohs(mHdr.length);
-    memcpy(bufMSG, &mHdr, MSGSIZE_HEADER);
+    hdr = &((openmsg *) bufMSG )->msghdr;
+
+    msgLen = ntohs(hdr->length);
     res = send(sfd, bufMSG, msgLen, 0);
 
     return (res == msgLen);
@@ -73,7 +68,7 @@ void Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
 
 void Message::DumpSelf()
 {
-    u_int8_t * buf = bufMSG;
-    ssize_t size = ntohs(mHdr.length);
-    DumpRawMsg(buf, size);
+    bgphdr * hdr = (bgphdr *) bufMSG;
+    ssize_t size = ntohs(hdr->length);
+    DumpRawMsg(bufMSG, size);
 }

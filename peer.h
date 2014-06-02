@@ -32,7 +32,7 @@ class Peer {
             mState = state;
         }
 
-        void InitTimer() {
+        void TimerBeZero() {
             hold_timer = 0;
             connect_timer = 0;
             keepalive_timer = 0;
