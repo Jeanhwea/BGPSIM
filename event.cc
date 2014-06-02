@@ -20,7 +20,6 @@ map<event_t, string> Event::mapEventName = {
 
 Event::Event()
 {
-
 }
 
 Event::~Event() 
