@@ -10,12 +10,14 @@ Simulator::~Simulator()
 {
 }
 
-void * Simulator::Run()
+void * 
+Simulator::Run()
 {
     return NULL;
 }
 
-void Simulator::FSM(Peer * pPeer, Event * pEve)
+void 
+Simulator::FSM(Peer * pPeer, Event * pEve)
 {
     switch ( pPeer->GetPeerState() ) {
         case IDLE:
@@ -24,26 +26,179 @@ void Simulator::FSM(Peer * pPeer, Event * pEve)
                     pPeer->TimerBeZero();
                     break;
                 default:
+                    // ignore
                     break;
             }
             break;
         case CONNECT:
+            switch ( pEve->GetEventType() ) { 
+                case BGP_START : 
+                    break;
+                case BGP_TRANS_CONN_OPEN:
+                    SimTCPEstablished(pPeer);
+                    SimOpen(pPeer);
+                    pPeer->ConnetRetryTimer = 0;
+                    ChangeState(pPeer, OPEN_SENT, pEve);
+                    break;
+                case BGP_TRANS_CONN_OPEN_FAILED : 
+                    pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
+                    SimColseConnect(pPeer);
+                    ChangeState(pPeer, ACTIVE, pEve);
+                    break;
+                case CONN_RETRY_TIMER_EXPIRED : 
+                    pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
+                    SimConnect(pPeer);
+                    break;
+                default:
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+            }
             break;
         case ACTIVE:
+            switch ( pEve->GetEventType() ) { 
+                case BGP_START : 
+                    // ignore
+                    break;
+                case BGP_TRANS_CONN_OPEN : 
+                    SimTCPEstablished(pPeer);
+                    SimOpen(pPeer);
+                    pPeer->ConnetRetryTimer = 0;
+                    pPeer->SetHoldtime(T_HOLD_INITIAL);
+                    pPeer->StartTimerHoldtime();
+                    ChangeState(pPeer, OPEN_SENT, pEve);
+                    break;
+                case BGP_TRANS_CONN_OPEN_FAILED : 
+                    pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
+                    SimColseConnect(pPeer);
+                    ChangeState(pPeer, CONNECT, pEve);
+                    break;
+                case CONN_RETRY_TIMER_EXPIRED : 
+                    pPeer->ConnetRetryTimer = time(NULL) + pPeer->GetHoldtime();
+                    ChangeState(pPeer, CONNECT, pEve);
+                    SimConnect(pPeer);
+                    break;
+                default:
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+            }
             break;
         case OPEN_SENT:
+            switch ( pEve->GetEventType() ) { 
+                case BGP_START : 
+                    // ignore
+                    break;
+                case BGP_STOP : 
+                    SimNotification(pPeer, ERR_CEASE, 0, NULL, 0);
+                    pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
+                    ChangeState(pPeer, ACTIVE, pEve);
+                    break;
+                case BGP_TRANS_CONN_CLOSED : 
+                    SimColseConnect(pPeer);
+                    pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
+                    ChangeState(pPeer, ACTIVE, pEve);
+                    break;
+                case BGP_TRANS_FATAL_ERROR : 
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case HOLD_TIMER_EXPIRED : 
+                    SimNotification(pPeer, ERR_HOLDTIMEREXPIRED, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case RECV_OPEN_MSG : 
+                    if ( ! pPeer->ParseOpen() ) break;
+                    SimKeepalive(pPeer);
+                    ChangeState(pPeer, OPEN_CONFIRM, pEve);
+                    break;
+                case RECV_NOTIFICATION_MSG : 
+                    if ( ! pPeer->ParseNotification() ) {
+                        ChangeState(pPeer, IDLE, pEve);
+                        pPeer->IdleHoldTimer = time(NULL);
+                        pPeer->HoldTimer /= 2;
+                    } else {
+                        ChangeState(pPeer, IDLE, pEve);
+                    }
+                    break;
+                default:
+                    SimNotification(pPeer, ERR_FSM, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+            }
             break;
         case OPEN_CONFIRM:
+            switch ( pEve->GetEventType() ) { 
+                case BGP_START : 
+                    // ignore
+                    break;
+                case BGP_STOP : 
+                    SimNotification(pPeer, ERR_CEASE, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case BGP_TRANS_CONN_CLOSED : 
+                case BGP_TRANS_FATAL_ERROR : 
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case KEEPALIVE_TIMER_EXPIRED : 
+                    SimKeepalive(pPeer);
+                    break;
+                case RECV_KEEPALIVE_MSG : 
+                    pPeer->StartTimerHoldtime();
+                    ChangeState(pPeer, ESTABLISHED, pEve);
+                    break;
+                case RECV_NOTIFICATION_MSG : 
+                    pPeer->ParseNotification();
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                default:
+                    SimNotification(pPeer, ERR_FSM, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+            }
             break;
         case ESTABLISHED:
-            break;
-        default:
-            // do nothing
+            switch ( pEve->GetEventType() ) { 
+                case BGP_START : 
+                    // ignore
+                    break;
+                case BGP_STOP : 
+                    SimNotification(pPeer, ERR_CEASE, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case BGP_TRANS_CONN_CLOSED : 
+                case BGP_TRANS_FATAL_ERROR :
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case HOLD_TIMER_EXPIRED : 
+                    SimNotification(pPeer, ERR_HOLDTIMEREXPIRED, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                case KEEPALIVE_TIMER_EXPIRED : 
+                    SimKeepalive(pPeer);
+                    break;
+                case RECV_KEEPALIVE_MSG :  
+                    pPeer->StartTimerHoldtime();
+                    break;
+                case RECV_UPDATE_MSG : 
+                    pPeer->StartTimerHoldtime();
+                    if ( ! pPeer->ParseUpdate() )
+                        ChangeState(pPeer, IDLE, pEve);
+                    else 
+                        pPeer->StartTimerHoldtime();
+                    break;
+                case RECV_NOTIFICATION_MSG : 
+                    pPeer->ParseNotification();
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+                default:
+                    SimNotification(pPeer, ERR_FSM, 0, NULL, 0);
+                    ChangeState(pPeer, IDLE, pEve);
+                    break;
+            }
             break;
     }
 }
 
-void Simulator::ChangeState(Peer * pPeer, Event * pEve, state_t state)
+void 
+Simulator::ChangeState(Peer * pPeer, state_t state, Event * pEve)
 {
     switch ( pPeer->GetPeerState() ) {
         case IDLE:
@@ -58,14 +213,54 @@ void Simulator::ChangeState(Peer * pPeer, Event * pEve, state_t state)
             break;
         case ESTABLISHED:
             break;
-        default:
-            // do nothing
-            break;
     }
     pPeer->SetPeerState(state);
 }
 
-bool Simulator::InitConn()
+void
+Simulator::SimTCPEstablished(Peer * pp) 
+{
+    
+}
+
+void
+Simulator::SimConnect(Peer * pp) 
+{
+    
+}
+
+void
+Simulator::SimColseConnect(Peer * pp) 
+{
+    
+}
+
+void
+Simulator::SimOpen(Peer * pp) 
+{
+    
+}
+
+void
+Simulator::SimKeepalive(Peer * pp) 
+{
+    
+}
+
+void
+Simulator::SimUpdate(Peer * pp, void * data, ssize_t len) 
+{
+    
+}
+
+void
+Simulator::SimNotification(Peer * pp, u_int8_t e, u_int8_t es, void * data, ssize_t len) 
+{
+    
+}
+
+bool 
+Simulator::InitConn()
 {
     sockfd sfd;
     sfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -87,7 +282,8 @@ bool Simulator::InitConn()
 }
 
 
-void Simulator::SendOpenMsg()
+void 
+Simulator::SendOpenMsg()
 {
     sockfd sfd;
 

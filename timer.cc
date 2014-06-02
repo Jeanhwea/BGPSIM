@@ -21,7 +21,8 @@ Timer::~Timer()
         delete instance;
 }
 
-void * Timer::Run()
+void * 
+Timer::Run()
 {
     if (NULL == instance) {
         // set timer at the very beginning
@@ -31,21 +32,24 @@ void * Timer::Run()
     return NULL;
 }
 
-void Timer::Schedule()
+void 
+Timer::Schedule()
 {
     if (isDebug) {
         
     }
 }
         
-Timer * Timer::GetInst()
+Timer * 
+Timer::GetInst()
 {
     if (NULL == instance)
         instance = new Timer;
     return instance;
 }
 
-void Timer::TimerHandler(int sig)
+void 
+Timer::TimerHandler(int sig)
 {
     if (isDebug)
         cout << "Tick : " << ++ Timer::walltime << endl;

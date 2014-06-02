@@ -18,14 +18,16 @@ Message::~Message()
 
 }
 
-void Message::InitHeader(bgphdr & hdr, u_int16_t len, message_t type)
+void 
+Message::InitHeader(bgphdr & hdr, u_int16_t len, message_t type)
 {
     memset(hdr.marker, 0xff, 16);
     hdr.length = htons(len);
     hdr.type = type;
 }
 
-void Message::InitOpenMsg(u_int16_t as, u_int16_t ht, u_int32_t ip)
+void 
+Message::InitOpenMsg(u_int16_t as, u_int16_t ht, u_int32_t ip)
 {
     openmsg * msg = (openmsg *) bufMSG;
     ssize_t msgLen = MSGSIZE_HEADER;
@@ -42,7 +44,8 @@ void Message::InitOpenMsg(u_int16_t as, u_int16_t ht, u_int32_t ip)
     InitHeader(msg->msghdr, msgLen, OPEN);
 }
 
-bool Message::SendMsg(sockfd sfd)
+bool 
+Message::SendMsg(sockfd sfd)
 {
     ssize_t msgLen;
     ssize_t res;
@@ -57,7 +60,8 @@ bool Message::SendMsg(sockfd sfd)
 }
 
 #define PRINT_ALIGN 16
-void Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
+void 
+Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
 {
     for (int i = 0; i < size; ++i) {
         if (!((i)%PRINT_ALIGN)) printf("0x%04x : ", i);
@@ -66,7 +70,8 @@ void Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
     if (size%PRINT_ALIGN) printf("\n");
 }
 
-void Message::DumpSelf()
+void 
+Message::DumpSelf()
 {
     bgphdr * hdr = (bgphdr *) bufMSG;
     ssize_t size = ntohs(hdr->length);

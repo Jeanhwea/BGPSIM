@@ -17,7 +17,8 @@ Listener::~Listener()
 
 }
 
-bool Listener::SetMainSocket()
+bool 
+Listener::SetMainSocket()
 {
     int sockfd;
     
@@ -33,7 +34,8 @@ bool Listener::SetMainSocket()
     return true;
 }
 
-bool Listener::ListenAll()
+bool 
+Listener::ListenAll()
 {
     struct ethhdr * pEthhdr;
     struct iphdr * pIphdr;
@@ -64,19 +66,22 @@ bool Listener::ListenAll()
     return true;
 }
 
-bool Listener::SetPromisc(string ifname)
+bool
+Listener::SetPromisc(string ifname)
 {
     if (vSockFd.empty()) return false;
     return SetPromisc(ifname, vSockFd[0]);
 }
 
-bool Listener::UnsetPromisc(string ifname)
+bool 
+Listener::UnsetPromisc(string ifname)
 {
     if (vSockFd.empty()) return false;
     return UnsetPromisc(ifname, vSockFd[0]);
 }
 
-bool Listener::SetPromisc(string ifname, int sockfd)
+bool 
+Listener::SetPromisc(string ifname, int sockfd)
 {
     struct ifreq ifr;
     int res;
@@ -89,7 +94,8 @@ bool Listener::SetPromisc(string ifname, int sockfd)
     return true;
 }
 
-bool Listener::UnsetPromisc(string ifname, int sockfd)
+bool 
+Listener::UnsetPromisc(string ifname, int sockfd)
 {
     struct ifreq ifr;
     int res;
@@ -102,7 +108,8 @@ bool Listener::UnsetPromisc(string ifname, int sockfd)
     return true;
 }
 
-void Listener::OutputPacket(struct iphdr * pIphdr) 
+void 
+Listener::OutputPacket(struct iphdr * pIphdr) 
 {
     char src[IP_ADDR_SIZE+1], des[IP_ADDR_SIZE+1];
 

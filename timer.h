@@ -11,7 +11,6 @@ class Timer : public Thread {
         virtual ~Timer ();
 
         void * Run();
-
         void Schedule();
 
     private:

@@ -17,3 +17,49 @@ Peer::Peer()
 Peer::~Peer()
 {
 }
+
+bool
+Peer::ParseHeader()
+{
+    return true;
+}
+
+bool
+Peer::ParseOpen()
+{
+    return true;
+}
+
+bool
+Peer::ParseNotification() 
+{
+    return true;
+}
+
+bool
+Peer::ParseUpdate() 
+{
+    return true;
+}
+
+bool
+Peer::ParseKeepalive() 
+{
+    return true;
+}
+
+void 
+Peer::StartTimerHoldtime() {
+    if ( holdtime > 0) 
+        HoldTimer = time(NULL) + holdtime;
+    else 
+        HoldTimer = 0;
+}
+
+void 
+Peer::StartTimerKeepalive() {
+    if ( holdtime > 0) 
+        KeepaliveTimer = time(NULL) + holdtime / 3;
+    else 
+        KeepaliveTimer = 0;
+}

@@ -13,13 +13,15 @@ Thread::~Thread()
         pthread_cancel(mTid);
 }
 
-bool Thread::Start() {
+bool 
+Thread::Start() {
     int res = pthread_create(&mTid, NULL, RunThread, this);
     if (res == 0) isRunning = true;
     return (res == 0);
 }
 
-bool Thread::Join() {
+bool 
+Thread::Join() {
     int res = -1;
     if (isRunning) {
         res = pthread_join(mTid, NULL);
@@ -28,7 +30,8 @@ bool Thread::Join() {
     return (res == 0);
 }
 
-bool Thread::Detach() {
+bool 
+Thread::Detach() {
     int res = -1;
     if (isRunning && (!isDetached) ) {
         res = pthread_detach(mTid);
@@ -37,7 +40,8 @@ bool Thread::Detach() {
     return (res == 0);
 }
 
-pthread_t Thread::Self() 
+pthread_t 
+Thread::Self() 
 {
     return mTid;
 }

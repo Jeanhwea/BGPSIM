@@ -2,7 +2,8 @@
 
 using namespace std;
 
-int main(int argc, char const *argv[])
+int 
+main(int argc, char const *argv[])
 {
     if (isDebug) printf("Debug is on ... ...\n");
     Timer tim;
