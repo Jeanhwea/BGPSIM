@@ -1,19 +1,16 @@
 BGP Simulator
 =============
 
-Introduction
+简介
 -------------
-> I am writing this project for an simple BGP simulator, which is well-definded in [rfc1771](http://www.rfc-editor.org/rfc/rfc1771.txt "rfc1771")
+> 这是一个简单的BGP协议的模拟器，主要参照文档[rfc1771](http://www.rfc-editor.org/rfc/rfc1771.txt "rfc1771")
+> 来设计和实现。
 
-Messge Format
+报文格式
 --------------
 
-### Messge Header Format
-
-
-> Each message has a fixed-size header.  There may or may not be a data
-> portion following the header, depending on the message type.  The
-> layout of these fields is shown below:
+### 报文首部格式
+> 每个BGP报文使用相同的首部， 其它的部分随着报文类型不同而变化，首部格式如下：
 >
 >        0                   1                   2                   3
 >        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -29,17 +26,12 @@ Messge Format
 >        |          Length               |      Type     |
 >        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-### OPEN Message Format
-
-
-> After a transport protocol connection is established, the first
-> message sent by each side is an OPEN message.  If the OPEN message is
-> acceptable, a KEEPALIVE message confirming the OPEN is sent back.
-> Once the OPEN is confirmed, UPDATE, KEEPALIVE, and NOTIFICATION
-> messages may be exchanged.
+### OPEN报文格式
+> 在TCP协议建立后，第一个发出的报文就是OPEN报文，如果OPEN报文被接受方接收到，
+> 则接受方返回KEEPALIVE报文，用于确认OPEN报文发送成功。当OPEN报文发生被确认后，
+> UPDATE报文，KEEPALIVE报文和NOTIFICATION报文将可以进行交换。
 >
-> In addition to the fixed-size BGP header, the OPEN message contains
-> the following fields:
+> 除了BGP的首部，OPEN报文还应包含如下字段：
 >
 >        0                   1                   2                   3
 >        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -59,22 +51,14 @@ Messge Format
 >        |                                                               |
 >        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-### UPDATE Message Format
+### UPDATE报文格式
 
 
-> UPDATE messages are used to transfer routing information between BGP
-> peers.  The information in the UPDATE packet can be used to construct
-> a graph describing the relationships of the various Autonomous
-> Systems.  By applying rules to be discussed, routing information
-> loops and some other anomalies may be detected and removed from
-> inter-AS routing.
+> UPDATE报文是用于传递BGP对等体之间的路由信息的。这些信息可以用于构建多个自治系统
+> 之间关系图。通过应用规则来加以讨论，路由信息环路和一些其他的异常可以被检测并从自
+> 治系统间路由除去。
 
-> An UPDATE message is used to advertise a single feasible route to a
-> peer, or to withdraw multiple unfeasible routes from service (see
-> 3.1). An UPDATE message may simultaneously advertise a feasible route
-> and withdraw multiple unfeasible routes from service.  The UPDATE
-> message always includes the fixed-size BGP header, and can optionally
-> include the other fields as shown below:
+> 除了BGP的首部，UPDATE报文还应包含如下字段：
 >
 >        +-----------------------------------------------------+
 >        |   Unfeasible Routes Length (2 octets)               |
@@ -88,33 +72,25 @@ Messge Format
 >        |   Network Layer Reachability Information (variable) |
 >        +-----------------------------------------------------+
 
-### KEEPALIVE Message Format
+### KEEPALIVE报文格式
 
 
-> BGP does not use any transport protocol-based keep-alive mechanism to
-> determine if peers are reachable.  Instead, KEEPALIVE messages are
-> exchanged between peers often enough as not to cause the Hold Timer
-> to expire.  A reasonable maximum time between KEEPALIVE messages
-> would be one third of the Hold Time interval.  KEEPALIVE messages
-> MUST NOT be sent more frequently than one per second.  An
-> implementation MAY adjust the rate at which it sends KEEPALIVE
-> messages as a function of the Hold Time interval.
+> BGP不以任何传输协议为基础的保活机制确保对等体可达。相反，keepalive报文 
+> 对等体之间不频繁地交换信息会引起HoldTimer过期。 KEEPALIVE报文之间合理
+> 的最大时间被置为保持时间间隔的三分之一。
 > 
-> If the negotiated Hold Time interval is zero, then periodic KEEPALIVE
-> messages MUST NOT be sent.
+> 如果协商保持时间间隔是零，那么KEEPALIVE报文将不会被发送。
 > 
-> KEEPALIVE message consists of only message header and has a length of
-> 19 octets.
+> KEEPALIVE报文只包括BGP首部的19个字节。
 
 
-### NOTIFICATION Message Format
+### NOTIFICATION报文格式
 
 
-> A NOTIFICATION message is sent when an error condition is detected.
-> The BGP connection is closed immediately after sending it.
+> NOTIFICATION报文用于报告连接的错误。一旦发送NOTIFICATION报文过后，
+> 就要立即断开BGP的链接。
 > 
-> In addition to the fixed-size BGP header, the NOTIFICATION message
-> contains the following fields:
+> 除了BGP的首部，NOTIFICATION报文还应包含如下字段：
 >
 >        0                   1                   2                   3
 >        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -124,6 +100,6 @@ Messge Format
 >        |                                                               |
 >        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-Reference
+参考资料
 ------------------------
 [1] : http://www.rfc-editor.org/rfc/rfc1771.txt "rfc1771"
