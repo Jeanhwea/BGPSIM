@@ -37,8 +37,9 @@ class Simulator : public Thread {
         
         void * Run();
 
+        void FSM(Peer *, event_t);
         void FSM(Peer *, Event *);
-        void ChangeState(Peer *, state_t, Event *);
+        void ChangeState(Peer *, state_t, event_t);
 
         // to remove
         bool InitConn();
