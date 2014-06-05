@@ -22,36 +22,6 @@ Peer::~Peer()
 {
 }
 
-bool
-Peer::ParseHeader()
-{
-    return true;
-}
-
-bool
-Peer::ParseOpen()
-{
-    return true;
-}
-
-bool
-Peer::ParseNotification() 
-{
-    return true;
-}
-
-bool
-Peer::ParseUpdate() 
-{
-    return true;
-}
-
-bool
-Peer::ParseKeepalive() 
-{
-    return true;
-}
-
 void 
 Peer::StartTimerHoldtime() {
     if ( holdtime > 0) 

@@ -78,6 +78,10 @@ class Simulator;
 
 class Message {
     public:
+        u_char      bufMSG[MSGBUFSIZE];
+        ssize_t     wpos;
+        u_char    * rptr;
+        
         Message ();
         virtual ~Message ();
 
@@ -95,12 +99,11 @@ class Message {
         void InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip);
 
         bool SendMsg(sockfd sfd);
-        void DumpRawMsg(u_int8_t * buf, ssize_t size);
+        void DumpRawMsg(u_char * buf, ssize_t size);
         void DumpSelf();
 
     private:
-        message_t mType;
-        u_int8_t bufMSG[MSGBUFSIZE];
+        message_t   mType;
 
         static std::map<message_t, string> mapMsgName;
 };

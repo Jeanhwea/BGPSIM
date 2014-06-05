@@ -105,12 +105,12 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     ChangeState(pPeer, IDLE, eve);
                     break;
                 case RECV_OPEN_MSG : 
-                    if ( ! pPeer->ParseOpen() ) break;
+                    if ( ! ParseOpen(pPeer) ) break;
                     SimKeepalive(pPeer);
                     ChangeState(pPeer, OPEN_CONFIRM, eve);
                     break;
                 case RECV_NOTIFICATION_MSG : 
-                    if ( ! pPeer->ParseNotification() ) {
+                    if ( ! ParseNotification(pPeer) ) {
                         ChangeState(pPeer, IDLE, eve);
                         pPeer->IdleHoldTimer = time(NULL);
                         pPeer->HoldTimer /= 2;
@@ -145,7 +145,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     ChangeState(pPeer, ESTABLISHED, eve);
                     break;
                 case RECV_NOTIFICATION_MSG : 
-                    pPeer->ParseNotification();
+                    ParseNotification(pPeer);
                     ChangeState(pPeer, IDLE, eve);
                     break;
                 default:
@@ -179,13 +179,13 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     break;
                 case RECV_UPDATE_MSG : 
                     pPeer->StartTimerHoldtime();
-                    if ( ! pPeer->ParseUpdate() )
+                    if ( ! ParseUpdate(pPeer) )
                         ChangeState(pPeer, IDLE, eve);
                     else 
                         pPeer->StartTimerHoldtime();
                     break;
                 case RECV_NOTIFICATION_MSG : 
-                    pPeer->ParseNotification();
+                    ParseNotification(pPeer);
                     ChangeState(pPeer, IDLE, eve);
                     break;
                 default:
@@ -224,45 +224,46 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 }
 
 void
-Simulator::SimTCPEstablished(Peer * pp) 
+Simulator::SimTCPEstablished(Peer * pPeer) 
 {
     socklen_t len;
 
-    len = sizeof(pp->sa_local);
-    if (getsockname(pp->sfd, (struct sockaddr *) & pp->sa_local, &len) == -1) 
+    len = sizeof(pPeer->sa_local);
+    if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1) 
         fprintf(errfd, "warnning: getsockname\n");
-    len = sizeof(pp->sa_remote);
-    if (getpeername(pp->sfd, (struct sockaddr *) & pp->sa_remote, &len) == -1) 
+    len = sizeof(pPeer->sa_remote);
+    if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1) 
         fprintf(errfd, "warnning: getpeername\n");
 }
 
 bool
-Simulator::SimConnect(Peer * pp) 
+Simulator::SimConnect(Peer * pPeer) 
 {
-    int opt = 1;
-    struct sockaddr * sa;
+    // int opt = 1;
+    // struct sockaddr * sa;
+    return true;
 }
 
 void
-Simulator::SimColseConnect(Peer * pp) 
-{
-    
-}
-
-void
-Simulator::SimOpen(Peer * pp) 
+Simulator::SimColseConnect(Peer * pPeer) 
 {
     
 }
 
 void
-Simulator::SimKeepalive(Peer * pp) 
+Simulator::SimOpen(Peer * pPeer) 
 {
     
 }
 
 void
-Simulator::SimUpdate(Peer * pp, void * data, ssize_t len) 
+Simulator::SimKeepalive(Peer * pPeer) 
+{
+    
+}
+
+void
+Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len) 
 {
     
 }
@@ -278,9 +279,207 @@ Simulator::GetPeerByAddr(struct in_addr * addr)
 }
 
 void
-Simulator::SimNotification(Peer * pp, u_int8_t e, u_int8_t es, void * data, ssize_t len) 
+Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t len) 
 {
     
+}
+
+bool
+Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & type)
+{
+    u_char    * pos;
+    u_char      one = 0xff;
+    u_int16_t   olen;
+
+    // parse at least 19 bytes
+    pos = &data;
+    for (int i = 0; i < MSGSIZE_HEADER_MARKER; ++i) { // marker
+        if (memcmp(pos, &one, 1)) {
+            fprintf(errfd, "sync error in parse header\n");
+            SimNotification(pPeer, ERR_HEADER, ERR_HDR_SYNC, NULL, 0);
+            FSM(pPeer, CONN_RETRY_TIMER_EXPIRED);
+            return false;
+        }
+        ++pos;
+    }
+    memcpy(&olen, pos, 2);
+    len = ntohs(olen);
+    pos += 2;
+    memcpy(&type, pos, 1);
+
+    if (len < MSGSIZE_HEADER || len > MAX_PKTSIZE) {
+        fprintf(errfd, "received MESSAGE: illegal length: %u bytes\n", len);
+        SimNotification(pPeer, ERR_HEADER, ERR_HDR_LEN, &olen, sizeof(olen));
+        return false;
+    }
+
+    switch (type) { 
+        case OPEN : 
+            if (len < MSGSIZE_OPEN_MIN) {
+                fprintf(errfd, "received OPEN: illegal length: %u byte\n", len);
+                SimNotification(pPeer, ERR_HEADER, ERR_HDR_LEN, &olen, sizeof(olen));
+                return false;
+            }
+            break;
+        case NOTIFICATION:
+            if (len < MSGSIZE_NOTIFICATION_MIN) {
+                fprintf(errfd, "received NOTIFICATION: illegal length: %u byte\n", len);
+                SimNotification(pPeer, ERR_HEADER, ERR_HDR_LEN, &olen, sizeof(olen));
+                return false;
+            }
+            break;
+        case UPDATE:
+            if (len < MSGSIZE_UPDATE_MIN) {
+                fprintf(errfd, "received UPDATE: illegal length: %u byte\n", len);
+                SimNotification(pPeer, ERR_HEADER, ERR_HDR_LEN, &olen, sizeof(olen));
+                return false;
+            }
+            break;
+        case KEEPALIVE:
+            if (len != MSGSIZE_KEEPALIVE) {
+                fprintf(errfd, "received KEEPALIVE: illegal length: %u byte\n", len);
+                SimNotification(pPeer, ERR_HEADER, ERR_HDR_LEN, &olen, sizeof(olen));
+                return false;
+            }
+            break;
+        default:
+                fprintf(errfd, "received msg with unknown type %u\n", type);
+                SimNotification(pPeer, ERR_HEADER, ERR_HDR_TYPE, &type, 1); 
+                return false;
+    }
+    return true;
+}
+
+bool
+Simulator::ParseOpen(Peer * pPeer)
+{
+    u_char    * pos;
+    // u_char    * op_val;
+    u_int8_t    version, rversion;
+    u_int16_t   as, msglen;
+    u_int16_t   holdtime, oholdtime, myholdtime;
+    u_int32_t   bgpid;
+    u_int8_t    optparamlen, plen;
+    // u_int8_t    op_type, op_len;
+
+    pos = pPeer->rbuf->rptr;
+    pos += MSGSIZE_HEADER_MARKER;
+    memcpy(&msglen, pos, sizeof(msglen));
+    msglen = ntohs(msglen);
+
+    pos = pPeer->rbuf->rptr;
+    pos += MSGSIZE_HEADER;
+
+    memcpy(&version, pos, sizeof(version));
+    pos += sizeof(version);
+    if (version != BGP_VERSION) {
+        fprintf(errfd, "Peer wants unrecognized version %u\n", version);
+        if (version > BGP_VERSION) 
+            rversion = version - BGP_VERSION;
+        else 
+            rversion = BGP_VERSION;
+        SimNotification(pPeer, ERR_OPEN, ERR_OPEN_VERSION, &rversion, sizeof(rversion));
+        ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
+        return false;
+    }
+
+    memcpy(&as, pos, sizeof(as));
+    pos += sizeof(as);
+    if (pPeer->conf.remote_as != ntohs(as)) {
+        fprintf(errfd, "peer sent wrong AS %u\n", ntohs(as));
+        SimNotification(pPeer, ERR_OPEN, ERR_OPEN_AS, NULL, 0);
+        ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
+        return false;
+    }
+
+    memcpy(&oholdtime, pos, sizeof(oholdtime));
+    pos += sizeof(oholdtime);
+    holdtime = ntohs(oholdtime);
+    if (holdtime && holdtime < pPeer->conf.min_holdtime) {
+        fprintf(errfd, "peer requests unacceptable holdtime %u\n", holdtime);
+        SimNotification(pPeer, ERR_OPEN, ERR_OPEN_HOLDTIME, NULL, 0);
+        ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
+        return false;
+    }
+    myholdtime = pPeer->conf.holdtime;
+    if (myholdtime <= 0) 
+        myholdtime = conf.holdtime;
+    if (holdtime < myholdtime) 
+        pPeer->SetHoldtime(holdtime);
+    else 
+        pPeer->SetHoldtime(myholdtime);
+
+    memcpy(&bgpid, pos, sizeof(bgpid));
+    pos += sizeof(bgpid);
+    pPeer->remote_bgpid = bgpid;
+
+    memcpy(&optparamlen, pos, sizeof(optparamlen));
+    pos += sizeof(optparamlen);
+    if (optparamlen > msglen - MSGSIZE_OPEN_MIN) {
+        fprintf(errfd, "corrupt OPEN message received: length mismatch\n");
+        SimNotification(pPeer, ERR_OPEN, 0, NULL, 0);
+        ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
+        return false;
+    }
+
+    plen = optparamlen;
+    while (plen > 0) {
+        if (plen < 2) {
+            fprintf(errfd, "corrupt OPEN message received: length mismatch\n");
+            SimNotification(pPeer, ERR_OPEN, 0, NULL, 0);
+            ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
+            return false;
+        }
+        // TODO: add ParseCapabilities ....
+    }
+
+    return true;
+}
+
+bool
+Simulator::ParseNotification(Peer * pPeer) 
+{
+    u_char    * pos;
+    u_int8_t    errcode;
+    u_int8_t    subcode;
+    u_int16_t   datalen;
+    // u_int8_t    capa_code, capa_len;
+
+    pos = pPeer->rbuf->rptr;
+    pos += MSGSIZE_HEADER_MARKER;
+    memcpy(&datalen, pos, sizeof(datalen));
+    datalen = ntohs(datalen);
+
+    pos = pPeer->rbuf->rptr;
+    pos += MSGSIZE_HEADER;
+    datalen -= MSGSIZE_HEADER;
+
+
+    memcpy(&errcode, pos, sizeof(errcode));
+    pos += sizeof(errcode);
+    datalen -= sizeof(errcode);
+
+    memcpy(&subcode, pos, sizeof(subcode));
+    pos += sizeof(subcode);
+    datalen -= sizeof(subcode);
+
+    fprintf(errfd, 
+        "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n", 
+            errcode, subcode, datalen);
+
+    return true;
+}
+
+bool
+Simulator::ParseUpdate(Peer * pPeer) 
+{
+    return true;
+}
+
+bool
+Simulator::ParseKeepalive(Peer * pPeer) 
+{
+    return true;
 }
 
 bool 

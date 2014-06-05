@@ -21,6 +21,15 @@ class Peer;
 class Event;
 class Message;
 
+typedef struct sim_config {
+    int                 opts;
+    u_int16_t           as;
+    u_int32_t           bgpid;
+    u_int16_t           holdtime;
+    u_int16_t           min_holdtime;
+    struct in_addrs *   listen_addrs;
+} sim_config;
+
 typedef enum {
     ERR_HEADER = 1,
     ERR_OPEN,
@@ -53,14 +62,21 @@ class Simulator : public Thread {
         void SimKeepalive(Peer *);
         void SimUpdate(Peer *, void *, ssize_t);
         void SimNotification(Peer *, u_int8_t, u_int8_t, void *, ssize_t);
+        // message parser
+        bool ParseHeader(Peer *, u_char &, u_int16_t &, u_int8_t &);
+        bool ParseOpen(Peer *);
+        bool ParseNotification(Peer *);
+        bool ParseUpdate(Peer *);
+        bool ParseKeepalive(Peer *);
 
-        Peer * GetPeerByAddr(struct in_addr * addr);
+        Peer * GetPeerByAddr(struct in_addr *);
 
     private:
         vector<Peer *> mvPeers;
         Peer * mpPeer;
         Event * mpEve;
 
+        sim_config conf;
         // to remove
         Message * mpMsg;
         sockfd fd;

@@ -16,9 +16,29 @@ typedef enum {
     ESTABLISHED
 } state_t;
 
+typedef struct _peer_config {
+    u_int32_t        id;
+    u_int32_t        groupid;
+    char             group[PEER_DESCR_LEN];
+    char             descr[PEER_DESCR_LEN];
+    struct in_addr   remote_addr;
+    struct in_addr   local_addr;
+    u_int8_t         remote_masklen;
+    u_int8_t         cloned;
+    u_int32_t        max_prefix;
+    u_int16_t        remote_as;
+    u_int8_t         ebgp;      /* 1 = ebgp, 0 = ibgp */
+    u_int8_t         distance;  /* 1 = direct, >1 = multihop */
+    u_int8_t         passive;
+    u_int16_t        holdtime;
+    u_int16_t        min_holdtime;
+} peer_config;
+
 class Peer {
     public:
         sockfd          sfd;
+        u_int32_t       remote_bgpid;
+        peer_config     conf;
         time_t          ConnetRetryTimer;
         time_t          KeepaliveTimer;
         time_t          HoldTimer;
@@ -29,6 +49,9 @@ class Peer {
         struct sockaddr_storage sa_local;
         struct sockaddr_storage sa_remote;
     
+        Message       * rbuf;
+        Message       * wbuf;
+
         Peer ();
         virtual ~Peer ();
     
@@ -50,17 +73,9 @@ class Peer {
         void StartTimerHoldtime();
         void StartTimerKeepalive();
 
-        bool ParseHeader();
-        bool ParseOpen();
-        bool ParseNotification();
-        bool ParseUpdate();
-        bool ParseKeepalive();
 
     private:
-        u_int32_t       remote_bgpid;
         u_int16_t       holdtime;
-        Message       * rbuf;
-        Message       * wbuf;
 
         state_t         mState;
 

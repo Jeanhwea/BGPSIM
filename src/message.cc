@@ -61,7 +61,7 @@ Message::SendMsg(sockfd sfd)
 
 #define PRINT_ALIGN 16
 void 
-Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
+Message::DumpRawMsg(u_char * buf, ssize_t size)
 {
     for (int i = 0; i < size; ++i) {
         if (!((i)%PRINT_ALIGN)) fprintf(logfd, "0x%04x : ", i);

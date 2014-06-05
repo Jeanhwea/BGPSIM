@@ -25,7 +25,16 @@
 #include <string>
 #include <vector>
 
-#define BGP_PORT 179
+#define	BGP_VERSION			4
+#define	BGP_PORT			179
+#define	BGPD_USER			"_bgpd"
+#define	PEER_DESCR_LEN			32
+#define	PFTABLE_LEN			16
+
+#define	MAX_PKTSIZE			4096
+#define	MIN_HOLDTIME			3
+#define	READ_BUF_SIZE			65535
+#define	RT_BUF_SIZE			16384
 
 typedef int sockfd;
 

@@ -17,16 +17,16 @@ $(OBJ) : %.o : %.cc %.h global.h helper.h
 run: 
 	make && $(TARGET)
 
-.PHONY: clean cleanall
+.PHONY: clean do_cleanall
 	
-clean : cleanobj
-cleanall: cleanobj cleanexe cleanbak
+clean : do_cleanobj
+do_cleanall: do_cleanobj do_cleanexe do_cleanbak
 
-cleanexe:
+do_cleanexe:
 	-rm $(TARGET)
 
-cleanobj: 
+do_cleanobj: 
 	-rm $(OBJ) 
 
-cleanbak:
+do_cleanbak:
 	-find . -type f -name '*~' -delete
