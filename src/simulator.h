@@ -46,7 +46,7 @@ class Simulator : public Thread {
         void SendOpenMsg();
 
         void SimTCPEstablished(Peer *);
-        void SimConnect(Peer *);
+        bool SimConnect(Peer *);
         void SimColseConnect(Peer *);
         
         void SimOpen(Peer *);
@@ -54,7 +54,10 @@ class Simulator : public Thread {
         void SimUpdate(Peer *, void *, ssize_t);
         void SimNotification(Peer *, u_int8_t, u_int8_t, void *, ssize_t);
 
+        Peer * GetPeerByAddr(struct in_addr * addr);
+
     private:
+        vector<Peer *> mvPeers;
         Peer * mpPeer;
         Event * mpEve;
 

@@ -12,4 +12,8 @@
 
 bool isDebug = true;
 
+FILE * outfd = stdout;
+FILE * errfd = stderr;
+FILE * logfd = stdout;
+
 #endif /* end of include guard: MAIN_H */

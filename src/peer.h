@@ -3,6 +3,7 @@
 #define PEER_V3V7QZZV
 
 #include "global.h"
+#include "message.h"
 
 using namespace std;
 
@@ -58,6 +59,8 @@ class Peer {
     private:
         u_int32_t       remote_bgpid;
         u_int16_t       holdtime;
+        Message       * rbuf;
+        Message       * wbuf;
 
         state_t         mState;
 

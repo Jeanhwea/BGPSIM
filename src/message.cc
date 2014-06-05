@@ -64,10 +64,10 @@ void
 Message::DumpRawMsg(u_int8_t * buf, ssize_t size)
 {
     for (int i = 0; i < size; ++i) {
-        if (!((i)%PRINT_ALIGN)) printf("0x%04x : ", i);
-        printf("%02x%c", *(buf+i), (i+1)%PRINT_ALIGN ? ' ' : '\n');
+        if (!((i)%PRINT_ALIGN)) fprintf(logfd, "0x%04x : ", i);
+        fprintf(logfd, "%02x%c", *(buf+i), (i+1)%PRINT_ALIGN ? ' ' : '\n');
     }
-    if (size%PRINT_ALIGN) printf("\n");
+    if (size%PRINT_ALIGN) fprintf(logfd, "\n");
 }
 
 void 

@@ -226,13 +226,21 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 void
 Simulator::SimTCPEstablished(Peer * pp) 
 {
-    
+    socklen_t len;
+
+    len = sizeof(pp->sa_local);
+    if (getsockname(pp->sfd, (struct sockaddr *) & pp->sa_local, &len) == -1) 
+        fprintf(errfd, "warnning: getsockname\n");
+    len = sizeof(pp->sa_remote);
+    if (getpeername(pp->sfd, (struct sockaddr *) & pp->sa_remote, &len) == -1) 
+        fprintf(errfd, "warnning: getpeername\n");
 }
 
-void
+bool
 Simulator::SimConnect(Peer * pp) 
 {
-    
+    int opt = 1;
+    struct sockaddr * sa;
 }
 
 void
@@ -257,6 +265,16 @@ void
 Simulator::SimUpdate(Peer * pp, void * data, ssize_t len) 
 {
     
+}
+
+Peer *
+Simulator::GetPeerByAddr(struct in_addr * addr) 
+{
+    vector<Peer *>::iterator pit;
+    for (pit = mvPeers.begin(); pit != mvPeers.end(); ++pit) {
+    }
+
+    return (*pit);
 }
 
 void

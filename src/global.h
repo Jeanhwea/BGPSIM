@@ -32,4 +32,8 @@ typedef int sockfd;
 extern int errno;
 extern bool isDebug;
 
+extern FILE * outfd;
+extern FILE * errfd;
+extern FILE * logfd;
+
 #endif /* end of include guard: GLOBAL_H */
