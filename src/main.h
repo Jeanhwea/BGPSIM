@@ -3,12 +3,12 @@
 #define MAIN_H
 
 #include "global.h"
-#include "listener.h"
-#include "peer.h"
-#include "simulator.h"
-#include "event.h"
-#include "message.h"
-#include "timer.h"
+#include "Listener.h"
+#include "Peer.h"
+#include "Simulator.h"
+#include "Event.h"
+#include "Message.h"
+#include "Timer.h"
 
 bool isDebug = true;
 

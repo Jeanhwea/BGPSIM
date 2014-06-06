@@ -20,9 +20,8 @@ main(int argc, char const *argv[])
 
     sim.InitConn();
     sim.SendOpenMsg();
-    lis.Start();
-    lis.Join();
-    // cout << eve.EventToString() << endl;
+    // lis.Start();
+    // lis.Join();
 
     return 0;
 }
