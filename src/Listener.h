@@ -3,29 +3,29 @@
 #define LISTENER_FCV7JYL9
 
 #include "global.h"
-#include "Thread.h"
+#include "Logger.h"
 
 using namespace std;
 
-class Listener : public Thread {
+class Listener {
     private:
-        vector<int> vSockFd;
+        sockfd      mfd; // member sockfd
 
+        Logger      log;
     public:
-        Listener ();
-        virtual ~Listener ();
+        Listener();
+        virtual ~Listener();
         bool SetMainSocket();
-        bool ListenAll();
-        bool SetPromisc(string ifname);
-        bool UnsetPromisc(string ifname);
-        bool SetPromisc(string ifname, int sockfd);
-        bool UnsetPromisc(string ifname, int sockfd);
-        void OutputPacket(struct iphdr * );
 
-        void * Run() {
-            ListenAll();
-            return NULL;
-        }
+        // control operations
+        sockfd Init();
+        sockfd Listen();
+        void Shutdown();
+        sockfd Accept(sockfd lisfd);
+
+        // socket helper
+        bool SetBlock(sockfd sfd);
+        bool UnsetBlock(sockfd sfd);
 };
 
 #endif /* end of include guard: LISTENER_FCV7JYL9 */

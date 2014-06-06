@@ -14,12 +14,8 @@ main(int argc, char const *argv[])
 
     tim.Start();
     tim.Join();
-    if (!lis.SetPromisc("eth0")) 
-        cout << "can not set promisc" << endl;
             
 
-    sim.InitConn();
-    sim.SendOpenMsg();
     // lis.Start();
     // lis.Join();
 

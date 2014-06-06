@@ -3,18 +3,24 @@
 #define GLOBAL_H
 
 #include <assert.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 
 #include <arpa/inet.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>
 #include <linux/netlink.h>
+#include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 

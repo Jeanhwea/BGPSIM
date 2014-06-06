@@ -7,9 +7,7 @@ using namespace std;
 
 Listener::Listener()
 {
-    bool sucess(false);
-    if (vSockFd.empty()) sucess = SetMainSocket();
-    printf("%s to add a main socket\n", sucess ? "sucess" : "failed");
+    SetMainSocket();
 }
 
 Listener::~Listener()
@@ -20,104 +18,126 @@ Listener::~Listener()
 bool 
 Listener::SetMainSocket()
 {
-    int sockfd;
-    
     // htons h:host n:network s:short
     // AF_foo := address family
     // PF_foo := protocol family
-    sockfd = socket( AF_PACKET, SOCK_RAW, htons(ETH_P_ALL) );
-    if (sockfd < 0) return false;
-    vSockFd.push_back(sockfd);
+    mfd = socket( AF_PACKET, SOCK_RAW, htons(ETH_P_ALL) );
+    if (mfd < 0) {
+        log.Error("failed to add main socket");
+        return false;
+    }
 
-    int recLen = 1024 * 100;
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &recLen, sizeof(int));
     return true;
 }
 
-bool 
-Listener::ListenAll()
+sockfd
+Listener::Init() 
 {
-    struct ethhdr * pEthhdr;
-    struct iphdr * pIphdr;
-    char buf[BUF_SIZE];
+    struct sockaddr_in  sad;
+    sockfd              sfd;
 
-    if (vSockFd.empty()) return false;
+    sfd = socket(AF_LOCAL, SOCK_STREAM, IPPROTO_IP);
+    if (sfd == -1) {
+        log.Warning("cannot init listen socket");
+        return (-1);
+    }
 
-    int mainSocket = vSockFd[0];
+    memset(&sad, 0, sizeof(sad));
+    sad.sin_family = AF_LOCAL;
+    sad.sin_addr.s_addr = htonl(INADDR_ANY);
+    sad.sin_port = htons(BGP_PORT);
 
-    while (true) {
-        ssize_t len = recv(mainSocket, buf, BUF_SIZE, 0);
-        assert(len >= 0);
+    if ( bind(sfd, (struct sockaddr *)&sad, sizeof(sad)) == -1 ) {
+        close(sfd);
+        log.Error("cannot bind socket");
+        return (-1);
+    }
 
-        char * pBuf = buf;
-        pEthhdr = (struct ethhdr *) pBuf;
-        pBuf += sizeof(struct ethhdr);
-        pIphdr = (struct iphdr *) pBuf;
+    UnsetBlock(sfd);
+    mfd = sfd;
 
-        if (pEthhdr->h_proto != htons(ETH_P_IP)) {
-            if (pEthhdr->h_proto != htons(ETH_P_ARP))
-                cout << "arp here ... " << endl;
-            continue;
-        }
+    return sfd;
+}
 
-        if (isDebug) OutputPacket(pIphdr);
+#define BACKLOG     10
+
+sockfd
+Listener::Listen() 
+{
+    if (listen(mfd, BACKLOG) == -1) {
+        log.Warning("cannot listen");
+        return (-1);
+    }
+
+    return mfd;
+}
+
+void
+Listener::Shutdown() 
+{
+    close(mfd);
+}
+
+sockfd
+Listener::Accept(sockfd lisfd) 
+{
+    sockfd              connfd;
+    socklen_t           len;
+    struct sockaddr_in  sad;
+
+    len = sizeof(sad);
+    connfd = accept(lisfd, (struct sockaddr *)&sad, &len);
+    if (connfd == -1) {
+        if (errno != EWOULDBLOCK && errno != EINTR) 
+            log.Warning("accept bug in Listener");
+        return (-1);
     }
     
+    UnsetBlock(connfd);
+
+    return connfd;
+}
+
+bool
+Listener::SetBlock(sockfd sfd) 
+{
+    int flags;
+
+    flags = fcntl(sfd, F_GETFL, 0);
+    if (flags == -1) {
+        log.Fatal("fnctl F_GETFL");
+        return false;
+    }
+
+    flags &= ~O_NONBLOCK;
+
+    flags = fcntl(sfd, F_SETFL, flags);
+    if (flags == -1) {
+        log.Fatal("fnctl F_SETFL");
+        return false;
+    }
+
     return true;
 }
 
 bool
-Listener::SetPromisc(string ifname)
+Listener::UnsetBlock(sockfd sfd) 
 {
-    if (vSockFd.empty()) return false;
-    return SetPromisc(ifname, vSockFd[0]);
-}
+    int flags;
 
-bool 
-Listener::UnsetPromisc(string ifname)
-{
-    if (vSockFd.empty()) return false;
-    return UnsetPromisc(ifname, vSockFd[0]);
-}
+    flags = fcntl(sfd, F_GETFL, 0);
+    if (flags == -1) {
+        log.Fatal("fnctl F_GETFL");
+        return false;
+    }
 
-bool 
-Listener::SetPromisc(string ifname, int sockfd)
-{
-    struct ifreq ifr;
-    int res;
-    strncpy(ifr.ifr_name, ifname.c_str(), ifname.length()+1);
-    res = ioctl(sockfd, SIOCGIFFLAGS, &ifr);
-    assert(res >= 0);
-    ifr.ifr_flags |= IFF_PROMISC;
-    res = ioctl(sockfd, SIOCSIFFLAGS, &ifr);
-    assert(res >= 0);
+    flags |= O_NONBLOCK;
+
+    flags = fcntl(sfd, F_SETFL, flags);
+    if (flags == -1) {
+        log.Fatal("fnctl F_SETFL");
+        return false;
+    }
+
     return true;
 }
-
-bool 
-Listener::UnsetPromisc(string ifname, int sockfd)
-{
-    struct ifreq ifr;
-    int res;
-    strncpy(ifr.ifr_name, ifname.c_str(), ifname.length()+1);
-    res = ioctl(sockfd, SIOCGIFFLAGS, &ifr);
-    assert(res >= 0);
-    ifr.ifr_flags &= ~IFF_PROMISC;
-    res = ioctl(sockfd, SIOCSIFFLAGS, &ifr);
-    assert(res >= 0);
-    return true;
-}
-
-void 
-Listener::OutputPacket(struct iphdr * pIphdr) 
-{
-    char src[IP_ADDR_SIZE+1], des[IP_ADDR_SIZE+1];
-
-    strncpy(src, (char *) inet_ntoa( *(struct in_addr *)&(pIphdr->saddr) ), IP_ADDR_SIZE);
-    strncpy(des, (char *) inet_ntoa( *(struct in_addr *)&(pIphdr->saddr) ), IP_ADDR_SIZE);
-
-    printf("%6d %15s > %15s : flag_off=%d\n",pIphdr->id, src, des, pIphdr->frag_off);
-
-}
-
-

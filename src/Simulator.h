@@ -3,10 +3,12 @@
 #define SIMULATOR_SQ47GXYM
 
 #include "global.h"
-#include "Thread.h"
 #include "Event.h"
-#include "Peer.h"
+#include "Listener.h"
+#include "Logger.h"
 #include "Message.h"
+#include "Peer.h"
+#include "Thread.h"
 
 #define MAX_BACKLOG                 5
 #define MAX_IDLE_HOLD               3600
@@ -42,14 +44,15 @@ typedef enum {
 class Simulator : public Thread {
 
     private:
-        vector<Peer *> mvPeers;
-        Peer * mpPeer;
-        Event * mpEve;
+        // flags for Simulator
+        bool            mQuit;
 
-        sim_config conf;
-        // to remove
-        Message * mpMsg;
-        sockfd fd;
+        vector<Peer *>  mvPeers;
+        sim_config      conf;
+
+        Listener        lis;
+        Logger          log;
+
     public:
         Simulator ();
         virtual ~Simulator ();
@@ -60,14 +63,12 @@ class Simulator : public Thread {
         void FSM(Peer *, Event *);
         void ChangeState(Peer *, state_t, event_t);
 
-        // to remove
-        bool InitConn();
-        void SendOpenMsg();
-
+        void SimMain();
+        // connection operation
         void SimTCPEstablished(Peer *);
         bool SimConnect(Peer *);
         void SimColseConnect(Peer *);
-        
+        // message handler
         void SimOpen(Peer *);
         void SimKeepalive(Peer *);
         void SimUpdate(Peer *, void *, ssize_t);
@@ -78,6 +79,9 @@ class Simulator : public Thread {
         bool ParseNotification(Peer *);
         bool ParseUpdate(Peer *);
         bool ParseKeepalive(Peer *);
+        // socket helper
+        bool SetBlock(sockfd sfd);
+        bool UnsetBlock(sockfd sfd);
 
         Peer * GetPeerByAddr(struct in_addr *);
 

@@ -17,6 +17,12 @@ Simulator::Run()
 }
 
 void
+Simulator::SimMain() 
+{
+    
+}
+
+void
 Simulator::FSM(Peer * pPeer, event_t eve)
 {
    switch ( pPeer->GetPeerState() ) {
@@ -230,10 +236,10 @@ Simulator::SimTCPEstablished(Peer * pPeer)
 
     len = sizeof(pPeer->sa_local);
     if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1) 
-        fprintf(errfd, "warnning: getsockname\n");
+        log.Warning("getsockname");
     len = sizeof(pPeer->sa_remote);
     if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1) 
-        fprintf(errfd, "warnning: getpeername\n");
+        log.Warning("getpeername");
 }
 
 bool
@@ -246,7 +252,7 @@ Simulator::SimConnect(Peer * pPeer)
 
     pPeer->sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (pPeer->sfd == -1) {
-        fprintf(errfd, "Simulator socket connect\n");
+        log.Warning("Simulator socket connect");
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         return false;
     }
@@ -311,7 +317,7 @@ Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & 
     pos = &data;
     for (int i = 0; i < MSGSIZE_HEADER_MARKER; ++i) { // marker
         if (memcmp(pos, &one, 1)) {
-            fprintf(errfd, "sync error in parse header\n");
+            log.Warning("sync error in parse header");
             SimNotification(pPeer, ERR_HEADER, ERR_HDR_SYNC, NULL, 0);
             FSM(pPeer, CONN_RETRY_TIMER_EXPIRED);
             return false;
@@ -498,41 +504,53 @@ Simulator::ParseKeepalive(Peer * pPeer)
     return true;
 }
 
-bool 
-Simulator::InitConn()
+bool
+Simulator::SetBlock(sockfd sfd) 
 {
-    sockfd sfd;
-    sfd = socket(AF_INET, SOCK_STREAM, 0);
-    assert(sfd >= 0);
-
-    int success;
-    struct sockaddr_in ad;
-    memset(&ad, 0, sizeof(ad));
-    ad.sin_family = AF_INET;
-    ad.sin_port = htons(BGP_PORT);
-    success = inet_pton(AF_INET, "192.168.1.108", &ad.sin_addr);
-    assert(success >= 0);
-    success = connect(sfd, (struct sockaddr *) &ad,sizeof(ad));
-    assert(success >= 0);
-
-    fd = sfd;
-
-    return true;
+    return lis.SetBlock(sfd);
 }
 
-
-void 
-Simulator::SendOpenMsg()
+bool
+Simulator::UnsetBlock(sockfd sfd) 
 {
-    sockfd sfd;
-
-    if (fd < 0) return;
-    sfd = fd;
-
-    mpMsg = new Message;
-    mpMsg->InitOpenMsg(100, 5, 0xc0a80164);
-    mpMsg->SendMsg(sfd);
-    mpMsg->DumpSelf();
-    
-    free(mpMsg);
+    return lis.UnsetBlock(sfd);
 }
+
+// bool 
+// Simulator::InitConn()
+// {
+//     sockfd sfd;
+//     sfd = socket(AF_INET, SOCK_STREAM, 0);
+//     assert(sfd >= 0);
+//
+//     int success;
+//     struct sockaddr_in ad;
+//     memset(&ad, 0, sizeof(ad));
+//     ad.sin_family = AF_INET;
+//     ad.sin_port = htons(BGP_PORT);
+//     success = inet_pton(AF_INET, "192.168.1.108", &ad.sin_addr);
+//     assert(success >= 0);
+//     success = connect(sfd, (struct sockaddr *) &ad,sizeof(ad));
+//     assert(success >= 0);
+//
+//     fd = sfd;
+//
+//     return true;
+// }
+//
+//
+// void 
+// Simulator::SendOpenMsg()
+// {
+//     sockfd sfd;
+//
+//     if (fd < 0) return;
+//     sfd = fd;
+//
+//     mpMsg = new Message;
+//     mpMsg->InitOpenMsg(100, 5, 0xc0a80164);
+//     mpMsg->SendMsg(sfd);
+//     mpMsg->DumpSelf();
+//     
+//     free(mpMsg);
+// }

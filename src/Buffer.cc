@@ -14,7 +14,7 @@ Buffer::Buffer(ssize_t len)
         size = 0;
         sfd = -1;
         free(buf);
-        fprintf(errfd, "cannot malloc buffer\n");
+        log.Error("cannot malloc buffer");
     } else {
         size = len;
         sfd = -1;
@@ -64,7 +64,7 @@ Buffer::Write(sockfd sfd, Buffer * buf)
     while (nleft > 0) {
         nwrite = write(sfd, ptr, nleft);
         if (nwrite < 0 && errno == EAGAIN) {
-            fprintf(errfd, "failed to write buf, left %lu\n", nleft);
+            log.Error("failed to write buf\n");
             return false;
         }
         nleft -= nwrite;

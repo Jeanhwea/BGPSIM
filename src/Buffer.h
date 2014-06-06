@@ -3,12 +3,14 @@
 #define BUFFER_3NKWNENG
 
 #include "global.h"
+#include "Logger.h"
 
 using namespace std;
 
 class Buffer {
     private:
         static deque<Buffer *> mqBuffer;
+        Logger log;
 
     public:
         u_char    * buf;
