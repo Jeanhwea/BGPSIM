@@ -4,6 +4,7 @@ using namespace std;
 
 Simulator::Simulator()
 {
+    mQuit = true;
 }
 
 Simulator::~Simulator()
@@ -19,7 +20,12 @@ Simulator::Run()
 void
 Simulator::SimMain() 
 {
-    
+    while (mQuit) {
+        vector<Peer *>::iterator vit;
+        for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+            (*vit)->SetPeerState(IDLE);
+        }
+    }
 }
 
 void
@@ -30,6 +36,17 @@ Simulator::FSM(Peer * pPeer, event_t eve)
             switch ( eve ) { 
                 case BGP_START : 
                     pPeer->TimerBeZero();
+                    pPeer->rbuf = new Buffer();
+                    pPeer->InitWbuf();
+
+                    if (pPeer->conf.passive) {
+                        ChangeState(pPeer, ACTIVE, eve);
+                        pPeer->ConnetRetryTimer = 0;
+                    } else {
+                        ChangeState(pPeer, CONNECT, eve);
+                        SimConnect(pPeer);
+                        pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
+                    }
                     break;
                 default:
                     // ignore
@@ -229,6 +246,22 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
     pPeer->SetPeerState(state);
 }
 
+bool
+Simulator::SimSetupSocket(Peer * pPeer) 
+{
+    int ttl = 1;
+    if (setsockopt(pPeer->sfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
+        log.Warning("failed to set TTL");
+        return false;
+    }
+    int nodelay = 1;
+    if (setsockopt(pPeer->sfd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) == -1) {
+        log.Warning("failed to set TCP nodelay");
+        return false;
+    }
+    return true;
+}
+
 void
 Simulator::SimTCPEstablished(Peer * pPeer) 
 {
@@ -245,8 +278,7 @@ Simulator::SimTCPEstablished(Peer * pPeer)
 bool
 Simulator::SimConnect(Peer * pPeer) 
 {
-    int                 opt = 1;
-    struct sockaddr   * sa;
+    struct sockaddr_in sad;
     if (pPeer->sfd != -1) 
         return false;
 
@@ -257,7 +289,26 @@ Simulator::SimConnect(Peer * pPeer)
         return false;
     }
 
+    pPeer->wbuf->sfd = pPeer->sfd;
 
+    if (SimSetupSocket(pPeer)) {
+        FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
+        return false;
+    }
+
+    UnsetBlock(pPeer->sfd);
+
+    sad.sin_addr = pPeer->conf.remote_addr;
+    sad.sin_family = AF_INET;
+    sad.sin_port = htons(BGP_PORT);
+    if (connect(pPeer->sfd, (sockaddr *) &sad, sizeof(sad)) == -1) {
+        if (errno != EINPROGRESS) {
+            log.Warning("peer connect failed");
+            FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
+            return false;
+        }
+    } else 
+        FSM(pPeer, BGP_TRANS_CONN_OPEN);
 
     return true;
 }

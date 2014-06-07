@@ -3,6 +3,7 @@
 #define MESSAGE_DKT2MXIT
 
 #include "global.h"
+#include "Logger.h"
 
 
 #define MSGSIZE_HEADER              19
@@ -74,38 +75,33 @@ typedef struct _openmsg {
 
 using namespace std;
 
-class Simulator;
 
 class Message {
 
     private:
         message_t   mType;
-
         static std::map<message_t, string> mapMsgName;
+        static deque<Message *> mqMessage;
+
+        Logger log;
+
     public:
-        u_char      bufMSG[MSGBUFSIZE];
+        u_char    * buf;
+        ssize_t     size;
         ssize_t     wpos;
-        u_char    * rptr;
-        
-        Message ();
-        virtual ~Message ();
+        ssize_t     rpos;
+        sockfd      sfd;
 
-        message_t GetMsgType() {
-            return mType;
-        }
-        void SetMsgType(message_t ty) {
-            mType = ty;
-        }
-        string MsgToString() {
-            return mapMsgName[mType];
-        }
+        Message(ssize_t len);
+        virtual ~Message();
+        bool Add(void * data, ssize_t len);
+        u_char * Reserve(ssize_t len);
+        bool Close();
+        bool Write();
+        bool Write(sockfd sfd, Message * buf);
 
-        void InitHeader(bgphdr & hdr, u_int16_t len, message_t type);
-        void InitOpenMsg(u_int16_t no, u_int16_t ht, u_int32_t ip);
-
-        bool SendMsg(sockfd sfd);
-        void DumpRawMsg(u_char * buf, ssize_t size);
-        void DumpSelf();
+        void BufDeque();
+        void BufEnque(Message *);
 };
 
 #endif /* end of include guard: MESSAGE_DKT2MXIT */

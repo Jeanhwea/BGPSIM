@@ -37,3 +37,10 @@ Peer::StartTimerKeepalive() {
     else 
         KeepaliveTimer = 0;
 }
+
+#define INIT_MSG_LEN 65535
+
+void
+Peer::InitWbuf() {
+    wbuf = new Message(INIT_MSG_LEN);
+}

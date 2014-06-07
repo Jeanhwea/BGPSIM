@@ -80,6 +80,7 @@ class Simulator : public Thread {
         bool ParseUpdate(Peer *);
         bool ParseKeepalive(Peer *);
         // socket helper
+        bool SimSetupSocket(Peer *);
         bool SetBlock(sockfd sfd);
         bool UnsetBlock(sockfd sfd);
 

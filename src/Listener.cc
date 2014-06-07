@@ -36,14 +36,14 @@ Listener::Init()
     struct sockaddr_in  sad;
     sockfd              sfd;
 
-    sfd = socket(AF_LOCAL, SOCK_STREAM, IPPROTO_IP);
+    sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     if (sfd == -1) {
         log.Warning("cannot init listen socket");
         return (-1);
     }
 
     memset(&sad, 0, sizeof(sad));
-    sad.sin_family = AF_LOCAL;
+    sad.sin_family = AF_INET;
     sad.sin_addr.s_addr = htonl(INADDR_ANY);
     sad.sin_port = htons(BGP_PORT);
 
