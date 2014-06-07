@@ -4,26 +4,27 @@ using namespace std;
 
 Simulator::Simulator()
 {
-    mQuit = true;
+    mQuit = false;
+    LoadSimConf("/home/fuzl/.peer.conf");
+    tim.Run();
+    tim.Join();
+    SimMain();
 }
 
 Simulator::~Simulator()
 {
 }
 
-void * 
-Simulator::Run()
-{
-    return NULL;
-}
-
 void
 Simulator::SimMain() 
 {
-    while (mQuit) {
-        vector<Peer *>::iterator vit;
+    vector<Peer *>::iterator vit;
+    Peer * pPeer;
+    while (mQuit != true) {
         for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
-            (*vit)->SetPeerState(IDLE);
+            pPeer = *vit;
+            pPeer->SetPeerState(IDLE);
+            FSM(pPeer, BGP_START);
         }
     }
 }
@@ -35,7 +36,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
         case IDLE:
             switch ( eve ) { 
                 case BGP_START : 
-                    pPeer->TimerBeZero();
+                    pPeer->Init();
                     pPeer->rbuf = new Buffer();
                     pPeer->InitWbuf();
 
@@ -56,6 +57,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
         case CONNECT:
             switch ( eve ) { 
                 case BGP_START : 
+                    // ignore
                     break;
                 case BGP_TRANS_CONN_OPEN:
                     SimTCPEstablished(pPeer);
@@ -86,7 +88,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     SimTCPEstablished(pPeer);
                     SimOpen(pPeer);
                     pPeer->ConnetRetryTimer = 0;
-                    pPeer->SetHoldtime(T_HOLD_INITIAL);
+                    pPeer->holdtime = T_HOLD_INITIAL;
                     pPeer->StartTimerHoldtime();
                     ChangeState(pPeer, OPEN_SENT, eve);
                     break;
@@ -96,7 +98,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     ChangeState(pPeer, CONNECT, eve);
                     break;
                 case CONN_RETRY_TIMER_EXPIRED : 
-                    pPeer->ConnetRetryTimer = time(NULL) + pPeer->GetHoldtime();
+                    pPeer->ConnetRetryTimer = time(NULL) + pPeer->holdtime;
                     ChangeState(pPeer, CONNECT, eve);
                     SimConnect(pPeer);
                     break;
@@ -326,7 +328,6 @@ Simulator::SimColseConnect(Peer * pPeer)
 void
 Simulator::SimOpen(Peer * pPeer) 
 {
-    
 }
 
 void
@@ -344,11 +345,13 @@ Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len)
 Peer *
 Simulator::GetPeerByAddr(struct in_addr * addr) 
 {
-    vector<Peer *>::iterator pit;
-    for (pit = mvPeers.begin(); pit != mvPeers.end(); ++pit) {
+    vector<Peer *>::iterator vit;
+    // Peer * pPeer;
+    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+        // pPeer = *vit;
     }
 
-    return (*pit);
+    return (*vit);
 }
 
 void
@@ -476,15 +479,15 @@ Simulator::ParseOpen(Peer * pPeer)
     }
     myholdtime = pPeer->conf.holdtime;
     if (myholdtime <= 0) 
-        myholdtime = conf.holdtime;
+        myholdtime = conf_holdtime;
     if (holdtime < myholdtime) 
-        pPeer->SetHoldtime(holdtime);
+        pPeer->holdtime = holdtime;
     else 
-        pPeer->SetHoldtime(myholdtime);
+        pPeer->holdtime = myholdtime;
 
     memcpy(&bgpid, pos, sizeof(bgpid));
     pos += sizeof(bgpid);
-    pPeer->remote_bgpid = bgpid;
+    pPeer->conf.remote_bgpid = bgpid;
 
     memcpy(&optparamlen, pos, sizeof(optparamlen));
     pos += sizeof(optparamlen);
@@ -536,7 +539,7 @@ Simulator::ParseNotification(Peer * pPeer)
     pos += sizeof(subcode);
     datalen -= sizeof(subcode);
 
-    fprintf(errfd, 
+    fprintf(outfd, 
         "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n", 
             errcode, subcode, datalen);
 
@@ -567,41 +570,36 @@ Simulator::UnsetBlock(sockfd sfd)
     return lis.UnsetBlock(sfd);
 }
 
-// bool 
-// Simulator::InitConn()
-// {
-//     sockfd sfd;
-//     sfd = socket(AF_INET, SOCK_STREAM, 0);
-//     assert(sfd >= 0);
-//
-//     int success;
-//     struct sockaddr_in ad;
-//     memset(&ad, 0, sizeof(ad));
-//     ad.sin_family = AF_INET;
-//     ad.sin_port = htons(BGP_PORT);
-//     success = inet_pton(AF_INET, "192.168.1.108", &ad.sin_addr);
-//     assert(success >= 0);
-//     success = connect(sfd, (struct sockaddr *) &ad,sizeof(ad));
-//     assert(success >= 0);
-//
-//     fd = sfd;
-//
-//     return true;
-// }
-//
-//
-// void 
-// Simulator::SendOpenMsg()
-// {
-//     sockfd sfd;
-//
-//     if (fd < 0) return;
-//     sfd = fd;
-//
-//     mpMsg = new Message;
-//     mpMsg->InitOpenMsg(100, 5, 0xc0a80164);
-//     mpMsg->SendMsg(sfd);
-//     mpMsg->DumpSelf();
-//     
-//     free(mpMsg);
-// }
+bool
+Simulator::LoadSimConf(const char * filename) 
+{
+    FILE          * ffd;
+    int             as;
+    char            addr[32];
+    struct in_addr  inad;
+    sim_config    * sconf;
+
+    ffd = fopen(filename, "r");
+    if (ffd == NULL) {
+        log.Warning("cannot open sim config file");
+        return false;
+    }
+
+    fscanf(ffd, "%d", &as);
+    conf_as = htons(as);
+    if (isDebug)
+        fprintf(outfd, "local Simulator in AS%d\n", as);
+    while (fscanf(ffd, "%d%s", &as, addr) != EOF) {
+        if( !inet_aton(addr, &inad) ) {
+            log.Warning("no a valid ip");
+        }
+        sconf = (sim_config *) malloc(sizeof(sim_config));
+        sconf->as = htons(as);
+        sconf->bgpid = htonl((u_int32_t) inad.s_addr);
+        vPeerConf.push_back(*sconf);
+        if (isDebug) 
+            fprintf(outfd, "add peer config AS%d, %s\n", as, addr);
+    }
+    fclose(ffd);
+    return true;
+}

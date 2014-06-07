@@ -4,6 +4,8 @@ deque<Buffer *> Buffer::mqBuffer;
 
 Buffer::Buffer() 
 {
+    rptr = buf;
+    wpos = 0;
 }
 
 

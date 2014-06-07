@@ -1,6 +1,8 @@
 #include "Peer.h"
 
-map<state_t, string> Peer::mapStateName = {
+vector<Peer *>  mvPeers;
+
+map<state_t, string> mapStateName = {
     { IDLE, "idle" },
     { CONNECT, "connect" },
     { ACTIVE, "active" },
@@ -15,11 +17,19 @@ Peer::Peer()
     rbuf = NULL;
     wbuf = NULL;
     mState = IDLE;
-    IdleHoldTimer = time(NULL);
+    Init();
 }
 
 Peer::~Peer()
 {
+}
+
+void 
+Peer::Init()
+{    
+    HoldTimer = 0;
+    KeepaliveTimer = 0;
+    IdleHoldTimer = time(NULL);
 }
 
 void 

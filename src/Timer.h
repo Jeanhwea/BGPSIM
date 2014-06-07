@@ -4,6 +4,7 @@
 
 #include "global.h"
 #include "Thread.h"
+#include "Peer.h"
 
 class Timer : public Thread {
     private:

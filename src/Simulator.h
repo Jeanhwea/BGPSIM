@@ -9,8 +9,8 @@
 #include "Message.h"
 #include "Peer.h"
 #include "Thread.h"
+#include "Timer.h"
 
-#define MAX_BACKLOG                 5
 #define MAX_IDLE_HOLD               3600
 #define T_CONNRETRY                 120
 #define T_HOLD_INITIAL              240
@@ -19,17 +19,9 @@
 
 using namespace std;
 
-class Peer;
-class Event;
-class Message;
-
-typedef struct sim_config {
-    int                 opts;
+typedef struct _sim_config {
     u_int16_t           as;
     u_int32_t           bgpid;
-    u_int16_t           holdtime;
-    u_int16_t           min_holdtime;
-    struct in_addrs *   listen_addrs;
 } sim_config;
 
 typedef enum {
@@ -41,24 +33,23 @@ typedef enum {
     ERR_CEASE
 } err_codes;
 
-class Simulator : public Thread {
-
+class Simulator {
     private:
         // flags for Simulator
-        bool            mQuit;
+        bool                mQuit;
+        vector<sim_config>  vPeerConf;
+        u_int16_t           conf_as;
+        u_int16_t           conf_holdtime;
+        struct in_addrs *   listen_addrs;
 
-        vector<Peer *>  mvPeers;
-        sim_config      conf;
-
-        Listener        lis;
-        Logger          log;
+        Listener            lis;
+        Logger              log;
+        Timer               tim;
 
     public:
         Simulator ();
         virtual ~Simulator ();
         
-        void * Run();
-
         void FSM(Peer *, event_t);
         void FSM(Peer *, Event *);
         void ChangeState(Peer *, state_t, event_t);
@@ -85,6 +76,7 @@ class Simulator : public Thread {
         bool UnsetBlock(sockfd sfd);
 
         Peer * GetPeerByAddr(struct in_addr *);
+        bool LoadSimConf(const char * filename);
 
 };
 

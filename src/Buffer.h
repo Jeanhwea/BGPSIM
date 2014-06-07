@@ -7,13 +7,15 @@
 
 using namespace std;
 
+#define MAX_BUF_SIZE 65535
+
 class Buffer {
     private:
         static deque<Buffer *> mqBuffer;
         Logger log;
 
     public:
-        u_char    * buf;
+        u_char      buf[MAX_BUF_SIZE];
         u_char    * rptr;
         ssize_t     wpos;
 

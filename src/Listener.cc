@@ -59,12 +59,12 @@ Listener::Init()
     return sfd;
 }
 
-#define BACKLOG     10
+#define MAX_BACKLOG     10
 
 sockfd
 Listener::Listen() 
 {
-    if (listen(mfd, BACKLOG) == -1) {
+    if (listen(mfd, MAX_BACKLOG) == -1) {
         log.Warning("cannot listen");
         return (-1);
     }
