@@ -1,4 +1,5 @@
 #include "Timer.h"
+#include "Simulator.h"
 
 using namespace std;
 
@@ -21,7 +22,7 @@ Timer::~Timer()
         delete instance;
 }
 
-void * 
+void *
 Timer::Run()
 {
     if (NULL == instance) {
@@ -32,7 +33,7 @@ Timer::Run()
     return NULL;
 }
 
-void 
+void
 Timer::Schedule()
 {
     if (isDebug) {
@@ -48,10 +49,13 @@ Timer::Schedule()
             pPeer->IdleHoldTimer ++;
         if (pPeer->KeepaliveTimer >= 0)
             pPeer->KeepaliveTimer ++;
+        if (pPeer->ConnetRetryTimer == time(NULL)) {
+            g_sim->FSM(pPeer, CONN_RETRY_TIMER_EXPIRED);
+        }
     }
 }
-        
-Timer * 
+
+Timer *
 Timer::GetInst()
 {
     if (NULL == instance)
@@ -59,7 +63,7 @@ Timer::GetInst()
     return instance;
 }
 
-void 
+void
 Timer::TimerHandler(int sig)
 {
     if (isDebug)

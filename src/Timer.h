@@ -6,8 +6,10 @@
 #include "Thread.h"
 #include "Peer.h"
 
+
 class Timer : public Thread {
     private:
+        static Simulator * sim;
         static time_t interval;
         static time_t walltime;
 
@@ -18,8 +20,8 @@ class Timer : public Thread {
         static void TimerHandler(int sig);
 
     public:
-        Timer ();
-        virtual ~Timer ();
+        Timer();
+        virtual ~Timer();
 
         void * Run();
         void Schedule();

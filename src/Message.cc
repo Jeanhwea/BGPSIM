@@ -2,7 +2,7 @@
 
 using namespace std;
 
-map<message_t, string> Message::mapMsgName = {
+map<message_t, string> mapMsgName = {
     { OPEN, "open" },
     { UPDATE, "update" },
     { NOTIFICATION, "notification" },
@@ -11,7 +11,7 @@ map<message_t, string> Message::mapMsgName = {
 
 deque<Message *> Message::mqMessage;
 
-Message::Message(ssize_t len) 
+Message::Message(ssize_t len)
 {
     buf = (u_char *) malloc(len);
     rpos = 0;
@@ -26,15 +26,16 @@ Message::Message(ssize_t len)
     }
 }
 
-Message::~Message() 
+Message::~Message()
 {
-    free(buf);
+    if (buf != NULL)
+        free(buf);
 }
 
 bool
-Message::Add(void * data, ssize_t len) 
+Message::Add(void * data, ssize_t len)
 {
-    if (wpos + len > size) 
+    if (wpos + len > size)
         return false;
     memcpy(buf + wpos, data, len);
     wpos += len;
@@ -42,10 +43,10 @@ Message::Add(void * data, ssize_t len)
 }
 
 u_char *
-Message::Reserve(ssize_t len) 
+Message::Reserve(ssize_t len)
 {
     u_char * ret;
-    if (wpos + len > size) 
+    if (wpos + len > size)
         return NULL;
     ret = buf + wpos;
     wpos += len;
@@ -53,13 +54,13 @@ Message::Reserve(ssize_t len)
 }
 
 bool
-Message::Write() 
+Message::Write()
 {
     return Write(sfd, this);
 }
 
 bool
-Message::Write(sockfd sfd, Message * buf) 
+Message::Write(sockfd sfd, Message * buf)
 {
     ssize_t nleft, nwrite;
     u_char * ptr;
@@ -80,13 +81,13 @@ Message::Write(sockfd sfd, Message * buf)
 }
 
 void
-Message::BufDeque() 
+Message::BufDeque()
 {
    mqMessage.pop_back();
 }
 
 void
-Message::BufEnque(Message * buf) 
+Message::BufEnque(Message * buf)
 {
     mqMessage.push_front(buf);
 }

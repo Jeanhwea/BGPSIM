@@ -38,20 +38,8 @@ typedef enum _suberr_open {
     ERR_OPEN_CAPA
 } suberr_open;
 
-typedef enum _opt_params {
-    OPT_PARAM_NONE,
-    OPT_PARAM_AUTH,
-    OPT_PARAM_CAPABILITIES
-} opt_params;
-
-typedef enum _capa_codes {
-    CAPA_NONE,
-    CAPA_MP,
-    CAPA_REFRESH
-} capa_codes;
-
 #pragma pack(push)  /* push current align to stack */
-#pragma pack(1)     /* set alignment to 1 byte */ 
+#pragma pack(1)     /* set alignment to 1 byte */
 
 using namespace std;
 
@@ -79,8 +67,6 @@ using namespace std;
 class Message {
 
     private:
-        message_t   mType;
-        static std::map<message_t, string> mapMsgName;
         static deque<Message *> mqMessage;
 
         Logger log;
@@ -104,4 +90,5 @@ class Message {
         void BufEnque(Message *);
 };
 
+extern std::map<message_t, string> mapMsgName;
 #endif /* end of include guard: MESSAGE_DKT2MXIT */

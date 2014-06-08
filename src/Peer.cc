@@ -17,7 +17,7 @@ Peer::Peer()
     rbuf = NULL;
     wbuf = NULL;
     mState = IDLE;
-    Init();
+    InitTimer();
 }
 
 Peer::~Peer()
@@ -30,33 +30,26 @@ Peer::Run()
     return NULL;
 }
 
-void 
-Peer::Init()
-{    
+void
+Peer::InitTimer()
+{
     HoldTimer = 0;
     KeepaliveTimer = 0;
     IdleHoldTimer = time(NULL);
 }
 
-void 
+void
 Peer::StartTimerHoldtime() {
-    if ( holdtime > 0) 
+    if ( holdtime > 0)
         HoldTimer = time(NULL) + holdtime;
-    else 
+    else
         HoldTimer = 0;
 }
 
-void 
-Peer::StartTimerKeepalive() {
-    if ( holdtime > 0) 
-        KeepaliveTimer = time(NULL) + holdtime / 3;
-    else 
-        KeepaliveTimer = 0;
-}
-
-#define INIT_MSG_LEN 65535
-
 void
-Peer::InitWbuf() {
-    wbuf = new Message(INIT_MSG_LEN);
+Peer::StartTimerKeepalive() {
+    if ( holdtime > 0)
+        KeepaliveTimer = time(NULL) + holdtime / 3;
+    else
+        KeepaliveTimer = 0;
 }

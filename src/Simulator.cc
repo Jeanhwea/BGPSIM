@@ -1,5 +1,6 @@
 #include "Simulator.h"
 
+#define INIT_MSG_LEN 65535
 using namespace std;
 
 Simulator::Simulator()
@@ -11,25 +12,27 @@ Simulator::Simulator()
     vector<struct sim_config>::iterator sit;
     for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
         pPeer = new Peer();
-        pPeer->Init();
+        pPeer->conf.passive = false;
         mvPeers.push_back(pPeer);
+        pPeer->Run();
+        pPeer->Join();
     }
-    vector<Peer *>::iterator vit;
-    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
-        pPeer = *vit;
-        FSM(pPeer, BGP_START);
-    }
-    cout << mvPeers.size() << endl;
-    tim.Run();
-    tim.Join();
-    lis.Run();
-    lis.Join();
-    SimMain();
+    cout << "initail peer size = " << mvPeers.size() << endl;
 }
 
 Simulator::~Simulator()
 {
 }
+
+void *
+Simulator::Run()
+{
+    tim.Run();
+    tim.Join();
+    SimMain();
+    return NULL;
+}
+
 
 void
 Simulator::SimMain()
@@ -37,11 +40,11 @@ Simulator::SimMain()
     vector<Peer *>::iterator vit;
     Peer * pPeer;
     cout << "in sim main" << endl;
-    while (mQuit != true) {
+    while (mQuit == false) {
         for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
             pPeer = *vit;
-            pPeer->SetPeerState(IDLE);
-            FSM(pPeer, BGP_START);
+            if (pPeer->GetPeerState() == IDLE)
+                FSM(pPeer, BGP_START);
         }
     }
 }
@@ -49,13 +52,13 @@ Simulator::SimMain()
 void
 Simulator::FSM(Peer * pPeer, event_t eve)
 {
-   switch ( pPeer->GetPeerState() ) {
+    switch ( pPeer->GetPeerState() ) {
         case IDLE:
             switch ( eve ) {
                 case BGP_START :
-                    pPeer->Init();
+                    pPeer->InitTimer();
                     pPeer->rbuf = new Buffer();
-                    pPeer->InitWbuf();
+                    pPeer->wbuf = new Message(4096);
 
                     if (pPeer->conf.passive) {
                         ChangeState(pPeer, ACTIVE, eve);
@@ -67,7 +70,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     }
                     break;
                 default:
-                    // ignore
+                    // ignore other event type
                     break;
             }
             break;
@@ -328,8 +331,9 @@ Simulator::SimConnect(Peer * pPeer)
             FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
             return false;
         }
-    } else
+    } else {
         FSM(pPeer, BGP_TRANS_CONN_OPEN);
+    }
 
     return true;
 }
@@ -342,6 +346,7 @@ Simulator::SimColseConnect(Peer * pPeer)
         close(pPeer->sfd);
     }
     pPeer->sfd = -1;
+    pPeer->wbuf->sfd = -1;
 }
 
 void
@@ -460,9 +465,9 @@ Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & 
             }
             break;
         default:
-                fprintf(errfd, "received msg with unknown type %u\n", type);
-                SimNotification(pPeer, ERR_HEADER, ERR_HDR_TYPE, &type, 1);
-                return false;
+            fprintf(errfd, "received msg with unknown type %u\n", type);
+            SimNotification(pPeer, ERR_HEADER, ERR_HDR_TYPE, &type, 1);
+            return false;
     }
     return true;
 }
@@ -581,7 +586,7 @@ Simulator::ParseNotification(Peer * pPeer)
     datalen -= sizeof(subcode);
 
     fprintf(outfd,
-        "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n",
+            "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n",
             errcode, subcode, datalen);
 
     return true;
@@ -629,7 +634,7 @@ Simulator::LoadSimConf(const char * filename)
     fscanf(ffd, "%d", &as);
     conf_as = htons(as);
     if (isDebug)
-        fprintf(outfd, "local Simulator in AS%d\n", as);
+        fprintf(outfd, "Local Simulator in AS%d\n", as);
     while (fscanf(ffd, "%d%s", &as, addr) != EOF) {
         if( !inet_aton(addr, &inad) ) {
             log.Warning("no a valid ip");
@@ -639,7 +644,7 @@ Simulator::LoadSimConf(const char * filename)
         sconf->bgpid = htonl((u_int32_t) inad.s_addr);
         vPeerConf.push_back(*sconf);
         if (isDebug)
-            fprintf(outfd, "add peer config AS%d, %s\n", as, addr);
+            fprintf(outfd, "Add peer config AS%d, %s\n", as, addr);
     }
     fclose(ffd);
     return true;

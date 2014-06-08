@@ -33,7 +33,7 @@ typedef enum {
     ERR_CEASE
 } err_codes;
 
-class Simulator {
+class Simulator : public Thread {
     private:
         // flags for Simulator
         bool                        mQuit;
@@ -50,7 +50,8 @@ class Simulator {
     public:
         Simulator ();
         virtual ~Simulator ();
-        
+	void * Run();
+
         void FSM(Peer *, event_t);
         void FSM(Peer *, Event *);
         void ChangeState(Peer *, state_t, event_t);

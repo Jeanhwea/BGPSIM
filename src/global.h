@@ -31,16 +31,39 @@
 #include <string>
 #include <vector>
 
-#define	BGP_VERSION			4
-#define	BGP_PORT			179
-#define	BGPD_USER			"_bgpd"
-#define	PEER_DESCR_LEN			32
-#define	PFTABLE_LEN			16
 
-#define	MAX_PKTSIZE			4096
-#define	MIN_HOLDTIME			3
-#define	READ_BUF_SIZE			65535
-#define	RT_BUF_SIZE			16384
+#define	BGP_VERSION     4
+#define	BGP_PORT        179
+
+#define	MAX_PKTSIZE     4096
+#define	MIN_HOLDTIME    3
+#define	READ_BUF_SIZE   65535
+#define	RT_BUF_SIZE     16384
+
+typedef enum {
+    IDLE,
+    CONNECT,
+    ACTIVE,
+    OPEN_SENT,
+    OPEN_CONFIRM,
+    ESTABLISHED
+} state_t;
+
+typedef enum {
+    BGP_START,
+    BGP_STOP,
+    BGP_TRANS_CONN_OPEN,
+    BGP_TRANS_CONN_CLOSED,
+    BGP_TRANS_CONN_OPEN_FAILED,
+    BGP_TRANS_FATAL_ERROR,
+    CONN_RETRY_TIMER_EXPIRED,
+    HOLD_TIMER_EXPIRED,
+    KEEPALIVE_TIMER_EXPIRED,
+    RECV_OPEN_MSG,
+    RECV_KEEPALIVE_MSG,
+    RECV_UPDATE_MSG,
+    RECV_NOTIFICATION_MSG
+} event_t;
 
 typedef int sockfd;
 
@@ -51,4 +74,6 @@ extern FILE * outfd;
 extern FILE * errfd;
 extern FILE * logfd;
 
+class Simulator;
+extern Simulator * g_sim;
 #endif /* end of include guard: GLOBAL_H */

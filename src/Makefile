@@ -11,7 +11,7 @@ all: $(TARGET)
 $(TARGET): $(OBJ)
 	$(CC) -o $(TARGET) $(OBJ) $(LFLAG) 
 
-$(OBJ) : %.o : %.cc %.h global.h helper.h
+$(OBJ) : %.o : %.cc %.h global.h 
 	$(CC) -c $(CFLAG) $< -o $@
 
 run: 

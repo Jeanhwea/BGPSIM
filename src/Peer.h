@@ -9,15 +9,6 @@
 
 using namespace std;
 
-typedef enum {
-    IDLE,
-    CONNECT,
-    ACTIVE,
-    OPEN_SENT,
-    OPEN_CONFIRM,
-    ESTABLISHED
-} state_t;
-
 struct peer_config {
     bool             passive;
     struct in_addr   remote_addr;
@@ -32,7 +23,6 @@ class Peer : public Thread {
     private:
         state_t         mState;
 
-        
     public:
         sockfd              sfd;
         u_int16_t           holdtime;
@@ -42,10 +32,10 @@ class Peer : public Thread {
         time_t              KeepaliveTimer;
         time_t              HoldTimer;
         time_t              IdleHoldTimer;
-        
+
         struct sockaddr_in  sa_local;
         struct sockaddr_in  sa_remote;
-    
+
         Buffer            * rbuf;
         Message           * wbuf;
 
@@ -54,17 +44,16 @@ class Peer : public Thread {
         void * Run();
 
         state_t GetPeerState() {
-            return mState; 
+            return mState;
         }
         void SetPeerState(state_t state) {
-            mState = state; 
+            mState = state;
         }
 
-        void Init();
+        void InitTimer();
 
         void StartTimerHoldtime();
         void StartTimerKeepalive();
-        void InitWbuf();
 };
 
 extern map<state_t, string> mapStateName;
