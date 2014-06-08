@@ -6,6 +6,20 @@ Simulator::Simulator()
 {
     mQuit = false;
     LoadSimConf("/home/fuzl/.peer.conf");
+
+    Peer * pPeer;
+    vector<struct sim_config>::iterator sit;
+    for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
+        pPeer = new Peer();
+        pPeer->Init();
+        mvPeers.push_back(pPeer);
+    }
+    vector<Peer *>::iterator vit;
+    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+        pPeer = *vit;
+        FSM(pPeer, BGP_START);
+    }
+    cout << mvPeers.size() << endl;
     tim.Run();
     tim.Join();
     lis.Run();
@@ -18,11 +32,11 @@ Simulator::~Simulator()
 }
 
 void
-Simulator::SimMain() 
+Simulator::SimMain()
 {
     vector<Peer *>::iterator vit;
     Peer * pPeer;
-    cout << "int sim main" << endl;
+    cout << "in sim main" << endl;
     while (mQuit != true) {
         for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
             pPeer = *vit;
@@ -37,8 +51,8 @@ Simulator::FSM(Peer * pPeer, event_t eve)
 {
    switch ( pPeer->GetPeerState() ) {
         case IDLE:
-            switch ( eve ) { 
-                case BGP_START : 
+            switch ( eve ) {
+                case BGP_START :
                     pPeer->Init();
                     pPeer->rbuf = new Buffer();
                     pPeer->InitWbuf();
@@ -58,8 +72,8 @@ Simulator::FSM(Peer * pPeer, event_t eve)
             }
             break;
         case CONNECT:
-            switch ( eve ) { 
-                case BGP_START : 
+            switch ( eve ) {
+                case BGP_START :
                     // ignore
                     break;
                 case BGP_TRANS_CONN_OPEN:
@@ -68,12 +82,12 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     pPeer->ConnetRetryTimer = 0;
                     ChangeState(pPeer, OPEN_SENT, eve);
                     break;
-                case BGP_TRANS_CONN_OPEN_FAILED : 
+                case BGP_TRANS_CONN_OPEN_FAILED :
                     pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
                     SimColseConnect(pPeer);
                     ChangeState(pPeer, ACTIVE, eve);
                     break;
-                case CONN_RETRY_TIMER_EXPIRED : 
+                case CONN_RETRY_TIMER_EXPIRED :
                     pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
                     SimConnect(pPeer);
                     break;
@@ -83,11 +97,11 @@ Simulator::FSM(Peer * pPeer, event_t eve)
             }
             break;
         case ACTIVE:
-            switch ( eve ) { 
-                case BGP_START : 
+            switch ( eve ) {
+                case BGP_START :
                     // ignore
                     break;
-                case BGP_TRANS_CONN_OPEN : 
+                case BGP_TRANS_CONN_OPEN :
                     SimTCPEstablished(pPeer);
                     SimOpen(pPeer);
                     pPeer->ConnetRetryTimer = 0;
@@ -95,12 +109,12 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     pPeer->StartTimerHoldtime();
                     ChangeState(pPeer, OPEN_SENT, eve);
                     break;
-                case BGP_TRANS_CONN_OPEN_FAILED : 
+                case BGP_TRANS_CONN_OPEN_FAILED :
                     pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
                     SimColseConnect(pPeer);
                     ChangeState(pPeer, CONNECT, eve);
                     break;
-                case CONN_RETRY_TIMER_EXPIRED : 
+                case CONN_RETRY_TIMER_EXPIRED :
                     pPeer->ConnetRetryTimer = time(NULL) + pPeer->holdtime;
                     ChangeState(pPeer, CONNECT, eve);
                     SimConnect(pPeer);
@@ -111,33 +125,33 @@ Simulator::FSM(Peer * pPeer, event_t eve)
             }
             break;
         case OPEN_SENT:
-            switch ( eve ) { 
-                case BGP_START : 
+            switch ( eve ) {
+                case BGP_START :
                     // ignore
                     break;
-                case BGP_STOP : 
+                case BGP_STOP :
                     SimNotification(pPeer, ERR_CEASE, 0, NULL, 0);
                     pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
                     ChangeState(pPeer, ACTIVE, eve);
                     break;
-                case BGP_TRANS_CONN_CLOSED : 
+                case BGP_TRANS_CONN_CLOSED :
                     SimColseConnect(pPeer);
                     pPeer->ConnetRetryTimer = time(NULL) + T_CONNRETRY;
                     ChangeState(pPeer, ACTIVE, eve);
                     break;
-                case BGP_TRANS_FATAL_ERROR : 
+                case BGP_TRANS_FATAL_ERROR :
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case HOLD_TIMER_EXPIRED : 
+                case HOLD_TIMER_EXPIRED :
                     SimNotification(pPeer, ERR_HOLDTIMEREXPIRED, 0, NULL, 0);
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case RECV_OPEN_MSG : 
+                case RECV_OPEN_MSG :
                     if ( ! ParseOpen(pPeer) ) break;
                     SimKeepalive(pPeer);
                     ChangeState(pPeer, OPEN_CONFIRM, eve);
                     break;
-                case RECV_NOTIFICATION_MSG : 
+                case RECV_NOTIFICATION_MSG :
                     if ( ! ParseNotification(pPeer) ) {
                         ChangeState(pPeer, IDLE, eve);
                         pPeer->IdleHoldTimer = time(NULL);
@@ -153,26 +167,26 @@ Simulator::FSM(Peer * pPeer, event_t eve)
             }
             break;
         case OPEN_CONFIRM:
-            switch ( eve ) { 
-                case BGP_START : 
+            switch ( eve ) {
+                case BGP_START :
                     // ignore
                     break;
-                case BGP_STOP : 
+                case BGP_STOP :
                     SimNotification(pPeer, ERR_CEASE, 0, NULL, 0);
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case BGP_TRANS_CONN_CLOSED : 
-                case BGP_TRANS_FATAL_ERROR : 
+                case BGP_TRANS_CONN_CLOSED :
+                case BGP_TRANS_FATAL_ERROR :
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case KEEPALIVE_TIMER_EXPIRED : 
+                case KEEPALIVE_TIMER_EXPIRED :
                     SimKeepalive(pPeer);
                     break;
-                case RECV_KEEPALIVE_MSG : 
+                case RECV_KEEPALIVE_MSG :
                     pPeer->StartTimerHoldtime();
                     ChangeState(pPeer, ESTABLISHED, eve);
                     break;
-                case RECV_NOTIFICATION_MSG : 
+                case RECV_NOTIFICATION_MSG :
                     ParseNotification(pPeer);
                     ChangeState(pPeer, IDLE, eve);
                     break;
@@ -183,36 +197,36 @@ Simulator::FSM(Peer * pPeer, event_t eve)
             }
             break;
         case ESTABLISHED:
-            switch ( eve ) { 
-                case BGP_START : 
+            switch ( eve ) {
+                case BGP_START :
                     // ignore
                     break;
-                case BGP_STOP : 
+                case BGP_STOP :
                     SimNotification(pPeer, ERR_CEASE, 0, NULL, 0);
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case BGP_TRANS_CONN_CLOSED : 
+                case BGP_TRANS_CONN_CLOSED :
                 case BGP_TRANS_FATAL_ERROR :
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case HOLD_TIMER_EXPIRED : 
+                case HOLD_TIMER_EXPIRED :
                     SimNotification(pPeer, ERR_HOLDTIMEREXPIRED, 0, NULL, 0);
                     ChangeState(pPeer, IDLE, eve);
                     break;
-                case KEEPALIVE_TIMER_EXPIRED : 
+                case KEEPALIVE_TIMER_EXPIRED :
                     SimKeepalive(pPeer);
                     break;
-                case RECV_KEEPALIVE_MSG :  
+                case RECV_KEEPALIVE_MSG :
                     pPeer->StartTimerHoldtime();
                     break;
-                case RECV_UPDATE_MSG : 
+                case RECV_UPDATE_MSG :
                     pPeer->StartTimerHoldtime();
                     if ( ! ParseUpdate(pPeer) )
                         ChangeState(pPeer, IDLE, eve);
-                    else 
+                    else
                         pPeer->StartTimerHoldtime();
                     break;
-                case RECV_NOTIFICATION_MSG : 
+                case RECV_NOTIFICATION_MSG :
                     ParseNotification(pPeer);
                     ChangeState(pPeer, IDLE, eve);
                     break;
@@ -225,13 +239,13 @@ Simulator::FSM(Peer * pPeer, event_t eve)
     }
 }
 
-void 
+void
 Simulator::FSM(Peer * pPeer, Event * pEve)
 {
     FSM(pPeer, pEve->GetEventType());
 }
 
-void 
+void
 Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 {
     switch ( pPeer->GetPeerState() ) {
@@ -248,11 +262,13 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
         case ESTABLISHED:
             break;
     }
+    cout << "Peer change state: " << mapStateName[pPeer->GetPeerState()]
+        << " -> " << mapStateName[state] << endl;
     pPeer->SetPeerState(state);
 }
 
 bool
-Simulator::SimSetupSocket(Peer * pPeer) 
+Simulator::SimSetupSocket(Peer * pPeer)
 {
     int ttl = 1;
     if (setsockopt(pPeer->sfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
@@ -268,23 +284,23 @@ Simulator::SimSetupSocket(Peer * pPeer)
 }
 
 void
-Simulator::SimTCPEstablished(Peer * pPeer) 
+Simulator::SimTCPEstablished(Peer * pPeer)
 {
     socklen_t len;
 
     len = sizeof(pPeer->sa_local);
-    if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1) 
+    if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1)
         log.Warning("getsockname");
     len = sizeof(pPeer->sa_remote);
-    if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1) 
+    if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1)
         log.Warning("getpeername");
 }
 
 bool
-Simulator::SimConnect(Peer * pPeer) 
+Simulator::SimConnect(Peer * pPeer)
 {
     struct sockaddr_in sad;
-    if (pPeer->sfd != -1) 
+    if (pPeer->sfd != -1)
         return false;
 
     pPeer->sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -312,14 +328,14 @@ Simulator::SimConnect(Peer * pPeer)
             FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
             return false;
         }
-    } else 
+    } else
         FSM(pPeer, BGP_TRANS_CONN_OPEN);
 
     return true;
 }
 
 void
-Simulator::SimColseConnect(Peer * pPeer) 
+Simulator::SimColseConnect(Peer * pPeer)
 {
     if (pPeer->sfd != -1) {
         shutdown(pPeer->sfd, SHUT_RDWR);
@@ -329,9 +345,9 @@ Simulator::SimColseConnect(Peer * pPeer)
 }
 
 void
-Simulator::SimOpen(Peer * pPeer) 
+Simulator::SimOpen(Peer * pPeer)
 {
-    openmsg     msg;
+    struct openmsg     msg;
     u_int16_t   len;
 
     len = MSGSIZE_OPEN_MIN;
@@ -340,7 +356,7 @@ Simulator::SimOpen(Peer * pPeer)
     msg.msghdr.type = OPEN;
     msg.version = 4;
     msg.myas = htons(conf_as);
-    if (pPeer->holdtime > 0) 
+    if (pPeer->holdtime > 0)
         msg.holdtime = htons(pPeer->holdtime);
     else
         msg.holdtime = htons(conf_holdtime);
@@ -351,35 +367,38 @@ Simulator::SimOpen(Peer * pPeer)
 }
 
 void
-Simulator::SimKeepalive(Peer * pPeer) 
+Simulator::SimKeepalive(Peer * pPeer)
 {
-    
+
 }
 
 void
-Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len) 
+Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len)
 {
-    
+
 }
 
 void
-Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t len) 
+Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t len)
 {
-    
+
 }
 
 Peer *
-Simulator::GetPeerByAddr(struct in_addr * addr) 
+Simulator::GetPeerByAddr(struct in_addr * addr)
 {
     vector<Peer *>::iterator vit;
-    Peer * pPeer;
+    Peer * pPeer, * ret;
+    ret = NULL;
     for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
         pPeer = *vit;
-        if (pPeer->conf.remote_addr.s_addr == addr->s_addr) 
+        if (memcmp(& pPeer->conf.remote_addr.s_addr, &addr->s_addr, sizeof(addr->s_addr)) == 0) {
+            ret = pPeer;
             break;
+        }
     }
 
-    return (*vit);
+    return ret;
 }
 
 bool
@@ -411,8 +430,8 @@ Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & 
         return false;
     }
 
-    switch (type) { 
-        case OPEN : 
+    switch (type) {
+        case OPEN :
             if (len < MSGSIZE_OPEN_MIN) {
                 fprintf(errfd, "received OPEN: illegal length: %u byte\n", len);
                 SimNotification(pPeer, ERR_HEADER, ERR_HDR_LEN, &olen, sizeof(olen));
@@ -442,7 +461,7 @@ Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & 
             break;
         default:
                 fprintf(errfd, "received msg with unknown type %u\n", type);
-                SimNotification(pPeer, ERR_HEADER, ERR_HDR_TYPE, &type, 1); 
+                SimNotification(pPeer, ERR_HEADER, ERR_HDR_TYPE, &type, 1);
                 return false;
     }
     return true;
@@ -472,9 +491,9 @@ Simulator::ParseOpen(Peer * pPeer)
     pos += sizeof(version);
     if (version != BGP_VERSION) {
         fprintf(errfd, "Peer wants unrecognized version %u\n", version);
-        if (version > BGP_VERSION) 
+        if (version > BGP_VERSION)
             rversion = version - BGP_VERSION;
-        else 
+        else
             rversion = BGP_VERSION;
         SimNotification(pPeer, ERR_OPEN, ERR_OPEN_VERSION, &rversion, sizeof(rversion));
         ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
@@ -500,11 +519,11 @@ Simulator::ParseOpen(Peer * pPeer)
         return false;
     }
     myholdtime = pPeer->conf.holdtime;
-    if (myholdtime <= 0) 
+    if (myholdtime <= 0)
         myholdtime = conf_holdtime;
-    if (holdtime < myholdtime) 
+    if (holdtime < myholdtime)
         pPeer->holdtime = holdtime;
-    else 
+    else
         pPeer->holdtime = myholdtime;
 
     memcpy(&bgpid, pos, sizeof(bgpid));
@@ -535,7 +554,7 @@ Simulator::ParseOpen(Peer * pPeer)
 }
 
 bool
-Simulator::ParseNotification(Peer * pPeer) 
+Simulator::ParseNotification(Peer * pPeer)
 {
     u_char    * pos;
     u_int8_t    errcode;
@@ -561,39 +580,39 @@ Simulator::ParseNotification(Peer * pPeer)
     pos += sizeof(subcode);
     datalen -= sizeof(subcode);
 
-    fprintf(outfd, 
-        "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n", 
+    fprintf(outfd,
+        "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n",
             errcode, subcode, datalen);
 
     return true;
 }
 
 bool
-Simulator::ParseUpdate(Peer * pPeer) 
+Simulator::ParseUpdate(Peer * pPeer)
 {
     return true;
 }
 
 bool
-Simulator::ParseKeepalive(Peer * pPeer) 
+Simulator::ParseKeepalive(Peer * pPeer)
 {
     return true;
 }
 
 bool
-Simulator::SetBlock(sockfd sfd) 
+Simulator::SetBlock(sockfd sfd)
 {
     return lis.SetBlock(sfd);
 }
 
 bool
-Simulator::UnsetBlock(sockfd sfd) 
+Simulator::UnsetBlock(sockfd sfd)
 {
     return lis.UnsetBlock(sfd);
 }
 
 bool
-Simulator::LoadSimConf(const char * filename) 
+Simulator::LoadSimConf(const char * filename)
 {
     FILE          * ffd;
     int             as;
@@ -619,7 +638,7 @@ Simulator::LoadSimConf(const char * filename)
         sconf->as = htons(as);
         sconf->bgpid = htonl((u_int32_t) inad.s_addr);
         vPeerConf.push_back(*sconf);
-        if (isDebug) 
+        if (isDebug)
             fprintf(outfd, "add peer config AS%d, %s\n", as, addr);
     }
     fclose(ffd);

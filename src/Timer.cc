@@ -42,9 +42,12 @@ Timer::Schedule()
     Peer * pPeer;
     for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
         pPeer = *vit;
-        pPeer->ConnetRetryTimer ++;
-        pPeer->IdleHoldTimer ++;
-        pPeer->KeepaliveTimer ++;
+        if (pPeer->ConnetRetryTimer >= 0)
+            pPeer->ConnetRetryTimer ++;
+        if (pPeer->IdleHoldTimer >= 0)
+            pPeer->IdleHoldTimer ++;
+        if (pPeer->KeepaliveTimer >= 0)
+            pPeer->KeepaliveTimer ++;
     }
 }
         

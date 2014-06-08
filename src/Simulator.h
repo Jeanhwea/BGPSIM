@@ -19,10 +19,10 @@
 
 using namespace std;
 
-typedef struct _sim_config {
+struct sim_config {
     u_int16_t           as;
     u_int32_t           bgpid;
-} sim_config;
+};
 
 typedef enum {
     ERR_HEADER = 1,
@@ -36,16 +36,16 @@ typedef enum {
 class Simulator {
     private:
         // flags for Simulator
-        bool                mQuit;
-        vector<sim_config>  vPeerConf;
-        u_int16_t           conf_as;
-        u_int16_t           conf_holdtime;
-        u_int16_t           conf_bgpid;
-        struct in_addrs *   listen_addrs;
+        bool                        mQuit;
+        vector<struct sim_config>   vPeerConf;
+        u_int16_t                   conf_as;
+        u_int16_t                   conf_holdtime;
+        u_int16_t                   conf_bgpid;
+        struct in_addrs *           listen_addrs;
 
-        Listener            lis;
-        Logger              log;
-        Timer               tim;
+        Listener                    lis;
+        Logger                      log;
+        Timer                       tim;
 
     public:
         Simulator ();

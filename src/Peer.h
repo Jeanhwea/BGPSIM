@@ -5,6 +5,7 @@
 #include "global.h"
 #include "Buffer.h"
 #include "Message.h"
+#include "Thread.h"
 
 using namespace std;
 
@@ -17,7 +18,7 @@ typedef enum {
     ESTABLISHED
 } state_t;
 
-typedef struct _peer_config {
+struct peer_config {
     bool             passive;
     struct in_addr   remote_addr;
     // struct in_addr   local_addr;
@@ -25,9 +26,9 @@ typedef struct _peer_config {
     u_int32_t        remote_bgpid;
     u_int16_t        holdtime;
     u_int16_t        min_holdtime;
-} peer_config;
+};
 
-class Peer {
+class Peer : public Thread {
     private:
         state_t         mState;
 
@@ -35,7 +36,7 @@ class Peer {
     public:
         sockfd              sfd;
         u_int16_t           holdtime;
-        peer_config         conf;
+        struct peer_config  conf;
 
         time_t              ConnetRetryTimer;
         time_t              KeepaliveTimer;
@@ -50,6 +51,7 @@ class Peer {
 
         Peer ();
         virtual ~Peer ();
+        void * Run();
 
         state_t GetPeerState() {
             return mState; 

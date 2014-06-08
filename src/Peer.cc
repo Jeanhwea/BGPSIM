@@ -24,6 +24,12 @@ Peer::~Peer()
 {
 }
 
+void *
+Peer::Run()
+{
+    return NULL;
+}
+
 void 
 Peer::Init()
 {    

@@ -55,20 +55,20 @@ typedef enum _capa_codes {
 
 using namespace std;
 
-typedef struct _bgphdr {
+struct bgphdr {
     u_char      marker[16];           // Marker
     u_int16_t   length;               // Length
     u_int8_t    type;                 // Type
-} bgphdr;
+};
 
-typedef struct _openmsg {
-    bgphdr      msghdr;               // Message header
-    u_int8_t    version;              // Version
-    u_int16_t   myas;                 // My Autonomous System
-    u_int16_t   holdtime;             // Hold Time
-    u_int32_t   bgpid;                // BGP Identifier
-    u_int8_t    optparamlen;          // Optional Parameters Length
-} openmsg;
+struct openmsg {
+    struct bgphdr   msghdr;               // Message header
+    u_int8_t        version;              // Version
+    u_int16_t       myas;                 // My Autonomous System
+    u_int16_t       holdtime;             // Hold Time
+    u_int32_t       bgpid;                // BGP Identifier
+    u_int8_t        optparamlen;          // Optional Parameters Length
+};
 
 
 #pragma pack(pop)   /* restore original alignment */
