@@ -11,7 +11,6 @@ class Event {
     private:
         event_t mType;
 
-        static std::map<event_t, string> mapEventName;
 
     public:
         Event ();
@@ -25,5 +24,7 @@ class Event {
         }
 
 };
+
+extern std::map<event_t, string> mapEventName;
 
 #endif /* end of include guard: EVENT_7QDU12AL */

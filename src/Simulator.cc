@@ -14,8 +14,6 @@ Simulator::Simulator()
         pPeer = new Peer();
         pPeer->conf.passive = false;
         mvPeers.push_back(pPeer);
-        pPeer->Run();
-        pPeer->Join();
     }
     cout << "initail peer size = " << mvPeers.size() << endl;
 }
@@ -27,7 +25,7 @@ Simulator::~Simulator()
 void *
 Simulator::Run()
 {
-    tim.Run();
+    tim.Start();
     tim.Join();
     SimMain();
     return NULL;
@@ -40,12 +38,11 @@ Simulator::SimMain()
     vector<Peer *>::iterator vit;
     Peer * pPeer;
     cout << "in sim main" << endl;
+    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+        pPeer = *vit;
+        pPeer->Start();
+    }
     while (mQuit == false) {
-        for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
-            pPeer = *vit;
-            if (pPeer->GetPeerState() == IDLE)
-                FSM(pPeer, BGP_START);
-        }
     }
 }
 
@@ -58,7 +55,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                 case BGP_START :
                     pPeer->InitTimer();
                     pPeer->rbuf = new Buffer();
-                    pPeer->wbuf = new Message(4096);
+                    pPeer->wbuf = new Message(MSGBUFSIZE);
 
                     if (pPeer->conf.passive) {
                         ChangeState(pPeer, ACTIVE, eve);
@@ -266,21 +263,22 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
             break;
     }
     cout << "Peer change state: " << mapStateName[pPeer->GetPeerState()]
-        << " -> " << mapStateName[state] << endl;
+            << " -> " << mapStateName[state]
+                << " with " << mapEventName[eve] << endl;
     pPeer->SetPeerState(state);
 }
 
 bool
 Simulator::SimSetupSocket(Peer * pPeer)
 {
-    int ttl = 1;
+    int ttl = 2;
     if (setsockopt(pPeer->sfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
-        log.Warning("failed to set TTL");
+        g_log->Warning("failed to set TTL");
         return false;
     }
     int nodelay = 1;
     if (setsockopt(pPeer->sfd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) == -1) {
-        log.Warning("failed to set TCP nodelay");
+        g_log->Warning("failed to set TCP nodelay");
         return false;
     }
     return true;
@@ -293,10 +291,10 @@ Simulator::SimTCPEstablished(Peer * pPeer)
 
     len = sizeof(pPeer->sa_local);
     if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1)
-        log.Warning("getsockname");
+        g_log->Warning("getsockname");
     len = sizeof(pPeer->sa_remote);
     if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1)
-        log.Warning("getpeername");
+        g_log->Warning("getpeername");
 }
 
 bool
@@ -308,7 +306,7 @@ Simulator::SimConnect(Peer * pPeer)
 
     pPeer->sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (pPeer->sfd == -1) {
-        log.Warning("Simulator socket connect");
+        g_log->Warning("Simulator socket connect");
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         return false;
     }
@@ -327,7 +325,7 @@ Simulator::SimConnect(Peer * pPeer)
     sad.sin_port = htons(BGP_PORT);
     if (connect(pPeer->sfd, (sockaddr *) &sad, sizeof(sad)) == -1) {
         if (errno != EINPROGRESS) {
-            log.Warning("peer connect failed");
+            g_log->Warning("peer connect failed");
             FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
             return false;
         }
@@ -359,7 +357,7 @@ Simulator::SimOpen(Peer * pPeer)
     memset(msg.msghdr.marker, 0xff, sizeof(msg.msghdr.marker));
     msg.msghdr.length = htons(len);
     msg.msghdr.type = OPEN;
-    msg.version = 4;
+    msg.version = BGP_VERSION;
     msg.myas = htons(conf_as);
     if (pPeer->holdtime > 0)
         msg.holdtime = htons(pPeer->holdtime);
@@ -417,7 +415,7 @@ Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & 
     pos = &data;
     for (int i = 0; i < MSGSIZE_HEADER_MARKER; ++i) { // marker
         if (memcmp(pos, &one, 1)) {
-            log.Warning("sync error in parse header");
+            g_log->Warning("sync error in parse header");
             SimNotification(pPeer, ERR_HEADER, ERR_HDR_SYNC, NULL, 0);
             FSM(pPeer, CONN_RETRY_TIMER_EXPIRED);
             return false;
@@ -627,7 +625,7 @@ Simulator::LoadSimConf(const char * filename)
 
     ffd = fopen(filename, "r");
     if (ffd == NULL) {
-        log.Warning("cannot open sim config file");
+        g_log->Warning("cannot open sim config file");
         return false;
     }
 
@@ -637,7 +635,7 @@ Simulator::LoadSimConf(const char * filename)
         fprintf(outfd, "Local Simulator in AS%d\n", as);
     while (fscanf(ffd, "%d%s", &as, addr) != EOF) {
         if( !inet_aton(addr, &inad) ) {
-            log.Warning("no a valid ip");
+            g_log->Warning("no a valid ip");
         }
         sconf = (sim_config *) malloc(sizeof(sim_config));
         sconf->as = htons(as);

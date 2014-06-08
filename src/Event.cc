@@ -2,7 +2,7 @@
 
 using namespace std;
 
-map<event_t, string> Event::mapEventName = {
+map<event_t, string> mapEventName = {
     { BGP_START, "bgp_start" },
     { BGP_STOP, "bgp_stop" },
     { BGP_TRANS_CONN_OPEN, "bgp_trans_conn_open" },
@@ -22,7 +22,7 @@ Event::Event()
 {
 }
 
-Event::~Event() 
+Event::~Event()
 {
 
 }

@@ -1,26 +1,33 @@
 #include "Thread.h"
 
+using namespace std;
+
+pthread_t Thread::thread_cnt = 0;
+
 Thread::Thread()
 : mTid(0), isRunning(false), isDetached(false)
 {
+    ++ thread_cnt;
+//     if (isDebug)
+//         cout << "add a thread_" << mTid << endl;
 }
 
 Thread::~Thread()
 {
-    if (isRunning && (!isDetached) ) 
+    if (isRunning && (!isDetached) )
         pthread_detach(mTid);
     if (isRunning)
         pthread_cancel(mTid);
 }
 
-bool 
+bool
 Thread::Start() {
     int res = pthread_create(&mTid, NULL, RunThread, this);
     if (res == 0) isRunning = true;
     return (res == 0);
 }
 
-bool 
+bool
 Thread::Join() {
     int res = -1;
     if (isRunning) {
@@ -30,7 +37,7 @@ Thread::Join() {
     return (res == 0);
 }
 
-bool 
+bool
 Thread::Detach() {
     int res = -1;
     if (isRunning && (!isDetached) ) {
@@ -40,8 +47,8 @@ Thread::Detach() {
     return (res == 0);
 }
 
-pthread_t 
-Thread::Self() 
+pthread_t
+Thread::Self()
 {
     return mTid;
 }

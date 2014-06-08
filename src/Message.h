@@ -69,8 +69,6 @@ class Message {
     private:
         static deque<Message *> mqMessage;
 
-        Logger log;
-
     public:
         u_char    * buf;
         ssize_t     size;

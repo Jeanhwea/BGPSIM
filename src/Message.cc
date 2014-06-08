@@ -20,7 +20,7 @@ Message::Message(ssize_t len)
     if (buf == NULL) {
         size = 0;
         free(buf);
-        log.Error("cannot malloc Message");
+        g_log->Error("cannot malloc Message");
     } else {
         size = len;
     }
@@ -70,7 +70,7 @@ Message::Write(sockfd sfd, Message * buf)
     while (nleft > 0) {
         nwrite = write(sfd, ptr, nleft);
         if (nwrite < 0 && errno == EAGAIN) {
-            log.Error("failed to write buf\n");
+            g_log->Error("failed to write buf\n");
             return false;
         }
         nleft -= nwrite;

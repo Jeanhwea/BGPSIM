@@ -1,4 +1,5 @@
 #include "Peer.h"
+#include "Simulator.h"
 
 vector<Peer *>  mvPeers;
 
@@ -13,20 +14,32 @@ map<state_t, string> mapStateName = {
 
 Peer::Peer()
 {
+    HoldTimer = -1;
+    KeepaliveTimer = -1;
+    ConnetRetryTimer = -1;
     sfd = -1;
     rbuf = NULL;
     wbuf = NULL;
     mState = IDLE;
-    InitTimer();
 }
 
 Peer::~Peer()
 {
+    if (rbuf != NULL)
+        delete rbuf;
+    if (wbuf != NULL)
+        delete wbuf;
 }
 
 void *
 Peer::Run()
 {
+    if (isDebug)
+        cout << "Peer_" << Self() << " Runs ..." << endl;
+    if (mState == IDLE)
+        g_sim->FSM(this, BGP_START);
+    else
+        g_log->Warning("Peer try start with non-IDLE state");
     return NULL;
 }
 

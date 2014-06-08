@@ -11,11 +11,8 @@
 #include "Thread.h"
 #include "Timer.h"
 
-#define MAX_IDLE_HOLD               3600
 #define T_CONNRETRY                 120
 #define T_HOLD_INITIAL              240
-#define T_HOLD                      90
-#define T_IDLE_HOLD_INITIAL         30
 
 using namespace std;
 
@@ -44,13 +41,12 @@ class Simulator : public Thread {
         struct in_addrs *           listen_addrs;
 
         Listener                    lis;
-        Logger                      log;
         Timer                       tim;
 
     public:
         Simulator ();
         virtual ~Simulator ();
-	void * Run();
+        void * Run();
 
         void FSM(Peer *, event_t);
         void FSM(Peer *, Event *);

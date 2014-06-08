@@ -6,6 +6,7 @@
 #include "Buffer.h"
 #include "Message.h"
 #include "Thread.h"
+#include "Logger.h"
 
 using namespace std;
 

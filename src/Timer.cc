@@ -43,13 +43,9 @@ Timer::Schedule()
     Peer * pPeer;
     for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
         pPeer = *vit;
-        if (pPeer->ConnetRetryTimer >= 0)
-            pPeer->ConnetRetryTimer ++;
-        if (pPeer->IdleHoldTimer >= 0)
-            pPeer->IdleHoldTimer ++;
         if (pPeer->KeepaliveTimer >= 0)
             pPeer->KeepaliveTimer ++;
-        if (pPeer->ConnetRetryTimer == time(NULL)) {
+        if (pPeer->ConnetRetryTimer <= time(NULL)) {
             g_sim->FSM(pPeer, CONN_RETRY_TIMER_EXPIRED);
         }
     }

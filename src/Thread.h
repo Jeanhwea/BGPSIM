@@ -6,6 +6,7 @@
 
 class Thread {
     private:
+        static pthread_t thread_cnt;
         pthread_t mTid;
         bool isRunning;
         bool isDetached;
@@ -13,11 +14,11 @@ class Thread {
         static void * RunThread(void * arg) {
             return ((Thread *)arg)->Run();
         }
-        
+
     public:
         Thread ();
         virtual ~Thread ();
-        virtual void * Run() = 0; 
+        virtual void * Run() = 0;
 
         bool Start();
         bool Join();
