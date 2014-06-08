@@ -36,9 +36,6 @@ Timer::Run()
 void
 Timer::Schedule()
 {
-    if (isDebug) {
-        cout << "in do schedule" << endl;
-    }
     vector<Peer *>::iterator vit;
     Peer * pPeer;
     for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
