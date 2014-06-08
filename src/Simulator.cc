@@ -13,6 +13,8 @@ Simulator::Simulator()
     for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
         pPeer = new Peer();
         pPeer->conf.passive = false;
+        pPeer->conf.remote_as = sit->as;
+        memcpy(& pPeer->conf.remote_addr, & sit->ipaddr, sizeof(sit->ipaddr));
         mvPeers.push_back(pPeer);
     }
     cout << "initail peer size = " << mvPeers.size() << endl;
@@ -262,9 +264,7 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
         case ESTABLISHED:
             break;
     }
-    cout << "Peer change state: " << mapStateName[pPeer->GetPeerState()]
-            << " -> " << mapStateName[state]
-                << " with " << mapEventName[eve] << endl;
+    g_log->LogStateChage(pPeer->GetPeerState(), state, eve);
     pPeer->SetPeerState(state);
 }
 
@@ -313,8 +313,9 @@ Simulator::SimConnect(Peer * pPeer)
 
     pPeer->wbuf->sfd = pPeer->sfd;
 
-    if (SimSetupSocket(pPeer)) {
+    if (!SimSetupSocket(pPeer)) {
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
+        g_log->Warning("SimConnect sim setup failed");
         return false;
     }
 
@@ -328,6 +329,8 @@ Simulator::SimConnect(Peer * pPeer)
             g_log->Warning("peer connect failed");
             FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
             return false;
+        } else {
+            g_log->Tips("peer connect in progress...");
         }
     } else {
         FSM(pPeer, BGP_TRANS_CONN_OPEN);
@@ -411,7 +414,7 @@ Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & 
     u_char      one = 0xff;
     u_int16_t   olen;
 
-    // parse at least 19 bytes
+    // parse at least 19 bytes, we do not check it right now
     pos = &data;
     for (int i = 0; i < MSGSIZE_HEADER_MARKER; ++i) { // marker
         if (memcmp(pos, &one, 1)) {
@@ -583,10 +586,6 @@ Simulator::ParseNotification(Peer * pPeer)
     pos += sizeof(subcode);
     datalen -= sizeof(subcode);
 
-    fprintf(outfd,
-            "received NOTIFICATION errcode(%u), subcode(%u), datalen(%u)\n",
-            errcode, subcode, datalen);
-
     return true;
 }
 
@@ -625,7 +624,7 @@ Simulator::LoadSimConf(const char * filename)
 
     ffd = fopen(filename, "r");
     if (ffd == NULL) {
-        g_log->Warning("cannot open sim config file");
+        g_log->Error("cannot open sim config file");
         return false;
     }
 
@@ -640,6 +639,7 @@ Simulator::LoadSimConf(const char * filename)
         sconf = (sim_config *) malloc(sizeof(sim_config));
         sconf->as = htons(as);
         sconf->bgpid = htonl((u_int32_t) inad.s_addr);
+        memcpy(&sconf->ipaddr, &inad, sizeof(inad));
         vPeerConf.push_back(*sconf);
         if (isDebug)
             fprintf(outfd, "Add peer config AS%d, %s\n", as, addr);

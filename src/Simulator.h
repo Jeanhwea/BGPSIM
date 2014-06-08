@@ -19,6 +19,7 @@ using namespace std;
 struct sim_config {
     u_int16_t           as;
     u_int32_t           bgpid;
+    struct in_addr      ipaddr;
 };
 
 typedef enum {
