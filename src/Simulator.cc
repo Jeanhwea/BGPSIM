@@ -8,6 +8,8 @@ Simulator::Simulator()
     LoadSimConf("/home/fuzl/.peer.conf");
     tim.Run();
     tim.Join();
+    lis.Run();
+    lis.Join();
     SimMain();
 }
 
@@ -20,6 +22,7 @@ Simulator::SimMain()
 {
     vector<Peer *>::iterator vit;
     Peer * pPeer;
+    cout << "int sim main" << endl;
     while (mQuit != true) {
         for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
             pPeer = *vit;
@@ -328,6 +331,23 @@ Simulator::SimColseConnect(Peer * pPeer)
 void
 Simulator::SimOpen(Peer * pPeer) 
 {
+    openmsg     msg;
+    u_int16_t   len;
+
+    len = MSGSIZE_OPEN_MIN;
+    memset(msg.msghdr.marker, 0xff, sizeof(msg.msghdr.marker));
+    msg.msghdr.length = htons(len);
+    msg.msghdr.type = OPEN;
+    msg.version = 4;
+    msg.myas = htons(conf_as);
+    if (pPeer->holdtime > 0) 
+        msg.holdtime = htons(pPeer->holdtime);
+    else
+        msg.holdtime = htons(conf_holdtime);
+    msg.bgpid = conf_bgpid;
+    msg.optparamlen = 0;
+
+    pPeer->wbuf->Add(&msg, sizeof(msg));
 }
 
 void
@@ -342,22 +362,24 @@ Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len)
     
 }
 
-Peer *
-Simulator::GetPeerByAddr(struct in_addr * addr) 
-{
-    vector<Peer *>::iterator vit;
-    // Peer * pPeer;
-    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
-        // pPeer = *vit;
-    }
-
-    return (*vit);
-}
-
 void
 Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t len) 
 {
     
+}
+
+Peer *
+Simulator::GetPeerByAddr(struct in_addr * addr) 
+{
+    vector<Peer *>::iterator vit;
+    Peer * pPeer;
+    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+        pPeer = *vit;
+        if (pPeer->conf.remote_addr.s_addr == addr->s_addr) 
+            break;
+    }
+
+    return (*vit);
 }
 
 bool

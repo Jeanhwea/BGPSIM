@@ -40,6 +40,7 @@ class Simulator {
         vector<sim_config>  vPeerConf;
         u_int16_t           conf_as;
         u_int16_t           conf_holdtime;
+        u_int16_t           conf_bgpid;
         struct in_addrs *   listen_addrs;
 
         Listener            lis;

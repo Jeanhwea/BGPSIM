@@ -20,7 +20,7 @@ typedef enum {
 typedef struct _peer_config {
     bool             passive;
     struct in_addr   remote_addr;
-    struct in_addr   local_addr;
+    // struct in_addr   local_addr;
     u_int16_t        remote_as;
     u_int32_t        remote_bgpid;
     u_int16_t        holdtime;

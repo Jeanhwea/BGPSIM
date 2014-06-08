@@ -4,10 +4,11 @@
 
 #include "global.h"
 #include "Logger.h"
+#include "Thread.h"
 
 using namespace std;
 
-class Listener {
+class Listener : public Thread {
     private:
         sockfd      mfd; // member sockfd
 
@@ -15,6 +16,7 @@ class Listener {
     public:
         Listener();
         virtual ~Listener();
+        void * Run();
         bool SetMainSocket();
 
         // control operations

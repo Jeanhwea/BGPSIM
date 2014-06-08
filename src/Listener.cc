@@ -7,12 +7,20 @@ using namespace std;
 
 Listener::Listener()
 {
-    SetMainSocket();
 }
 
 Listener::~Listener()
 {
 
+}
+
+void * Listener::Run()
+{
+    cout << "int listen main run" << endl;
+    SetMainSocket();
+    Init();
+    Listen();
+    return NULL;
 }
 
 bool 
@@ -65,7 +73,8 @@ sockfd
 Listener::Listen() 
 {
     if (listen(mfd, MAX_BACKLOG) == -1) {
-        log.Warning("cannot listen");
+        log.Error("cannot listen");
+        assert(false);
         return (-1);
     }
 
