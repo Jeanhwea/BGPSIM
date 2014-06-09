@@ -57,7 +57,8 @@ Logger::LogStateChage(state_t from, state_t to, event_t eve)
 void
 Logger::LogDumpMsg(u_char* data, ssize_t len)
 {
-    fprintf(out, "MSG with %luB, Dump\n", len);
+    fprintf(out, "MSG with %luBytes, Dump\n", len);
+    if (len > 4096) return;
     for (int i = 0; i < len; ++i) {
         if (!((i)%PRINT_ALIGN)) fprintf(out, "0x%04x : ", i);
         fprintf(out, "%02x%c", *(data+i), (i+1)%PRINT_ALIGN ? ' ' : '\n');

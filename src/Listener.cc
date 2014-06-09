@@ -22,14 +22,14 @@ void * Listener::Run()
     Listen();
 
     sockfd  ac_sfd;
-    ssize_t nread;
+    ssize_t nread = 0;
     u_char  buf[4096];
     for (;;) {
         ac_sfd = Accept(mfd);
-        if (ac_sfd == -1)
-            g_log->Error("Listener accept error");
-        nread = read(ac_sfd, buf, 4096);
-        g_log->LogDumpMsg(buf, nread);
+        if (ac_sfd != -1) {
+            nread = read(ac_sfd, buf, 4096);
+            g_log->LogDumpMsg(buf, nread);
+        }
         close(ac_sfd);
     }
     return NULL;
@@ -109,13 +109,16 @@ Listener::Accept(sockfd lisfd)
     struct sockaddr_in  sad;
 
     len = sizeof(sad);
+    sad.sin_addr.s_addr = htonl(INADDR_ANY);
+    sad.sin_family = AF_INET;
+    sad.sin_port = htons(BGP_PORT);
     connfd = accept(lisfd, (struct sockaddr *)&sad, &len);
     if (connfd == -1) {
         if (errno != EWOULDBLOCK && errno != EINTR)
             g_log->Warning("accept bug in Listener");
         return (-1);
     } else
-        g_log->Tips("Recive a Msg");
+        g_log->Tips("Accept successfully !!! ");
 
     UnsetBlock(connfd);
 
