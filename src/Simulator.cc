@@ -29,8 +29,8 @@ Simulator::Run()
 {
     tim.Start();
     tim.Join();
-    lis.Start();
-    lis.Join();
+//    lis.Start();
+//    lis.Join();
     SimMain();
     return NULL;
 }
