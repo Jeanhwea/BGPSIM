@@ -22,7 +22,7 @@ void * Listener::Run()
     Listen();
 
     sockfd  ac_sfd;
-    ssize_t nread = 0;
+    size_t nread = 0;
     u_char  buf[4096];
     for (;;) {
         ac_sfd = Accept(mfd);
