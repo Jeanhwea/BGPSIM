@@ -11,7 +11,6 @@ class Event {
     private:
         event_t mType;
 
-
     public:
         Event ();
         virtual ~Event ();

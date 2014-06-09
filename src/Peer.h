@@ -59,5 +59,5 @@ class Peer : public Thread {
 };
 
 extern map<state_t, string> mapStateName;
-extern vector<Peer *>  mvPeers;
+extern vector<Peer *>       mvPeers;
 #endif /* end of include guard: PEER_V3V7QZZV */

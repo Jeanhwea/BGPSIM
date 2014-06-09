@@ -20,6 +20,7 @@ class Logger {
         void Error(const char *);
         void Fatal(const char *);
         void LogStateChage(state_t from, state_t to, event_t eve);
+        void LogDumpMsg(u_char * data, ssize_t len);
 };
 
 #endif /* end of include guard: LOGGER_6S0KXYMJ */

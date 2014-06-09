@@ -24,5 +24,4 @@ Event::Event()
 
 Event::~Event()
 {
-
 }

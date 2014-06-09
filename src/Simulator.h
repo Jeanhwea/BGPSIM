@@ -45,8 +45,8 @@ class Simulator : public Thread {
         Timer                       tim;
 
     public:
-        Simulator ();
-        virtual ~Simulator ();
+        Simulator();
+        virtual ~Simulator();
         void * Run();
 
         void FSM(Peer *, event_t);

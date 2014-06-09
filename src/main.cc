@@ -9,7 +9,7 @@ int
 main(int argc, char const *argv[])
 {
     if (isDebug)
-        printf("Debug is on ... ...\n");
+        cout << "Debug is on ..." << endl;
 
     g_log = new Logger;
     g_sim = new Simulator;

@@ -53,10 +53,14 @@ Logger::LogStateChage(state_t from, state_t to, event_t eve)
                 mapEventName[eve].c_str());
 }
 
-
-// const char *
-// Logger::LogAddr(const struct in_addr * addr)
-// {
-//     static char buf[48];
-//
-// }
+#define PRINT_ALIGN 16
+void
+Logger::LogDumpMsg(u_char* data, ssize_t len)
+{
+    fprintf(out, "MSG with %luB, Dump\n", len);
+    for (int i = 0; i < len; ++i) {
+        if (!((i)%PRINT_ALIGN)) fprintf(out, "0x%04x : ", i);
+        fprintf(out, "%02x%c", *(data+i), (i+1)%PRINT_ALIGN ? ' ' : '\n');
+    }
+    if (len%PRINT_ALIGN) fprintf(out, "\n");
+}
