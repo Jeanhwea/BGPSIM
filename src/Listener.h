@@ -12,7 +12,6 @@ class Listener : public Thread {
     private:
         sockfd      mfd; // member sockfd
 
-        Logger      log;
     public:
         Listener();
         virtual ~Listener();

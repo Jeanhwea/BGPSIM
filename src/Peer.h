@@ -43,6 +43,7 @@ class Peer : public Thread {
         Peer ();
         virtual ~Peer ();
         void * Run();
+        void * Run(event_t eve);
 
         state_t GetPeerState() {
             return mState;

@@ -23,7 +23,8 @@ void * Listener::Run()
     return NULL;
 }
 
-bool 
+
+bool
 Listener::SetMainSocket()
 {
     // htons h:host n:network s:short
@@ -31,22 +32,23 @@ Listener::SetMainSocket()
     // PF_foo := protocol family
     mfd = socket( AF_PACKET, SOCK_RAW, htons(ETH_P_ALL) );
     if (mfd < 0) {
-        log.Error("failed to add main socket");
+        g_log->Error("failed to add main socket");
         return false;
-    }
+    } else
+        g_log->Tips("add main socket in listener");
 
     return true;
 }
 
 sockfd
-Listener::Init() 
+Listener::Init()
 {
     struct sockaddr_in  sad;
     sockfd              sfd;
 
     sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     if (sfd == -1) {
-        log.Warning("cannot init listen socket");
+        g_log->Warning("cannot init listen socket");
         return (-1);
     }
 
@@ -57,7 +59,7 @@ Listener::Init()
 
     if ( bind(sfd, (struct sockaddr *)&sad, sizeof(sad)) == -1 ) {
         close(sfd);
-        log.Error("cannot bind socket");
+        g_log->Error("cannot bind socket");
         return (-1);
     }
 
@@ -70,10 +72,10 @@ Listener::Init()
 #define MAX_BACKLOG     10
 
 sockfd
-Listener::Listen() 
+Listener::Listen()
 {
     if (listen(mfd, MAX_BACKLOG) == -1) {
-        log.Error("cannot listen");
+        g_log->Error("cannot listen");
         assert(false);
         return (-1);
     }
@@ -82,13 +84,13 @@ Listener::Listen()
 }
 
 void
-Listener::Shutdown() 
+Listener::Shutdown()
 {
     close(mfd);
 }
 
 sockfd
-Listener::Accept(sockfd lisfd) 
+Listener::Accept(sockfd lisfd)
 {
     sockfd              connfd;
     socklen_t           len;
@@ -97,24 +99,24 @@ Listener::Accept(sockfd lisfd)
     len = sizeof(sad);
     connfd = accept(lisfd, (struct sockaddr *)&sad, &len);
     if (connfd == -1) {
-        if (errno != EWOULDBLOCK && errno != EINTR) 
-            log.Warning("accept bug in Listener");
+        if (errno != EWOULDBLOCK && errno != EINTR)
+            g_log->Warning("accept bug in Listener");
         return (-1);
     }
-    
+
     UnsetBlock(connfd);
 
     return connfd;
 }
 
 bool
-Listener::SetBlock(sockfd sfd) 
+Listener::SetBlock(sockfd sfd)
 {
     int flags;
 
     flags = fcntl(sfd, F_GETFL, 0);
     if (flags == -1) {
-        log.Fatal("fnctl F_GETFL");
+        g_log->Fatal("fnctl F_GETFL");
         return false;
     }
 
@@ -122,7 +124,7 @@ Listener::SetBlock(sockfd sfd)
 
     flags = fcntl(sfd, F_SETFL, flags);
     if (flags == -1) {
-        log.Fatal("fnctl F_SETFL");
+        g_log->Fatal("fnctl F_SETFL");
         return false;
     }
 
@@ -130,13 +132,13 @@ Listener::SetBlock(sockfd sfd)
 }
 
 bool
-Listener::UnsetBlock(sockfd sfd) 
+Listener::UnsetBlock(sockfd sfd)
 {
     int flags;
 
     flags = fcntl(sfd, F_GETFL, 0);
     if (flags == -1) {
-        log.Fatal("fnctl F_GETFL");
+        g_log->Fatal("fnctl F_GETFL");
         return false;
     }
 
@@ -144,7 +146,7 @@ Listener::UnsetBlock(sockfd sfd)
 
     flags = fcntl(sfd, F_SETFL, flags);
     if (flags == -1) {
-        log.Fatal("fnctl F_SETFL");
+        g_log->Fatal("fnctl F_SETFL");
         return false;
     }
 

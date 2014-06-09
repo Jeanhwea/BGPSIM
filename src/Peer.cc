@@ -43,6 +43,15 @@ Peer::Run()
     return NULL;
 }
 
+void *
+Peer::Run(event_t eve)
+{
+    if (isDebug)
+        cout << "Peer_" << Self() << " Runs ..." << endl;
+    g_sim->FSM(this, eve);
+    return NULL;
+}
+
 void
 Peer::InitTimer()
 {

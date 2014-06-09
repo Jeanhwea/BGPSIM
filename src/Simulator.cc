@@ -29,6 +29,8 @@ Simulator::Run()
 {
     tim.Start();
     tim.Join();
+    lis.Start();
+    lis.Join();
     SimMain();
     return NULL;
 }
@@ -291,10 +293,10 @@ Simulator::SimTCPEstablished(Peer * pPeer)
 
     len = sizeof(pPeer->sa_local);
     if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1)
-        g_log->Warning("getsockname");
+        g_log->Warning("getsockname failed");
     len = sizeof(pPeer->sa_remote);
     if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1)
-        g_log->Warning("getpeername");
+        g_log->Warning("getpeername failed");
 }
 
 bool

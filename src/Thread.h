@@ -4,6 +4,13 @@
 
 #include "global.h"
 
+class Thread;
+
+struct arg_eve {
+    event_t     eve;
+    Thread    * thd;
+};
+
 class Thread {
     private:
         static pthread_t thread_cnt;
@@ -11,16 +18,18 @@ class Thread {
         bool isRunning;
         bool isDetached;
 
-        static void * RunThread(void * arg) {
-            return ((Thread *)arg)->Run();
-        }
+        static void * RunThread_one(void * arg);
+        static void * RunThread_two(void * arg);
 
     public:
-        Thread ();
-        virtual ~Thread ();
+        Thread();
+        virtual ~Thread();
         virtual void * Run() = 0;
+        // use for just Peer when handle event
+        virtual void * Run(event_t eve) { return NULL;}
 
         bool Start();
+        bool Start(event_t eve);
         bool Join();
         bool Detach();
         pthread_t Self();

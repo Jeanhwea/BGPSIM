@@ -74,8 +74,9 @@ extern FILE * outfd;
 extern FILE * errfd;
 extern FILE * logfd;
 
-class Simulator;
-extern Simulator * g_sim;
 class Logger;
 extern Logger * g_log;
+
+class Simulator;
+extern Simulator * g_sim;
 #endif /* end of include guard: GLOBAL_H */
