@@ -106,21 +106,21 @@ Listener::Accept(sockfd lisfd)
 {
     sockfd              connfd;
     socklen_t           len;
-    struct sockaddr_in  sad;
+    struct sockaddr_in *sad = NULL;
 
-    len = sizeof(sad);
-    sad.sin_addr.s_addr = htonl(INADDR_ANY);
-    sad.sin_family = AF_INET;
-    sad.sin_port = htons(BGP_PORT);
-    connfd = accept(lisfd, (struct sockaddr *)&sad, &len);
+    len = sizeof(struct sockaddr_in);
+//     sad.sin_addr.s_addr = htonl(INADDR_ANY);
+//     sad.sin_family = AF_INET;
+//     sad.sin_port = htons(BGP_PORT);
+    connfd = accept(lisfd, (struct sockaddr *)sad, &len);
     if (connfd == -1) {
         if (errno != EWOULDBLOCK && errno != EINTR)
             g_log->Warning("accept bug in Listener");
         return (-1);
-    } else
+    } else {
         g_log->Tips("Accept successfully !!! ");
-
-    UnsetBlock(connfd);
+        UnsetBlock(connfd);
+    }
 
     return connfd;
 }
