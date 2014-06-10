@@ -9,7 +9,6 @@
 #include "Event.h"
 #include "Message.h"
 #include "Timer.h"
-
 bool isDebug = true;
 
 FILE * outfd = stdout;
