@@ -76,7 +76,6 @@ Message::Write(sockfd sfd, Message * buf)
         nleft -= nwrite;
         ptr += nwrite;
     }
-
     return true;
 }
 

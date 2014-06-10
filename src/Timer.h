@@ -11,7 +11,6 @@ class Timer : public Thread {
     private:
         static Simulator * sim;
         static time_t interval;
-        static time_t walltime;
 
         static Timer * instance;
         static int ref_times;

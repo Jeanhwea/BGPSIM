@@ -65,7 +65,6 @@ using namespace std;
 
 
 class Message {
-
     private:
         static deque<Message *> mqMessage;
 

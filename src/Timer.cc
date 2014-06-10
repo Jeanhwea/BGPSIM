@@ -3,8 +3,8 @@
 
 using namespace std;
 
+time_t walltime = 0;
 time_t Timer::interval = 1;
-time_t Timer::walltime = 0;
 
 // all timer shares this one instance
 Timer * Timer::instance = NULL;
@@ -62,7 +62,7 @@ void
 Timer::TimerHandler(int sig)
 {
     if (isDebug)
-        cout << "Tick : " << ++ Timer::walltime << endl;
+        cout << "Tick : " << ++ walltime << endl;
     alarm(Timer::interval);
     GetInst()->Schedule();
 }

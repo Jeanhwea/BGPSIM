@@ -69,6 +69,7 @@ typedef int sockfd;
 
 extern int errno;
 extern bool isDebug;
+extern time_t walltime;
 
 extern FILE * outfd;
 extern FILE * errfd;
