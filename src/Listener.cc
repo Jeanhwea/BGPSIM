@@ -126,6 +126,13 @@ Listener::Accept(sockfd lisfd)
 }
 
 bool
+Listener::Init(Peer * pPeer)
+{
+    // TODO
+}
+
+
+bool
 Listener::SetBlock(sockfd sfd)
 {
     int flags;

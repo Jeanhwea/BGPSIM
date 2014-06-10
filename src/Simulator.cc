@@ -44,11 +44,15 @@ Simulator::SimMain()
     Peer * pPeer;
     if (isDebug)
         cout << "in sim main" << endl;
+    for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+        pPeer = *vit;
+        pPeer->Start();
+    }
     while (mQuit == false) {
-        for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
-            pPeer = *vit;
-            pPeer->Start(BGP_START);
-        }
+//         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+//             pPeer = *vit;
+//             pPeer->Start(BGP_START);
+//         }
 //         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
 //             pPeer = *vit;
 //             pPeer->Join();
@@ -338,7 +342,7 @@ Simulator::SimConnect(Peer * pPeer)
             FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
             return false;
         } else {
-            g_log->Tips("peer connect in progress...");
+            FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         }
     } else {
         FSM(pPeer, BGP_TRANS_CONN_OPEN);
@@ -620,6 +624,13 @@ Simulator::UnsetBlock(sockfd sfd)
 {
     return lis.UnsetBlock(sfd);
 }
+
+bool
+Simulator::InitPeerConn(Peer * pPeer)
+{
+
+}
+
 
 bool
 Simulator::LoadSimConf(const char * filename)

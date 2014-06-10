@@ -44,7 +44,8 @@ Timer::Schedule()
             pPeer->KeepaliveTimer ++;
         if (pPeer->IdleHoldTimer >= 0)
             pPeer->IdleHoldTimer ++;
-        if (pPeer->ConnetRetryTimer <= time(NULL)) {
+        if (pPeer->ConnetRetryTimer > 0 &&
+                pPeer->ConnetRetryTimer <= time(NULL)) {
             g_sim->FSM(pPeer, CONN_RETRY_TIMER_EXPIRED);
         }
     }
