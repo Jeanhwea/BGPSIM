@@ -58,7 +58,7 @@ Listener::Init()
     struct sockaddr_in  sad;
     sockfd              sfd;
 
-    sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sfd == -1) {
         g_log->Warning("cannot init listen socket");
         return (-1);
@@ -126,9 +126,54 @@ Listener::Accept(sockfd lisfd)
 }
 
 bool
-Listener::Init(Peer * pPeer)
+Listener::InitPeerConn(Peer * pPeer)
 {
-    // TODO
+    struct sockaddr_in  sad;
+    sockfd              sfd;
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sfd == -1) {
+        g_log->Error("Cannot init peer socket1");
+        return false;
+    }
+
+    memset(&sad, 0, sizeof(sad));
+    sad.sin_family = AF_INET;
+    sad.sin_addr = pPeer->conf.local_addr;
+    sad.sin_port = htons(BGP_PORT);
+
+    if (bind(sfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
+        close(sfd);
+        g_log->Error("Cannot bind peer socket");
+        return false;
+    }
+
+    UnsetBlock(sfd);
+
+    if (listen(sfd, MAX_BACKLOG) == -1) {
+        g_log->Error("Cannot listen peer socket");
+        assert(false);
+        return false;
+    }
+
+    sockfd      acfd;
+    socklen_t   len;
+    len = sizeof(struct sockaddr_in);
+    sad.sin_family = AF_INET;
+    sad.sin_addr = pPeer->conf.remote_addr;
+    sad.sin_port = htons(BGP_PORT);
+    size_t      nread = 0;
+    u_char      buf[40960];
+    for (;;) {
+        acfd = accept(sfd, (struct sockaddr *)&sad, &len);
+        if (acfd == -1) continue;
+        pPeer->sfd = acfd;
+        nread = read(acfd, buf, 40960);
+        g_log->LogDumpMsg(buf, nread);
+        close(acfd);
+        return true;
+    }
+
+    return true;
 }
 
 

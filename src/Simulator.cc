@@ -3,6 +3,7 @@
 #define INIT_MSG_LEN 65535
 using namespace std;
 
+
 Simulator::Simulator()
 {
     mQuit = false;
@@ -10,12 +11,13 @@ Simulator::Simulator()
 
     Peer * pPeer;
     vector<struct sim_config>::iterator sit;
+    // instantiation of a peers list
     for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
         pPeer = new Peer();
         pPeer->conf.passive = false;
         pPeer->conf.remote_as = sit->as;
-        pPeer->holdtime = T_HOLD_INITIAL;
-        memcpy(& pPeer->conf.remote_addr, & sit->ipaddr, sizeof(sit->ipaddr));
+        memcpy(& pPeer->conf.local_addr, & sit->laddr, sizeof(sit->laddr));
+        memcpy(& pPeer->conf.remote_addr, & sit->raddr, sizeof(sit->raddr));
         vPeers.push_back(pPeer);
     }
     cout << "initail peer size = " << vPeers.size() << endl;
@@ -29,10 +31,10 @@ void *
 Simulator::Run()
 {
     tim.Start();
-    tim.Join();
 //    lis.Start();
-//    lis.Join();
     SimMain();
+    tim.Join();
+//    lis.Join();
     return NULL;
 }
 
@@ -337,13 +339,7 @@ Simulator::SimConnect(Peer * pPeer)
     sad.sin_family = AF_INET;
     sad.sin_port = htons(BGP_PORT);
     if (connect(pPeer->sfd, (sockaddr *) &sad, sizeof(sad)) == -1) {
-        if (errno != EINPROGRESS) {
-            g_log->Warning("peer connect failed");
-            FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
-            return false;
-        } else {
-            FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
-        }
+        FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
     } else {
         FSM(pPeer, BGP_TRANS_CONN_OPEN);
     }
@@ -637,13 +633,15 @@ Simulator::LoadSimConf(const char * filename)
 {
     FILE          * ffd;
     int             as;
-    char            addr[32];
-    struct in_addr  inad;
+    char            lad[32];
+    char            rad[32];
+    struct in_addr  linad;
+    struct in_addr  rinad;
     sim_config    * sconf;
 
     ffd = fopen(filename, "r");
     if (ffd == NULL) {
-        g_log->Error("cannot open sim config file");
+        g_log->Error("Cannot open sim config file");
         return false;
     }
 
@@ -651,17 +649,15 @@ Simulator::LoadSimConf(const char * filename)
     conf_as = htons(as);
     if (isDebug)
         fprintf(outfd, "Local Simulator in AS%d\n", as);
-    while (fscanf(ffd, "%d%s", &as, addr) != EOF) {
-        if( !inet_aton(addr, &inad) ) {
+    while (fscanf(ffd, "%d%s%s", &as, lad, rad) != EOF) {
+        if(!inet_aton(lad, &linad) || !inet_aton(rad, &rinad) )
             g_log->Warning("no a valid ip");
-        }
         sconf = (sim_config *) malloc(sizeof(sim_config));
         sconf->as = htons(as);
-        sconf->bgpid = htonl((u_int32_t) inad.s_addr);
-        memcpy(&sconf->ipaddr, &inad, sizeof(inad));
+        memcpy(&sconf->laddr, &linad, sizeof(linad));
+        memcpy(&sconf->raddr, &rinad, sizeof(rinad));
         vPeerConf.push_back(*sconf);
-        if (isDebug)
-            fprintf(outfd, "Add peer config AS%d, %s\n", as, addr);
+        g_log->LogSimConf(as, lad, rad);
     }
     fclose(ffd);
     return true;

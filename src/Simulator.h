@@ -17,9 +17,9 @@
 using namespace std;
 
 struct sim_config {
-    u_int16_t           as;
-    u_int32_t           bgpid;
-    struct in_addr      ipaddr;
+    u_int16_t           as;     // as number
+    struct in_addr      laddr;  // local ip address
+    struct in_addr      raddr;  // remote ip address
 };
 
 typedef enum {

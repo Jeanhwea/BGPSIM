@@ -9,7 +9,8 @@ Thread::Thread()
 : mTid(0), isRunning(false), isDetached(false)
 {
     ++ thread_cnt;
-    g_log->Tips("Add thread");
+//     if (isDebug)
+//         fprintf(outfd, "Add Thread%d\n", thread_cnt);
 }
 
 Thread::~Thread()

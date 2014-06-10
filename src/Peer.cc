@@ -2,6 +2,7 @@
 #include "Simulator.h"
 
 vector<Peer *>  vPeers;
+int peer_cnt = 0;
 
 map<state_t, string> mapStateName = {
     { IDLE, "idle" },
@@ -14,10 +15,12 @@ map<state_t, string> mapStateName = {
 
 Peer::Peer()
 {
+    peerid = ++peer_cnt;
     HoldTimer = -1;
     KeepaliveTimer = -1;
     ConnetRetryTimer = -1;
     sfd = -1;
+    holdtime = T_HOLD_INITIAL;
     rbuf = NULL;
     wbuf = NULL;
     mState = IDLE;
@@ -34,13 +37,12 @@ Peer::~Peer()
 void *
 Peer::Run()
 {
-    g_log->Tips("Peer runs ...");
     if (isDebug)
-        cout << "Peer_" << Self() << " Runs ..." << endl;
+        cout << "Peer_" << peerid << " Runs ..." << endl;
     if (mState == IDLE)
         g_sim->FSM(this, BGP_START);
     else
-        g_log->Warning("Peer try start with non-IDLE state");
+        g_log->Warning("Peer try to start with non-IDLE state");
     return NULL;
 }
 

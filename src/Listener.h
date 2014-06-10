@@ -26,7 +26,7 @@ class Listener : public Thread {
         sockfd Accept(sockfd lisfd);
 
         // peer listen helper or connect helper
-        bool Init(Peer * pPeer);
+        bool InitPeerConn(Peer * pPeer);
 
         // socket helper
         bool SetBlock(sockfd sfd);
