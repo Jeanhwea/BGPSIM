@@ -7,6 +7,7 @@ using namespace std;
 Simulator::Simulator()
 {
     mQuit = false;
+    conf_holdtime = T_HOLD_INITIAL;
     LoadSimConf("/home/fuzl/.peer.conf");
 
     Peer * pPeer;
@@ -601,31 +602,71 @@ Simulator::ParseNotification(Peer * pPeer)
 bool
 Simulator::ParseUpdate(Peer * pPeer)
 {
-    return true;
 }
 
 bool
 Simulator::ParseKeepalive(Peer * pPeer)
 {
-    return true;
 }
 
 bool
 Simulator::SetBlock(sockfd sfd)
 {
-    return lis.SetBlock(sfd);
+    return Listener::SetBlock(sfd);
 }
 
 bool
 Simulator::UnsetBlock(sockfd sfd)
 {
-    return lis.UnsetBlock(sfd);
+    return Listener::UnsetBlock(sfd);
 }
 
 bool
 Simulator::InitPeerConn(Peer * pPeer)
 {
-    return lis.InitPeerConn(pPeer);
+    struct sockaddr_in  sad;
+    sockfd              sfd;
+    sfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sfd == -1) {
+        g_log->Error("Cannot init peer socket1");
+        return false;
+    }
+
+    memset(&sad, 0, sizeof(sad));
+    sad.sin_family = AF_INET;
+    sad.sin_addr = pPeer->conf.local_addr;
+    sad.sin_port = htons(BGP_PORT);
+
+    if (bind(sfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
+        close(sfd);
+        g_log->Error("Cannot bind peer socket");
+        return false;
+    }
+
+    UnsetBlock(sfd);
+
+    if (listen(sfd, MAX_BACKLOG) == -1) {
+        g_log->Error("Cannot listen peer socket");
+        assert(false);
+        return false;
+    }
+
+    sockfd      acfd;
+    socklen_t   len;
+    len = sizeof(struct sockaddr_in);
+    sad.sin_family = AF_INET;
+    sad.sin_addr = pPeer->conf.remote_addr;
+    sad.sin_port = htons(BGP_PORT);
+    size_t      nread = 0;
+    u_char      buf[40960];
+    for (;;) {
+        acfd = accept(sfd, (struct sockaddr *)&sad, &len);
+        if (acfd == -1) continue;
+        pPeer->sfd = acfd;
+        return true;
+    }
+
+    return true;
 }
 
 
@@ -638,6 +679,7 @@ Simulator::LoadSimConf(const char * filename)
     char            rad[32];
     struct in_addr  linad;
     struct in_addr  rinad;
+    struct in_addr * lisa;
     sim_config    * sconf;
 
     ffd = fopen(filename, "r");
@@ -646,7 +688,7 @@ Simulator::LoadSimConf(const char * filename)
         return false;
     }
 
-    fscanf(ffd, "%d", &as);
+    fscanf(ffd, "%d%s", &as, lad);
     conf_as = htons(as);
     if (isDebug)
         fprintf(outfd, "Local Simulator in AS%d\n", as);
@@ -654,10 +696,13 @@ Simulator::LoadSimConf(const char * filename)
         if(!inet_aton(lad, &linad) || !inet_aton(rad, &rinad) )
             g_log->Warning("no a valid ip");
         sconf = (sim_config *) malloc(sizeof(sim_config));
+        lisa = (struct in_addr *) malloc(sizeof(struct in_addr));
         sconf->as = htons(as);
         memcpy(&sconf->laddr, &linad, sizeof(linad));
         memcpy(&sconf->raddr, &rinad, sizeof(rinad));
+        memcpy(lisa, &rinad, sizeof(rinad));
         vPeerConf.push_back(*sconf);
+        vLisaddr.push_back(*lisa);
         g_log->LogSimConf(as, lad, rad);
     }
     fclose(ffd);

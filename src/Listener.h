@@ -7,25 +7,32 @@
 #include "Thread.h"
 #include "Peer.h"
 
+#define MAX_BACKLOG 10
+
 using namespace std;
+
 
 class Listener : public Thread {
     private:
-        sockfd      mfd; // member sockfd
+        struct in_addr  la;     // local address
+        struct in_addr  ra;     // remote address
+        sockfd          lfd;    // listen socket fd
+        sockfd          afd;    // accepet socket fd
 
     public:
-        Listener();
+        Listener(struct in_addr & l, struct in_addr & r);
         virtual ~Listener();
         void * Run();
-        bool SetMainSocket();
-
 
         // peer listen helper or connect helper
-        bool InitPeerConn(Peer * pPeer);
+        bool InitConn(struct in_addr & addr);
+        bool TryAccept(struct in_addr & addr);
 
         // socket helper
-        bool SetBlock(sockfd sfd);
-        bool UnsetBlock(sockfd sfd);
+        static bool SetBlock(sockfd sfd);
+        static bool UnsetBlock(sockfd sfd);
+
 };
+
 
 #endif /* end of include guard: LISTENER_FCV7JYL9 */
