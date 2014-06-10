@@ -38,7 +38,7 @@ Timer::Schedule()
 {
     vector<Peer *>::iterator vit;
     Peer * pPeer;
-    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+    for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
         if (pPeer->KeepaliveTimer >= 0)
             pPeer->KeepaliveTimer ++;

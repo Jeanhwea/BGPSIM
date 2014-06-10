@@ -1,7 +1,7 @@
 #include "Peer.h"
 #include "Simulator.h"
 
-vector<Peer *>  mvPeers;
+vector<Peer *>  vPeers;
 
 map<state_t, string> mapStateName = {
     { IDLE, "idle" },

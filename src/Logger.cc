@@ -56,7 +56,8 @@ Logger::LogStateChage(state_t from, state_t to, event_t eve)
 void
 Logger::LogPeerEve(event_t eve)
 {
-    fprintf(out, "Peer runs, handling event : %s\n", mapEventName[eve].c_str());
+    fprintf(out, "Peer runs, handling event : %s\n",
+            mapEventName[eve].c_str());
 }
 
 
@@ -67,7 +68,9 @@ Logger::LogDumpMsg(u_char * data, size_t len)
     fprintf(out, "MSG with %uBytes, Dump\n", (unsigned int)len);
     if (len > 4096) return;
     for (size_t i = 0; i < len; ++i) {
-        if (!((i)%PRINT_ALIGN)) fprintf(out, "0x%04x : ", (unsigned int)i);
+        if (!((i)%PRINT_ALIGN))
+            fprintf(out, "0x%04x : ", (unsigned int)i);
+
         fprintf(out, "%02x%c", *(data+i), (i+1)%PRINT_ALIGN ? ' ' : '\n');
     }
     if (len%PRINT_ALIGN) fprintf(out, "\n");

@@ -26,6 +26,8 @@ class Peer : public Thread {
 
     public:
         sockfd              sfd;
+        struct sockaddr_in  sa_local;
+        struct sockaddr_in  sa_remote;
         u_int16_t           holdtime;
         struct peer_config  conf;
 
@@ -34,13 +36,10 @@ class Peer : public Thread {
         time_t              HoldTimer;
         time_t              IdleHoldTimer;
 
-        struct sockaddr_in  sa_local;
-        struct sockaddr_in  sa_remote;
-
         Buffer            * rbuf;
         Message           * wbuf;
 
-        Peer ();
+        Peer();
         virtual ~Peer ();
         void * Run();
         void * Run(event_t eve);
@@ -59,5 +58,5 @@ class Peer : public Thread {
 };
 
 extern map<state_t, string> mapStateName;
-extern vector<Peer *>       mvPeers;
+extern vector<Peer *>       vPeers;
 #endif /* end of include guard: PEER_V3V7QZZV */

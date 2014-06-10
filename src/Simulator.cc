@@ -14,10 +14,11 @@ Simulator::Simulator()
         pPeer = new Peer();
         pPeer->conf.passive = false;
         pPeer->conf.remote_as = sit->as;
+        pPeer->holdtime = T_HOLD_INITIAL;
         memcpy(& pPeer->conf.remote_addr, & sit->ipaddr, sizeof(sit->ipaddr));
-        mvPeers.push_back(pPeer);
+        vPeers.push_back(pPeer);
     }
-    cout << "initail peer size = " << mvPeers.size() << endl;
+    cout << "initail peer size = " << vPeers.size() << endl;
 }
 
 Simulator::~Simulator()
@@ -41,13 +42,17 @@ Simulator::SimMain()
 {
     vector<Peer *>::iterator vit;
     Peer * pPeer;
-    cout << "in sim main" << endl;
-    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
-        pPeer = *vit;
-        pPeer->Start(BGP_START);
-//         pPeer->Start();
-    }
+    if (isDebug)
+        cout << "in sim main" << endl;
     while (mQuit == false) {
+        for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+            pPeer = *vit;
+            pPeer->Start(BGP_START);
+        }
+//         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+//             pPeer = *vit;
+//             pPeer->Join();
+//         }
     }
 }
 
@@ -399,7 +404,7 @@ Simulator::GetPeerByAddr(struct in_addr * addr)
     vector<Peer *>::iterator vit;
     Peer * pPeer, * ret;
     ret = NULL;
-    for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
+    for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
         if (memcmp(& pPeer->conf.remote_addr.s_addr, &addr->s_addr, sizeof(addr->s_addr)) == 0) {
             ret = pPeer;
