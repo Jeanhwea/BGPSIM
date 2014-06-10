@@ -11,7 +11,6 @@ using namespace std;
 
 class Buffer {
     private:
-        static deque<Buffer *> mqBuffer;
         Logger log;
 
     public:

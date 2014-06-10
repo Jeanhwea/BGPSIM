@@ -2,14 +2,13 @@
 
 deque<Buffer *> Buffer::mqBuffer;
 
-Buffer::Buffer() 
+Buffer::Buffer()
 {
     rptr = buf;
     wpos = 0;
 }
 
 
-Buffer::~Buffer() 
+Buffer::~Buffer()
 {
-
 }

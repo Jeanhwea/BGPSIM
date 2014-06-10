@@ -1,5 +1,4 @@
 #!/bin/bash
-
 if [[ $# -le 0 ]]; then
     echo "usage: ./bashcmd.sh number"
     exit
