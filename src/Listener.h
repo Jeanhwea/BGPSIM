@@ -19,11 +19,6 @@ class Listener : public Thread {
         void * Run();
         bool SetMainSocket();
 
-        // control operations
-        sockfd Init();
-        sockfd Listen();
-        void Shutdown();
-        sockfd Accept(sockfd lisfd);
 
         // peer listen helper or connect helper
         bool InitPeerConn(Peer * pPeer);

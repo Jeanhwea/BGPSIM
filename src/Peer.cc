@@ -51,7 +51,7 @@ Peer::Run(event_t eve)
 {
     g_log->LogPeerEve(eve);
     if (isDebug)
-        cout << "Peer_" << Self() << " Runs ..." << endl;
+        cout << "Peer_" << peerid << " Runs ..." << endl;
     g_sim->FSM(this, eve);
     return NULL;
 }

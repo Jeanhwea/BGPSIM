@@ -48,6 +48,7 @@ Simulator::SimMain()
         cout << "in sim main" << endl;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
+        InitPeerConn(pPeer);
         pPeer->Start();
     }
     while (mQuit == false) {
@@ -624,7 +625,7 @@ Simulator::UnsetBlock(sockfd sfd)
 bool
 Simulator::InitPeerConn(Peer * pPeer)
 {
-
+    return lis.InitPeerConn(pPeer);
 }
 
 
