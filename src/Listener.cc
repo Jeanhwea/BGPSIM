@@ -16,18 +16,18 @@ Listener::~Listener()
 
 void * Listener::Run()
 {
-    cout << "int listen main run" << endl;
+    g_log->Tips("Listener runs ...");
     SetMainSocket();
     Init();
     Listen();
 
     sockfd  ac_sfd;
     size_t nread = 0;
-    u_char  buf[4096];
+    u_char  buf[40960];
     for (;;) {
         ac_sfd = Accept(mfd);
         if (ac_sfd != -1) {
-            nread = read(ac_sfd, buf, 4096);
+            nread = read(ac_sfd, buf, 40960);
             g_log->LogDumpMsg(buf, nread);
         }
         close(ac_sfd);

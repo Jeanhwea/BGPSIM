@@ -34,6 +34,7 @@ Peer::~Peer()
 void *
 Peer::Run()
 {
+    g_log->Tips("Peer runs ...");
     if (isDebug)
         cout << "Peer_" << Self() << " Runs ..." << endl;
     if (mState == IDLE)
@@ -46,6 +47,7 @@ Peer::Run()
 void *
 Peer::Run(event_t eve)
 {
+    g_log->LogPeerEve(eve);
     if (isDebug)
         cout << "Peer_" << Self() << " Runs ..." << endl;
     g_sim->FSM(this, eve);

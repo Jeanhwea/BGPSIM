@@ -53,6 +53,13 @@ Logger::LogStateChage(state_t from, state_t to, event_t eve)
                 mapEventName[eve].c_str());
 }
 
+void
+Logger::LogPeerEve(event_t eve)
+{
+    fprintf(out, "Peer runs, handling event : %s\n", mapEventName[eve].c_str());
+}
+
+
 #define PRINT_ALIGN 16
 void
 Logger::LogDumpMsg(u_char * data, size_t len)

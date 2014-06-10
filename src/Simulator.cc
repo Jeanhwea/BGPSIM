@@ -44,7 +44,8 @@ Simulator::SimMain()
     cout << "in sim main" << endl;
     for (vit = mvPeers.begin(); vit != mvPeers.end(); ++vit) {
         pPeer = *vit;
-        pPeer->Start();
+        pPeer->Start(BGP_START);
+//         pPeer->Start();
     }
     while (mQuit == false) {
     }

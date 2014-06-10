@@ -21,6 +21,7 @@ class Logger {
         void Fatal(const char *);
         void LogStateChage(state_t from, state_t to, event_t eve);
         void LogDumpMsg(u_char * data, size_t len);
+        void LogPeerEve(event_t eve);
 };
 
 #endif /* end of include guard: LOGGER_6S0KXYMJ */
