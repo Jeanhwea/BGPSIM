@@ -1,7 +1,5 @@
 #include "Buffer.h"
 
-deque<Buffer *> Buffer::mqBuffer;
-
 Buffer::Buffer()
 {
     rptr = buf;
