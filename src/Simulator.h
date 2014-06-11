@@ -22,15 +22,6 @@ struct sim_config {
     struct in_addr      raddr;  // remote ip address
 };
 
-typedef enum {
-    ERR_HEADER = 1,
-    ERR_OPEN,
-    ERR_UPDATE,
-    ERR_HOLDTIMEREXPIRED,
-    ERR_FSM,
-    ERR_CEASE
-} err_codes;
-
 class Simulator : public Thread {
     private:
         // flags for Simulator

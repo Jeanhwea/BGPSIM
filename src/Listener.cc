@@ -5,7 +5,7 @@ using namespace std;
 #define BUF_SIZE        8096
 #define IP_ADDR_SIZE    64
 
-Listener::Listener(in_addr & l, in_addr & r)
+Listener::Listener(struct in_addr & l, struct in_addr & r)
 {
     afd = lfd = -1;
     memcpy(&la, &l, sizeof(l));
@@ -44,8 +44,8 @@ Listener::InitConn(struct in_addr & lisaddr)
 
     memset(&sad, 0, sizeof(sad));
     sad.sin_family = AF_INET;
-    sad.sin_addr.s_addr = htonl(INADDR_ANY);
-//     sad.sin_addr.s_addr = lisaddr.s_addr;
+//     sad.sin_addr.s_addr = htonl(INADDR_ANY);
+    sad.sin_addr.s_addr = lisaddr.s_addr;
     sad.sin_port = htons(BGP_PORT);
 
     if (bind(lfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
@@ -54,7 +54,8 @@ Listener::InitConn(struct in_addr & lisaddr)
         lfd = -1;
         g_log->Error("Cannot bind peer socket");
         return false;
-    }
+    } else
+        g_log->Tips("bind success");
 
     UnsetBlock(lfd);
 
@@ -76,6 +77,8 @@ Listener::TryAccept(struct in_addr & addr)
     sad.sin_family = AF_INET;
     sad.sin_addr = addr;
     sad.sin_port = htons(BGP_PORT);
+    if (lfd == -1)
+        g_log->Error("Cannot accept socket with -1 listen fd");
     afd = accept(lfd, (struct sockaddr *)&sad, &len);
     return (afd != -1);
 }
