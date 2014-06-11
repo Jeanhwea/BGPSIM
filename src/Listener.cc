@@ -44,10 +44,12 @@ Listener::InitConn(struct in_addr & lisaddr)
 
     memset(&sad, 0, sizeof(sad));
     sad.sin_family = AF_INET;
-    sad.sin_addr = lisaddr;
+    sad.sin_addr.s_addr = htonl(INADDR_ANY);
+//     sad.sin_addr.s_addr = lisaddr.s_addr;
     sad.sin_port = htons(BGP_PORT);
 
     if (bind(lfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
+        g_log->ShowErrno();
         close(lfd);
         lfd = -1;
         g_log->Error("Cannot bind peer socket");

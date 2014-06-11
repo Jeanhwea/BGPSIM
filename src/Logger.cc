@@ -48,6 +48,14 @@ Logger::Fatal(const char * emsg)
 }
 
 void
+Logger::ShowErrno()
+{
+    fprintf(err, "!!!!!!!!!!!!!!!! Errno : %s\n", strerror(errno));
+    fflush(err);
+}
+
+
+void
 Logger::LogStateChage(state_t from, state_t to, event_t eve)
 {
     fprintf(out, "Peer : { %s }->{ %s } : [%s]\n",
