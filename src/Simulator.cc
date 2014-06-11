@@ -51,12 +51,14 @@ Simulator::SimMain()
     Peer * pPeer;
     if (isDebug)
         cout << "Start simulator main" << endl;
-    for (lit= vListeners.begin(); lit != vListeners.end(); ++lit) {
-        (*lit)->Start();
-    }
+//     for (lit= vListeners.begin(); lit != vListeners.end(); ++lit) {
+//         (*lit)->Start();
+//     }
+    lit = vListeners.begin();
+    (*lit)->Start();
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
-        InitPeerConn(pPeer);
+//         InitPeerConn(pPeer);
         pPeer->Start();
     }
     while (mQuit == false) {
