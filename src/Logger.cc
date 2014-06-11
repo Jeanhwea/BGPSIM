@@ -54,6 +54,17 @@ Logger::ShowErrno()
     fflush(err);
 }
 
+void
+Logger::ShowIPAddr(struct in_addr & ad)
+{
+    fprintf(out, "ip:%s\n", inet_ntoa(ad));
+}
+
+void
+Logger::ShowIPAddr(sockaddr_in & sad)
+{
+    ShowIPAddr(sad.sin_addr);
+}
 
 void
 Logger::LogStateChage(state_t from, state_t to, event_t eve)

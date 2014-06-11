@@ -20,6 +20,8 @@ class Logger {
         void Error(const char *);
         void Fatal(const char *);
         void ShowErrno();
+        void ShowIPAddr(struct in_addr & ad);
+        void ShowIPAddr(struct sockaddr_in & sad);
         void LogStateChage(state_t from, state_t to, event_t eve);
         void LogDumpMsg(u_char * data, size_t len);
         void LogPeerEve(event_t eve);

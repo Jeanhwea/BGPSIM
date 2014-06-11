@@ -30,6 +30,7 @@ void * Listener::Run()
     struct sockaddr_in  sad;
     socklen_t           len;
 
+    g_log->Tips("Listener runs ... ");
     if ( !InitConn(la) )
         return NULL;
     while (true) {

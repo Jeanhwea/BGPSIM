@@ -293,7 +293,7 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 bool
 Simulator::SimSetupSocket(Peer * pPeer)
 {
-    int ttl = 2;
+    int ttl = 64;
     if (setsockopt(pPeer->sfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
         g_log->Warning("failed to set TTL");
         return false;
@@ -326,7 +326,7 @@ Simulator::SimConnect(Peer * pPeer)
     if (pPeer->sfd != -1)
         return false;
 
-    pPeer->sfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    pPeer->sfd = socket(AF_INET, SOCK_STREAM, 0);
     if (pPeer->sfd == -1) {
         g_log->Warning("Simulator socket connect");
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
@@ -346,6 +346,7 @@ Simulator::SimConnect(Peer * pPeer)
     sad.sin_addr = pPeer->conf.remote_addr;
     sad.sin_family = AF_INET;
     sad.sin_port = htons(BGP_PORT);
+    g_log->ShowIPAddr(sad);
     if (connect(pPeer->sfd, (sockaddr *) &sad, sizeof(sad)) == -1) {
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
     } else {
