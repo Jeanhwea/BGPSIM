@@ -104,9 +104,15 @@ Listener::TryAccept(struct sockaddr_in & sad)
 bool
 Listener::SetNonBlock(sockfd sfd)
 {
+    int flag = 1 ;
+    int ret = setsockopt( sfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int)) ;
+    if (ret < 0)
+        g_log->Error("Cannot set non-block");
+    return true;
 }
 
 bool
 Listener::UnsetNonBlock(sockfd sfd)
 {
+    return true;
 }
