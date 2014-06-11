@@ -31,6 +31,7 @@ void * Listener::Run()
     socklen_t           len;
 
     g_log->Tips("Listener runs ... ");
+    g_log->ShowIPAddr(la);
     if ( !InitConn(la) )
         return NULL;
     while (true) {
@@ -62,8 +63,8 @@ Listener::InitConn(struct in_addr & lisaddr)
     memset(&sad, 0, sizeof(sad));
     sad.sin_family = AF_INET;
     sad.sin_addr.s_addr = lisaddr.s_addr;
+//    sad.sin_addr.s_addr = htonl(INADDR_ANY);
     sad.sin_port = htons(BGP_PORT);
-
     if (bind(lfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
         g_log->ShowErrno();
         close(lfd);
@@ -73,7 +74,7 @@ Listener::InitConn(struct in_addr & lisaddr)
     } else
         g_log->Tips("Bind success");
 
-    UnsetBlock(lfd);
+    SetNonBlock(lfd);
 
     if (listen(lfd, MAX_BACKLOG) == -1) {
         g_log->Error("Cannot listen peer socket");
@@ -90,56 +91,22 @@ Listener::TryAccept(struct sockaddr_in & sad)
     socklen_t           len;
     len = sizeof(struct sockaddr_in);
     memset(&sad, 0, sizeof(sad));
-//     sad.sin_family = AF_INET;
-//     sad.sin_addr = htonl(INADDR_ANY);
-//     sad.sin_port = htons(BGP_PORT);
+    sad.sin_family = AF_INET;
+    sad.sin_addr.s_addr = htonl(INADDR_ANY);
+    sad.sin_port = htons(BGP_PORT);
     if (lfd == -1)
         g_log->Error("Cannot accept socket with -1 listen fd");
-    afd = accept(lfd, (struct sockaddr *)&sad, &len);
+    afd = accept(lfd, (struct sockaddr *)NULL, NULL);
     return (afd != -1);
 }
 
 
 bool
-Listener::SetBlock(sockfd sfd)
+Listener::SetNonBlock(sockfd sfd)
 {
-    int flags;
-
-    flags = fcntl(sfd, F_GETFL, 0);
-    if (flags == -1) {
-        g_log->Fatal("fnctl F_GETFL");
-        return false;
-    }
-
-    flags &= ~O_NONBLOCK;
-
-    flags = fcntl(sfd, F_SETFL, flags);
-    if (flags == -1) {
-        g_log->Fatal("fnctl F_SETFL");
-        return false;
-    }
-
-    return true;
 }
 
 bool
-Listener::UnsetBlock(sockfd sfd)
+Listener::UnsetNonBlock(sockfd sfd)
 {
-    int flags;
-
-    flags = fcntl(sfd, F_GETFL, 0);
-    if (flags == -1) {
-        g_log->Fatal("fnctl F_GETFL");
-        return false;
-    }
-
-    flags |= O_NONBLOCK;
-
-    flags = fcntl(sfd, F_SETFL, flags);
-    if (flags == -1) {
-        g_log->Fatal("fnctl F_SETFL");
-        return false;
-    }
-
-    return true;
 }

@@ -30,8 +30,8 @@ class Listener : public Thread {
         bool TryAccept(struct sockaddr_in & addr);
 
         // socket helper
-        static bool SetBlock(sockfd sfd);
-        static bool UnsetBlock(sockfd sfd);
+        static bool SetNonBlock(sockfd sfd);
+        static bool UnsetNonBlock(sockfd sfd);
 
 };
 

@@ -35,7 +35,7 @@ Simulator::Run()
 {
     tim.Start();
     SimMain();
-//    tim.Join();
+    tim.Join();
     return NULL;
 }
 
@@ -51,8 +51,6 @@ Simulator::SimMain()
     for (lit = vListeners.begin(); lit != vListeners.end(); ++lit) {
         (*lit)->Start();
     }
-//     lit = vListeners.begin();
-//     (*lit)->Start();
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
 //         InitPeerConn(pPeer);
@@ -67,7 +65,7 @@ Simulator::SimMain()
 //             pPeer = *vit;
 //             pPeer->Join();
 //         }
-    }
+     }
 }
 
 void
@@ -336,18 +334,20 @@ Simulator::SimConnect(Peer * pPeer)
     pPeer->wbuf->sfd = pPeer->sfd;
 
     if (!SimSetupSocket(pPeer)) {
-        FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         g_log->Warning("SimConnect sim setup failed");
+        FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         return false;
     }
 
-    UnsetBlock(pPeer->sfd);
+    SetNonBlock(pPeer->sfd);
 
-    sad.sin_addr = pPeer->conf.remote_addr;
+    memcpy(&sad.sin_addr, &pPeer->conf.remote_addr, sizeof(sad.sin_addr));
     sad.sin_family = AF_INET;
     sad.sin_port = htons(BGP_PORT);
+    //g_log->ShowIPAddr(sad);
+    cout << "try connect" << endl;
     g_log->ShowIPAddr(sad);
-    if (connect(pPeer->sfd, (sockaddr *) &sad, sizeof(sad)) == -1) {
+    if (connect(pPeer->sfd, (struct sockaddr *) &sad, sizeof(sad)) < 0) {
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
     } else {
         FSM(pPeer, BGP_TRANS_CONN_OPEN);
@@ -624,15 +624,15 @@ Simulator::ParseKeepalive(Peer * pPeer)
 }
 
 bool
-Simulator::SetBlock(sockfd sfd)
+Simulator::SetNonBlock(sockfd sfd)
 {
-    return Listener::SetBlock(sfd);
+    return Listener::SetNonBlock(sfd);
 }
 
 bool
-Simulator::UnsetBlock(sockfd sfd)
+Simulator::UnsetNonBlock(sockfd sfd)
 {
-    return Listener::UnsetBlock(sfd);
+    return Listener::UnsetNonBlock(sfd);
 }
 
 bool
@@ -657,7 +657,7 @@ Simulator::InitPeerConn(Peer * pPeer)
         return false;
     }
 
-    UnsetBlock(sfd);
+    SetNonBlock(sfd);
 
     if (listen(sfd, MAX_BACKLOG) == -1) {
         g_log->Error("Cannot listen peer socket");
