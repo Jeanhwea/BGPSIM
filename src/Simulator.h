@@ -36,7 +36,7 @@ class Simulator : public Thread {
         // flags for Simulator
         bool                        mQuit;
         vector<struct sim_config>   vPeerConf;
-        vector<struct in_addr>      vLisaddr;
+        vector<Listener *>          vListeners;
         u_int16_t                   conf_as;
         u_int16_t                   conf_holdtime;
         u_int16_t                   conf_bgpid;

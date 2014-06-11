@@ -25,6 +25,7 @@ void * Listener::Run()
     while (true) {
         if (!TryAccept(ra))
             continue;
+        assert(afd != -1);
     }
     return NULL;
 }

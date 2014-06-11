@@ -10,9 +10,14 @@ Simulator::Simulator()
     conf_holdtime = T_HOLD_INITIAL;
     LoadSimConf("/home/fuzl/.peer.conf");
 
-    Peer * pPeer;
     vector<struct sim_config>::iterator sit;
+    Listener * lis;
+    for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
+        lis = new Listener(sit->laddr, sit->raddr);
+        vListeners.push_back(lis);
+    }
     // instantiation of a peers list
+    Peer * pPeer;
     for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
         pPeer = new Peer();
         pPeer->conf.passive = false;
@@ -32,10 +37,8 @@ void *
 Simulator::Run()
 {
     tim.Start();
-//    lis.Start();
     SimMain();
-    tim.Join();
-//    lis.Join();
+//    tim.Join();
     return NULL;
 }
 
@@ -43,10 +46,14 @@ Simulator::Run()
 void
 Simulator::SimMain()
 {
+    vector<Listener *>::iterator lit;
     vector<Peer *>::iterator vit;
     Peer * pPeer;
     if (isDebug)
-        cout << "in sim main" << endl;
+        cout << "Start simulator main" << endl;
+    for (lit= vListeners.begin(); lit != vListeners.end(); ++lit) {
+        (*lit)->Start();
+    }
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
         InitPeerConn(pPeer);
@@ -679,7 +686,6 @@ Simulator::LoadSimConf(const char * filename)
     char            rad[32];
     struct in_addr  linad;
     struct in_addr  rinad;
-    struct in_addr * lisa;
     sim_config    * sconf;
 
     ffd = fopen(filename, "r");
@@ -696,13 +702,10 @@ Simulator::LoadSimConf(const char * filename)
         if(!inet_aton(lad, &linad) || !inet_aton(rad, &rinad) )
             g_log->Warning("no a valid ip");
         sconf = (sim_config *) malloc(sizeof(sim_config));
-        lisa = (struct in_addr *) malloc(sizeof(struct in_addr));
         sconf->as = htons(as);
         memcpy(&sconf->laddr, &linad, sizeof(linad));
         memcpy(&sconf->raddr, &rinad, sizeof(rinad));
-        memcpy(lisa, &rinad, sizeof(rinad));
         vPeerConf.push_back(*sconf);
-        vLisaddr.push_back(*lisa);
         g_log->LogSimConf(as, lad, rad);
     }
     fclose(ffd);
