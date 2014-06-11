@@ -74,9 +74,9 @@ Logger::LogPeerEve(event_t eve)
 }
 
 void
-Logger::LogSimConf(int as, const char * la, const char * ra)
+Logger::LogSimConf(int as, const char * ra)
 {
-    fprintf(out, "Load Simu Config : AS%d, la(%s), ra(%s)\n", as, la, ra);
+    fprintf(out, "Load Simu Config : AS%d, ra(%s)\n", as, ra);
 }
 
 #define PRINT_ALIGN 16

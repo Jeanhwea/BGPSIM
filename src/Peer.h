@@ -22,6 +22,8 @@ struct peer_config {
 
 class Peer : public Thread {
     private:
+        static int      peer_cnt;
+        pthread_mutex_t mutex;
         int             peerid;
         state_t         mState;
 
@@ -51,6 +53,8 @@ class Peer : public Thread {
         void SetPeerState(state_t state) {
             mState = state;
         }
+        void Lock();
+        void UnLock();
 
         void InitTimer();
 

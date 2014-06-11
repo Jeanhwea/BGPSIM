@@ -1,4 +1,5 @@
 #include "Listener.h"
+#include "Simulator.h"
 
 using namespace std;
 
@@ -12,6 +13,11 @@ Listener::Listener(struct in_addr & l, struct in_addr & r)
     memcpy(&ra, &r, sizeof(r));
 }
 
+Listener::Listener(struct in_addr & l)
+{
+    afd = lfd = -1;
+    memcpy(&la, &l, sizeof(l));
+}
 
 Listener::~Listener()
 {
@@ -20,12 +26,22 @@ Listener::~Listener()
 
 void * Listener::Run()
 {
+    Peer *              pPeer;
+    struct sockaddr_in  sad;
+    socklen_t           len;
+
     if ( !InitConn(la) )
         return NULL;
     while (true) {
-        if (!TryAccept(ra))
+        if (!TryAccept(sad))
             continue;
         assert(afd != -1);
+        if (getpeername(afd, (struct sockaddr *) &sad, &len) > 0)
+            g_log->Tips("accept a socket");
+        pPeer = g_sim->GetPeerByAddr(sad);
+        pPeer->sfd = afd;
+        g_sim->FSM(pPeer, BGP_TRANS_CONN_OPEN);
+        cout << pPeer->Self() << endl;
     }
     return NULL;
 }
@@ -44,8 +60,7 @@ Listener::InitConn(struct in_addr & lisaddr)
 
     memset(&sad, 0, sizeof(sad));
     sad.sin_family = AF_INET;
-//    sad.sin_addr.s_addr = lisaddr.s_addr;
-    sad.sin_addr.s_addr = htonl(INADDR_ANY);
+    sad.sin_addr.s_addr = lisaddr.s_addr;
     sad.sin_port = htons(BGP_PORT);
 
     if (bind(lfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
@@ -55,7 +70,7 @@ Listener::InitConn(struct in_addr & lisaddr)
         g_log->Error("Cannot bind peer socket");
         return false;
     } else
-        g_log->Tips("bind success");
+        g_log->Tips("Bind success");
 
     UnsetBlock(lfd);
 
@@ -69,14 +84,14 @@ Listener::InitConn(struct in_addr & lisaddr)
 }
 
 bool
-Listener::TryAccept(struct in_addr & addr)
+Listener::TryAccept(struct sockaddr_in & sad)
 {
-    struct sockaddr_in  sad;
     socklen_t           len;
     len = sizeof(struct sockaddr_in);
-    sad.sin_family = AF_INET;
-    sad.sin_addr = addr;
-    sad.sin_port = htons(BGP_PORT);
+    memset(&sad, 0, sizeof(sad));
+//     sad.sin_family = AF_INET;
+//     sad.sin_addr = htonl(INADDR_ANY);
+//     sad.sin_port = htons(BGP_PORT);
     if (lfd == -1)
         g_log->Error("Cannot accept socket with -1 listen fd");
     afd = accept(lfd, (struct sockaddr *)&sad, &len);

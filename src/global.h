@@ -44,8 +44,8 @@ typedef enum {
     IDLE,
     CONNECT,
     ACTIVE,
-    OPEN_SENT,
-    OPEN_CONFIRM,
+    OPENSENT,
+    OPENCONFIRM,
     ESTABLISHED
 } state_t;
 

@@ -2,20 +2,21 @@
 #include "Simulator.h"
 
 vector<Peer *>  vPeers;
-int peer_cnt = 0;
+int Peer::peer_cnt = 0;
 
 map<state_t, string> mapStateName = {
     { IDLE, "idle" },
     { CONNECT, "connect" },
     { ACTIVE, "active" },
-    { OPEN_SENT, "open_sent" },
-    { OPEN_CONFIRM, "open_confirm" },
+    { OPENSENT, "open_sent" },
+    { OPENCONFIRM, "open_confirm" },
     { ESTABLISHED, "established" }
 };
 
 Peer::Peer()
 {
     peerid = ++peer_cnt;
+    mutex = PTHREAD_MUTEX_INITIALIZER;
     HoldTimer = -1;
     KeepaliveTimer = -1;
     ConnetRetryTimer = -1;
@@ -78,4 +79,16 @@ Peer::StartTimerKeepalive() {
         KeepaliveTimer = time(NULL) + holdtime / 3;
     else
         KeepaliveTimer = 0;
+}
+
+void
+Peer::Lock()
+{
+    pthread_mutex_lock(&mutex);
+}
+
+void
+Peer::UnLock()
+{
+    pthread_mutex_unlock(&mutex);
 }

@@ -18,7 +18,6 @@ using namespace std;
 
 struct sim_config {
     u_int16_t           as;     // as number
-    struct in_addr      laddr;  // local ip address
     struct in_addr      raddr;  // remote ip address
 };
 
@@ -28,9 +27,11 @@ class Simulator : public Thread {
         bool                        mQuit;
         vector<struct sim_config>   vPeerConf;
         vector<Listener *>          vListeners;
+
         u_int16_t                   conf_as;
         u_int16_t                   conf_holdtime;
         u_int16_t                   conf_bgpid;
+        struct in_addr              lisaddr;
 
         Timer                       tim;
 
@@ -65,7 +66,8 @@ class Simulator : public Thread {
         bool SetBlock(sockfd sfd);
         bool UnsetBlock(sockfd sfd);
 
-        Peer * GetPeerByAddr(struct in_addr *);
+        Peer * GetPeerByAddr(struct sockaddr_in & sad);
+        Peer * GetPeerByAddr(struct in_addr & ad);
         bool LoadSimConf(const char * filename);
 
 };

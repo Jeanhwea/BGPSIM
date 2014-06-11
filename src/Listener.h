@@ -21,12 +21,13 @@ class Listener : public Thread {
 
     public:
         Listener(struct in_addr & l, struct in_addr & r);
+        Listener(struct in_addr & l);
         virtual ~Listener();
         void * Run();
 
         // peer listen helper or connect helper
         bool InitConn(struct in_addr & addr);
-        bool TryAccept(struct in_addr & addr);
+        bool TryAccept(struct sockaddr_in & addr);
 
         // socket helper
         static bool SetBlock(sockfd sfd);
