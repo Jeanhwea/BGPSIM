@@ -41,6 +41,10 @@ void * Listener::Run()
         if (getpeername(afd, (struct sockaddr *) &sad, &len) > 0)
             g_log->Tips("accept a socket");
         pPeer = g_sim->GetPeerByAddr(sad);
+        if (pPeer == NULL) {
+            g_log->Warning("Cannot find a peer");
+            continue;
+        }
         pPeer->sfd = afd;
         g_sim->FSM(pPeer, BGP_TRANS_CONN_OPEN);
         cout << pPeer->Self() << endl;
@@ -63,7 +67,6 @@ Listener::InitConn(struct in_addr & lisaddr)
     memset(&sad, 0, sizeof(sad));
     sad.sin_family = AF_INET;
     sad.sin_addr.s_addr = lisaddr.s_addr;
-//    sad.sin_addr.s_addr = htonl(INADDR_ANY);
     sad.sin_port = htons(BGP_PORT);
     if (bind(lfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
         g_log->ShowErrno();
