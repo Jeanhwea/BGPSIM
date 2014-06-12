@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "Peer.h"
 #include "Event.h"
+#include "Listener.h"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ void
 Logger::Tips(const char * emsg)
 {
     if (emsg != NULL)
-        fprintf(out, "Tips: %s\n", emsg);
+        fprintf(out, "Tips\t: %s\n", emsg);
     fflush(out);
 }
 
@@ -27,7 +28,7 @@ void
 Logger::Warning(const char * emsg)
 {
     if (emsg != NULL)
-        fprintf(war, "Warning: %s\n", emsg);
+        fprintf(war, "Warning\t: %s\n", emsg);
     fflush(war);
 }
 
@@ -35,7 +36,7 @@ void
 Logger::Error(const char * emsg)
 {
     if (emsg != NULL)
-        fprintf(err, "Error: %s\n", emsg);
+        fprintf(err, "Error\t: %s\n", emsg);
     fflush(err);
 }
 
@@ -43,33 +44,49 @@ void
 Logger::Fatal(const char * emsg)
 {
     if (emsg != NULL)
-        fprintf(err, "Fatal Error: %s\n", emsg);
+        fprintf(err, "Fatal\t: %s\n", emsg);
     exit(1);
 }
 
 void
 Logger::ShowErrno()
 {
-    fprintf(err, "!!!!!!!!!!!!!!!! Errno : %s\n", strerror(errno));
+    fprintf(err, "Errno%d\t: %s\n", errno, strerror(errno));
     fflush(err);
 }
 
-void
-Logger::ShowIPAddr(struct in_addr & ad)
+char *
+Logger::AddrToStr(struct in_addr * pAd)
 {
-    fprintf(out, "ip:%s\n", inet_ntoa(ad));
+    assert(pAd != NULL);
+    return inet_ntoa(*pAd);
+}
+
+char *
+Logger::AddrToStr(struct sockaddr_in * pSad)
+{
+    assert(pSad != NULL);
+    return AddrToStr(&pSad->sin_addr);
+}
+
+
+void
+Logger::ShowIPAddr(struct in_addr * pAd)
+{
+    fprintf(out, "ip:%s\n", AddrToStr(pAd));
 }
 
 void
-Logger::ShowIPAddr(sockaddr_in & sad)
+Logger::ShowIPAddr(struct sockaddr_in * pSad)
 {
-    ShowIPAddr(sad.sin_addr);
+    assert(pSad != NULL);
+    ShowIPAddr(&pSad->sin_addr);
 }
 
 void
 Logger::LogStateChage(state_t from, state_t to, event_t eve)
 {
-    fprintf(out, "Peer : { %s }->{ %s } : [%s]\n",
+    fprintf(out, "Peer\t: { %s }->{ %s } : [%s]\n",
         mapStateName[from].c_str(),
             mapStateName[to].c_str(),
                 mapEventName[eve].c_str());
@@ -106,4 +123,27 @@ Logger::LogDumpMsg(u_char * data, size_t len)
     if (len%PRINT_ALIGN)
         fprintf(out, "\n");
     fflush(out);
+}
+
+void
+Logger::LogListenerList()
+{
+    vector<Listener *>::iterator lit;
+    Listener * pListener;
+    struct in_addr * pAd;
+    fprintf(out, "Listener list addr = [ ");
+    for (lit = vListeners.begin(); lit != vListeners.end(); ++lit) {
+        pListener = *lit;
+        assert(pListener != NULL);
+        pAd = pListener->GetLisAddr();
+        assert(pAd != NULL);
+        fprintf(out, "%s ", AddrToStr(pListener->GetLisAddr()));
+    }
+    fprintf(out, "]\n");
+}
+
+void
+Logger::LogPeerList()
+{
+
 }

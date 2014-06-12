@@ -9,12 +9,21 @@ Simulator::Simulator()
     mQuit = false;
     conf_holdtime = T_HOLD_INITIAL;
     LoadSimConf("/home/fuzl/.bgpconf/peer.conf");
+    LoadListConf("/home/fuzl/.bgpconf/listen.conf");
 
-    vector<struct sim_config>::iterator sit;
-    Listener * lis;
-    lis = new Listener(lisaddr);
-    vListeners.push_back(lis);
+    // instantiation of listeners
+    vector<struct in_addr>::iterator lit;
+    Listener * pListener;
+    for (lit = vLisAddr.begin(); lit != vLisAddr.end(); ++lit) {
+        g_log->ShowIPAddr(&*lit);
+        pListener = new Listener(&(*lit));
+        vListeners.push_back(pListener);
+    }
+    cout << vListeners.size() << endl;
+    g_log->LogListenerList();
+
     // instantiation of a peers list
+    vector<struct sim_config>::iterator sit;
     Peer * pPeer;
     for (sit = vPeerConf.begin(); sit != vPeerConf.end(); ++sit) {
         pPeer = new Peer();
@@ -23,7 +32,8 @@ Simulator::Simulator()
         memcpy(& pPeer->conf.remote_addr, & sit->raddr, sizeof(sit->raddr));
         vPeers.push_back(pPeer);
     }
-    cout << "initail peer size = " << vPeers.size() << endl;
+    if (isDebug)
+        cout << "Initial peer size = " << vPeers.size() << endl;
 }
 
 Simulator::~Simulator()
@@ -346,7 +356,7 @@ Simulator::SimConnect(Peer * pPeer)
     sad.sin_port = htons(BGP_PORT);
     //g_log->ShowIPAddr(sad);
     cout << "try connect" << endl;
-    g_log->ShowIPAddr(sad);
+    g_log->ShowIPAddr(&sad);
     if (connect(pPeer->sfd, (struct sockaddr *) &sad, sizeof(sad)) < 0) {
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
     } else {
@@ -408,21 +418,26 @@ Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, s
 }
 
 Peer *
-Simulator::GetPeerByAddr(struct sockaddr_in & sad)
+Simulator::GetPeerByAddr(struct sockaddr_in * pSad)
 {
-    return GetPeerByAddr(sad.sin_addr);
+    if (pSad == NULL)
+        return NULL;
+    return GetPeerByAddr(&pSad->sin_addr);
 }
 
 
 Peer *
-Simulator::GetPeerByAddr(struct in_addr & ad)
+Simulator::GetPeerByAddr(struct in_addr * pAd)
 {
+    if (pAd == NULL)
+        return NULL;
+
     vector<Peer *>::iterator vit;
     Peer * pPeer, * ret;
     ret = NULL;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
-        if (memcmp(& pPeer->conf.remote_addr.s_addr, &ad.s_addr, sizeof(ad.s_addr)) == 0) {
+        if (memcmp(&pPeer->conf.remote_addr.s_addr, &pAd->s_addr, sizeof(pAd->s_addr)) == 0) {
             ret = pPeer;
             break;
         }
@@ -717,6 +732,29 @@ Simulator::LoadSimConf(const char * filename)
         memcpy(&sconf->raddr, &rinad, sizeof(rinad));
         vPeerConf.push_back(*sconf);
         g_log->LogSimConf(as, rad);
+    }
+    fclose(ffd);
+    return true;
+}
+
+bool
+Simulator::LoadListConf(const char * filename)
+{
+    FILE           * ffd;
+    char             ad[32];
+    struct in_addr * inad;
+
+    ffd = fopen(filename, "r");
+    if (ffd == NULL) {
+        g_log->Error("Cannot open listen config file");
+        return false;
+    }
+
+    while (fscanf(ffd, "%s", ad) != EOF) {
+        inad = (struct in_addr *) malloc(sizeof(struct in_addr));
+        if(!inet_aton(ad, inad))
+            g_log->Warning("not a lister valid ip");
+        vLisAddr.push_back(*inad);
     }
     fclose(ffd);
     return true;

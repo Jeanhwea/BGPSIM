@@ -8,8 +8,8 @@ map<state_t, string> mapStateName = {
     { IDLE, "idle" },
     { CONNECT, "connect" },
     { ACTIVE, "active" },
-    { OPENSENT, "open_sent" },
-    { OPENCONFIRM, "open_confirm" },
+    { OPENSENT, "opensent" },
+    { OPENCONFIRM, "openconfirm" },
     { ESTABLISHED, "established" }
 };
 

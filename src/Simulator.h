@@ -26,7 +26,7 @@ class Simulator : public Thread {
         // flags for Simulator
         bool                        mQuit;
         vector<struct sim_config>   vPeerConf;
-        vector<Listener *>          vListeners;
+        vector<struct in_addr>      vLisAddr;
 
         u_int16_t                   conf_as;
         u_int16_t                   conf_holdtime;
@@ -66,9 +66,10 @@ class Simulator : public Thread {
         bool SetNonBlock(sockfd sfd);
         bool UnsetNonBlock(sockfd sfd);
 
-        Peer * GetPeerByAddr(struct sockaddr_in & sad);
-        Peer * GetPeerByAddr(struct in_addr & ad);
+        Peer * GetPeerByAddr(struct sockaddr_in * pSad);
+        Peer * GetPeerByAddr(struct in_addr * pAd);
         bool LoadSimConf(const char * filename);
+        bool LoadListConf(const char * filename);
 
 };
 

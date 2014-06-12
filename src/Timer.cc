@@ -63,7 +63,7 @@ void
 Timer::TimerHandler(int sig)
 {
     if (isDebug)
-        cout << "Tick : " << ++ walltime << endl;
+        cout << "Tick\t: " << ++ walltime << endl;
     alarm(Timer::interval);
     GetInst()->Schedule();
 }

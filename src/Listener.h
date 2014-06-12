@@ -14,20 +14,24 @@ using namespace std;
 
 class Listener : public Thread {
     private:
-        struct in_addr  la;     // local address
-        struct in_addr  ra;     // remote address
-        sockfd          lfd;    // listen socket fd
-        sockfd          afd;    // accepet socket fd
+    public:
+        struct in_addr * pLAdd;     // listener address
+        struct in_addr * pRAdd;     // remote address
+        sockfd           lfd;      // listen socket fd
+        sockfd           afd;      // accepet socket fd
 
     public:
-        Listener(struct in_addr & l, struct in_addr & r);
-        Listener(struct in_addr & l);
+        Listener(struct in_addr * pL, struct in_addr * pR);
+        Listener(struct in_addr * pL);
         virtual ~Listener();
         void * Run();
 
         // peer listen helper or connect helper
-        bool InitConn(struct in_addr & addr);
-        bool TryAccept(struct sockaddr_in & addr);
+        bool InitConn(struct in_addr * pAd);
+        bool TryAccept(struct sockaddr_in * pSad);
+
+        // ...
+        struct in_addr * GetLisAddr();
 
         // socket helper
         static bool SetNonBlock(sockfd sfd);
@@ -35,5 +39,5 @@ class Listener : public Thread {
 
 };
 
-
+extern vector<Listener *> vListeners;
 #endif /* end of include guard: LISTENER_FCV7JYL9 */
