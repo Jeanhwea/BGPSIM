@@ -11,7 +11,8 @@
 #include "Thread.h"
 #include "Timer.h"
 
-#define T_CONNRETRY                 120
+//#define T_CONNRETRY                 120
+#define T_CONNRETRY                 10
 #define T_HOLD_INITIAL              240
 
 using namespace std;

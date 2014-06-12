@@ -62,10 +62,14 @@ Simulator::SimMain()
     Peer * pPeer;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
-//         InitPeerConn(pPeer);
         pPeer->Start();
     }
-    while (mQuit == false) { }
+    while (mQuit == false) {
+//         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+//             pPeer = *vit;
+//             pPeer->Start();
+//         }
+    }
 }
 
 void
@@ -345,8 +349,8 @@ Simulator::SimConnect(Peer * pPeer)
     memcpy(&sad.sin_addr, &pPeer->conf.remote_addr, sizeof(sad.sin_addr));
     sad.sin_family = AF_INET;
     sad.sin_port = htons(BGP_PORT);
-    //g_log->ShowIPAddr(sad);
-    cout << "try connect" << endl;
+
+    cout << "try connect ";
     g_log->ShowIPAddr(&sad);
     if (connect(pPeer->sfd, (struct sockaddr *) &sad, sizeof(sad)) < 0) {
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
@@ -650,47 +654,6 @@ Simulator::UnsetNonBlock(sockfd sfd)
 bool
 Simulator::InitPeerConn(Peer * pPeer)
 {
-    struct sockaddr_in  sad;
-    sockfd              sfd;
-    sfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sfd == -1) {
-        g_log->Error("Cannot init peer socket1");
-        return false;
-    }
-
-    memset(&sad, 0, sizeof(sad));
-    sad.sin_family = AF_INET;
-    sad.sin_addr = pPeer->conf.local_addr;
-    sad.sin_port = htons(BGP_PORT);
-
-    if (bind(sfd, (struct sockaddr *)&sad, sizeof(sad)) == -1) {
-        close(sfd);
-        g_log->Error("Cannot bind peer socket");
-        return false;
-    }
-
-    SetNonBlock(sfd);
-
-    if (listen(sfd, MAX_BACKLOG) == -1) {
-        g_log->Error("Cannot listen peer socket");
-        assert(false);
-        return false;
-    }
-
-    sockfd      acfd;
-    socklen_t   len;
-    len = sizeof(struct sockaddr_in);
-    sad.sin_family = AF_INET;
-    sad.sin_addr = pPeer->conf.remote_addr;
-    sad.sin_port = htons(BGP_PORT);
-    for (;;) {
-        acfd = accept(sfd, (struct sockaddr *)&sad, &len);
-        if (acfd == -1) continue;
-        pPeer->sfd = acfd;
-        return true;
-    }
-
-    return true;
 }
 
 

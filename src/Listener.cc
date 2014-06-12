@@ -65,7 +65,9 @@ void * Listener::Run()
         }
         pPeer->sfd = afd;
         pPeer->wbuf->sfd = afd;
-        g_sim->FSM(pPeer, BGP_TRANS_CONN_OPEN);
+        pPeer->Lock();
+        pPeer->Start(BGP_TRANS_CONN_OPEN);
+        pPeer->UnLock();
     }
     return NULL;
 }
