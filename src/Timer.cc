@@ -40,14 +40,28 @@ Timer::Schedule()
     Peer * pPeer;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
-        if (pPeer->KeepaliveTimer >= 0)
-            pPeer->KeepaliveTimer ++;
-        if (pPeer->IdleHoldTimer >= 0)
-            pPeer->IdleHoldTimer ++;
+        if (pPeer->KeepaliveTimer > 0 &&
+                pPeer->GetPeerState() <= time(NULL) ) {
+            pPeer->Lock();
+            if (pPeer->GetPeerState() == OPENCONFIRM ||
+                    pPeer->GetPeerState() == ESTABLISHED ) {
+                pPeer->Start(KEEPALIVE_TIMER_EXPIRED);
+            }
+            pPeer->UnLock();
+        }
+        if (pPeer->HoldTimer > 0 &&
+                pPeer->HoldTimer <= time(NULL) ) {
+            pPeer->Lock();
+            if (pPeer->GetPeerState() == OPENSENT ||
+                    pPeer->GetPeerState() == ESTABLISHED )
+                pPeer->Start(HOLD_TIMER_EXPIRED);
+            pPeer->UnLock();
+        }
         if (pPeer->ConnetRetryTimer > 0 &&
                 pPeer->ConnetRetryTimer <= time(NULL)) {
             pPeer->Lock();
-            pPeer->Start(CONN_RETRY_TIMER_EXPIRED);
+            if (pPeer->GetPeerState() == ACTIVE)
+                pPeer->Start(CONN_RETRY_TIMER_EXPIRED);
             pPeer->UnLock();
         }
     }

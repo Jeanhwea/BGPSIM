@@ -275,8 +275,13 @@ Simulator::FSM(Peer * pPeer, Event * pEve)
 void
 Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 {
-    switch ( pPeer->GetPeerState() ) {
+    switch (state) {
         case IDLE:
+            if (pPeer->GetPeerState() != IDLE) {
+                pPeer->ConnetRetryTimer = 0;
+                free(pPeer->rbuf);
+                free(pPeer->wbuf);
+            }
             break;
         case CONNECT:
             break;
