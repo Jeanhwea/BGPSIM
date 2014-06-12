@@ -67,6 +67,8 @@ Simulator::SimMain()
     while (mQuit == false) {
 //         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
 //             pPeer = *vit;
+//             if (pPeer->IdleHoldTimer != 0 &&
+//                     pPeer->IdleHoldTimer <= time(NULL) )
 //             pPeer->Start();
 //         }
     }
@@ -79,9 +81,9 @@ Simulator::FSM(Peer * pPeer, event_t eve)
         case IDLE:
             switch ( eve ) {
                 case BGP_START :
-                    pPeer->InitTimer();
-                    pPeer->rbuf = new Buffer();
-                    pPeer->wbuf = new Message(MSGBUFSIZE);
+                    pPeer->IdleHoldTimer = 0;
+                    pPeer->HoldTimer = 0;
+                    pPeer->KeepaliveTimer = 0;
 
                     if (pPeer->conf.passive) {
                         ChangeState(pPeer, ACTIVE, eve);
@@ -181,7 +183,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     if ( ! ParseNotification(pPeer) ) {
                         ChangeState(pPeer, IDLE, eve);
                         pPeer->IdleHoldTimer = time(NULL);
-                        pPeer->HoldTimer /= 2;
+                        pPeer->IdleHoldTime /= 2;
                     } else {
                         ChangeState(pPeer, IDLE, eve);
                     }
@@ -279,8 +281,17 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
         case IDLE:
             if (pPeer->GetPeerState() != IDLE) {
                 pPeer->ConnetRetryTimer = 0;
-                free(pPeer->rbuf);
-                free(pPeer->wbuf);
+            }
+            if (pPeer->IdleHoldTime == 0)
+                pPeer->IdleHoldTime = T_IDLE_INITIAL;
+            pPeer->holdtime = T_HOLD_INITIAL;
+            pPeer->KeepaliveTimer = 0;
+            pPeer->HoldTimer = 0;
+            pPeer->ConnetRetryTimer = 0;
+            SimColseConnect(pPeer);
+            if (eve != BGP_STOP) {
+                pPeer->IdleHoldTimer = time(NULL) + pPeer->IdleHoldTime;
+                pPeer->IdleHoldTime *= 2;
             }
             break;
         case CONNECT:
@@ -341,7 +352,7 @@ Simulator::SimConnect(Peer * pPeer)
         return false;
     }
 
-    pPeer->wbuf->sfd = pPeer->sfd;
+    //pPeer->wbuf->sfd = pPeer->sfd;
 
     if (!SimSetupSocket(pPeer)) {
         g_log->Warning("SimConnect sim setup failed");
@@ -374,14 +385,14 @@ Simulator::SimColseConnect(Peer * pPeer)
         close(pPeer->sfd);
     }
     pPeer->sfd = -1;
-    pPeer->wbuf->sfd = -1;
+    //pPeer->wbuf->sfd = -1;
 }
 
 void
 Simulator::SimOpen(Peer * pPeer)
 {
-    struct openmsg     msg;
-    u_int16_t   len;
+    struct openmsg  msg;
+    u_int16_t       len;
 
     len = MSGSIZE_OPEN_MIN;
     memset(msg.msghdr.marker, 0xff, sizeof(msg.msghdr.marker));
@@ -393,10 +404,16 @@ Simulator::SimOpen(Peer * pPeer)
         msg.holdtime = htons(pPeer->holdtime);
     else
         msg.holdtime = htons(conf_holdtime);
-    msg.bgpid = conf_bgpid;
+    msg.bgpid = conf_bgpid; // already in network order
     msg.optparamlen = 0;
 
-    pPeer->wbuf->Add(&msg, sizeof(msg));
+    Message * pMsg;
+    pMsg = new Message(MSGBUFSIZE);
+    pMsg->Add(&msg, sizeof(msg));
+    pPeer->qMsg.push(pMsg);
+    cout << pPeer->qMsg.size() << endl;
+    //pPeer->wbuf->Add(&msg, sizeof(msg));
+    //pPeer->wbuf->Write();
 }
 
 void
@@ -530,12 +547,12 @@ Simulator::ParseOpen(Peer * pPeer)
     u_int8_t    optparamlen, plen;
     // u_int8_t    op_type, op_len;
 
-    pos = pPeer->rbuf->rptr;
+    //pos = pPeer->rbuf->rptr;
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&msglen, pos, sizeof(msglen));
     msglen = ntohs(msglen);
 
-    pos = pPeer->rbuf->rptr;
+    //pos = pPeer->rbuf->rptr;
     pos += MSGSIZE_HEADER;
 
     memcpy(&version, pos, sizeof(version));
@@ -613,12 +630,12 @@ Simulator::ParseNotification(Peer * pPeer)
     u_int16_t   datalen;
     // u_int8_t    capa_code, capa_len;
 
-    pos = pPeer->rbuf->rptr;
+    //pos = pPeer->rbuf->rptr;
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&datalen, pos, sizeof(datalen));
     datalen = ntohs(datalen);
 
-    pos = pPeer->rbuf->rptr;
+    //pos = pPeer->rbuf->rptr;
     pos += MSGSIZE_HEADER;
     datalen -= MSGSIZE_HEADER;
 

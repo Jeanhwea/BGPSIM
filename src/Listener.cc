@@ -61,12 +61,29 @@ void * Listener::Run()
         pPeer = g_sim->GetPeerByAddr(&sad);
         if (pPeer == NULL) {
             g_log->Warning("Cannot find a peer");
+            shutdown(afd, SHUT_RDWR);
+            close(afd);
             continue;
         }
         pPeer->sfd = afd;
-        pPeer->wbuf->sfd = afd;
+        //pPeer->wbuf->sfd = afd;
         pPeer->Lock();
-        pPeer->Start(BGP_TRANS_CONN_OPEN);
+        if (pPeer->GetPeerState() == CONNECT ||
+                pPeer->GetPeerState() == ACTIVE ) {
+            if (pPeer->sfd != -1) {
+                if (pPeer->GetPeerState() == CONNECT) {
+                    g_sim->SimColseConnect(pPeer);
+                } else {
+                    shutdown(afd, SHUT_RDWR);
+                    close(afd);
+                }
+            }
+            if (!g_sim->SimSetupSocket(pPeer)) {
+                    shutdown(afd, SHUT_RDWR);
+                    close(afd);
+            }
+            pPeer->Start(BGP_TRANS_CONN_OPEN);
+        }
         pPeer->UnLock();
     }
     return NULL;

@@ -92,8 +92,6 @@ class Message {
         bool Write();
         bool Write(sockfd sfd, Message * buf);
 
-        void BufDeque();
-        void BufEnque(Message *);
 };
 
 extern std::map<message_t, string> mapMsgName;

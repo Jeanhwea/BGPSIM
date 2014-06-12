@@ -9,11 +9,9 @@ map<message_t, string> mapMsgName = {
     { KEEPALIVE, "keepalive" }
 };
 
-deque<Message *> Message::mqMessage;
-
 Message::Message(ssize_t len)
 {
-    buf = (u_char *) malloc(len);
+    buf = (u_char *) malloc(len * sizeof(u_char));
     rpos = 0;
     wpos = 0;
     sfd = -1;
@@ -78,16 +76,3 @@ Message::Write(sockfd sfd, Message * buf)
     }
     return true;
 }
-
-void
-Message::BufDeque()
-{
-   mqMessage.pop_back();
-}
-
-void
-Message::BufEnque(Message * buf)
-{
-    mqMessage.push_front(buf);
-}
-

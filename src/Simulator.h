@@ -14,6 +14,7 @@
 //#define T_CONNRETRY                 120
 #define T_CONNRETRY                 10
 #define T_HOLD_INITIAL              240
+#define T_IDLE_INITIAL              60
 
 using namespace std;
 

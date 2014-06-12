@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <queue>
 #include <deque>
 #include <iostream>
 #include <list>

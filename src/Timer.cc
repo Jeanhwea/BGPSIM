@@ -64,6 +64,12 @@ Timer::Schedule()
                 pPeer->Start(CONN_RETRY_TIMER_EXPIRED);
             pPeer->UnLock();
         }
+        if (pPeer->IdleHoldTimer > 0 &&
+                pPeer->IdleHoldTimer <= time(NULL) ) {
+            pPeer->Lock();
+            pPeer->Start();
+            pPeer->UnLock();
+        }
     }
 }
 

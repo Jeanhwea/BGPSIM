@@ -17,22 +17,24 @@ Peer::Peer()
 {
     peerid = ++peer_cnt;
     mutex = PTHREAD_MUTEX_INITIALIZER;
-    HoldTimer = -1;
-    KeepaliveTimer = -1;
-    ConnetRetryTimer = -1;
     sfd = -1;
     holdtime = T_HOLD_INITIAL;
-    rbuf = NULL;
-    wbuf = NULL;
+    IdleHoldTime = T_IDLE_INITIAL;
+    HoldTimer = 0;
+    KeepaliveTimer = 0;
+    IdleHoldTimer = 0;
+    ConnetRetryTimer = 0;
+    //rbuf = NULL;
+    //wbuf = NULL;
     mState = IDLE;
 }
 
 Peer::~Peer()
 {
-    if (rbuf != NULL)
-        delete rbuf;
-    if (wbuf != NULL)
-        delete wbuf;
+//     if (rbuf != NULL)
+//         delete rbuf;
+//     if (wbuf != NULL)
+//         delete wbuf;
 }
 
 void *
@@ -55,14 +57,6 @@ Peer::Run(event_t eve)
         cout << "Peer_" << peerid << " Runs ..." << endl;
     g_sim->FSM(this, eve);
     return NULL;
-}
-
-void
-Peer::InitTimer()
-{
-    HoldTimer = 0;
-    KeepaliveTimer = 0;
-    IdleHoldTimer = time(NULL);
 }
 
 void

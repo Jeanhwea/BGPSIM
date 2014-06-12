@@ -37,10 +37,12 @@ class Peer : public Thread {
         time_t              ConnetRetryTimer;
         time_t              KeepaliveTimer;
         time_t              HoldTimer;
-        time_t              IdleHoldTimer;
 
-        Buffer            * rbuf;
-        Message           * wbuf;
+        time_t              IdleHoldTimer;
+        time_t              IdleHoldTime;
+
+        //Buffer            * rbuf;
+        queue<Message *>    qMsg;
 
         Peer();
         virtual ~Peer ();
@@ -55,8 +57,6 @@ class Peer : public Thread {
         }
         void Lock();
         void UnLock();
-
-        void InitTimer();
 
         void StartTimerHoldtime();
         void StartTimerKeepalive();
