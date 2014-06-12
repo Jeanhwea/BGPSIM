@@ -15,11 +15,9 @@ Simulator::Simulator()
     vector<struct in_addr>::iterator lit;
     Listener * pListener;
     for (lit = vLisAddr.begin(); lit != vLisAddr.end(); ++lit) {
-        g_log->ShowIPAddr(&*lit);
         pListener = new Listener(&(*lit));
         vListeners.push_back(pListener);
     }
-    cout << vListeners.size() << endl;
     g_log->LogListenerList();
 
     // instantiation of a peers list
@@ -32,8 +30,7 @@ Simulator::Simulator()
         memcpy(& pPeer->conf.remote_addr, & sit->raddr, sizeof(sit->raddr));
         vPeers.push_back(pPeer);
     }
-    if (isDebug)
-        cout << "Initial peer size = " << vPeers.size() << endl;
+    g_log->LogPeerList();
 }
 
 Simulator::~Simulator()
@@ -53,29 +50,22 @@ Simulator::Run()
 void
 Simulator::SimMain()
 {
-    vector<Listener *>::iterator lit;
-    vector<Peer *>::iterator vit;
-    Peer * pPeer;
     if (isDebug)
         cout << "Start simulator main" << endl;
+    vector<Listener *>::iterator lit;
+    Listener * pListener;
     for (lit = vListeners.begin(); lit != vListeners.end(); ++lit) {
-        (*lit)->Start();
+        pListener = *lit;
+        pListener->Start();
     }
+    vector<Peer *>::iterator vit;
+    Peer * pPeer;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
 //         InitPeerConn(pPeer);
         pPeer->Start();
     }
-    while (mQuit == false) {
-//         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
-//             pPeer = *vit;
-//             pPeer->Start(BGP_START);
-//         }
-//         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
-//             pPeer = *vit;
-//             pPeer->Join();
-//         }
-     }
+    while (mQuit == false) { }
 }
 
 void
@@ -274,6 +264,7 @@ Simulator::FSM(Peer * pPeer, event_t eve)
 void
 Simulator::FSM(Peer * pPeer, Event * pEve)
 {
+    // no
     FSM(pPeer, pEve->GetEventType());
 }
 
@@ -412,9 +403,15 @@ Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len)
 }
 
 void
-Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t len)
+Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t datalen)
 {
+    struct bgphdr   msg;
+    ssize_t         len;
 
+    len = MSGSIZE_NOTIFICATION_MIN + datalen;
+    memset(&msg.marker, 0xff, sizeof(msg.marker));
+    msg.length = htons(len);
+    msg.type = NOTIFICATION;
 }
 
 Peer *
@@ -721,17 +718,15 @@ Simulator::LoadSimConf(const char * filename)
     conf_as     = htons(as);
     conf_bgpid  = htonl(linad.s_addr);
     memcpy(&lisaddr, &linad, sizeof(linad));
-    if (isDebug)
-        fprintf(outfd, "Local Simulator in AS%d\n", as);
 
     while (fscanf(ffd, "%d%s", &as, rad) != EOF) {
-        if(!inet_aton(rad, &rinad) )
+        if(!inet_aton(rad, &rinad))
             g_log->Warning("not a valid ip");
         sconf = (sim_config *) malloc(sizeof(sim_config));
         sconf->as = htons(as);
         memcpy(&sconf->raddr, &rinad, sizeof(rinad));
         vPeerConf.push_back(*sconf);
-        g_log->LogSimConf(as, rad);
+        //g_log->LogSimConf(as, rad);
     }
     fclose(ffd);
     return true;

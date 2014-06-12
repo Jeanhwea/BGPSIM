@@ -101,10 +101,11 @@ Logger::LogPeerEve(event_t eve)
     fflush(out);
 }
 
+
 void
 Logger::LogSimConf(int as, const char * ra)
 {
-    fprintf(out, "Load Simu Config : AS%d, ra(%s)\n", as, ra);
+    fprintf(out, "Load Simu Config : AS%d, %s\n", as, ra);
 }
 
 #define PRINT_ALIGN 16
@@ -145,5 +146,15 @@ Logger::LogListenerList()
 void
 Logger::LogPeerList()
 {
-
+    vector<Peer *>::iterator    pit;
+    Peer                      * pPeer;
+    u_int16_t                   as;
+    fprintf(out, "Peers list config  = [ ");
+    for (pit = vPeers.begin(); pit != vPeers.end(); ++pit) {
+        pPeer = *pit;
+        assert(pPeer != NULL);
+        as = ntohs(pPeer->conf.remote_as);
+        fprintf(out,"{ AS%d, %s } ", as, AddrToStr(&pPeer->conf.remote_addr));
+    }
+    fprintf(out, "]\n");
 }

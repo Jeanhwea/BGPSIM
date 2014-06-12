@@ -53,9 +53,9 @@ typedef enum _suberr_open {
 using namespace std;
 
 struct bgphdr {
-    u_char      marker[16];           // Marker
-    u_int16_t   length;               // Length
-    u_int8_t    type;                 // Type
+    u_char          marker[16];           // Marker
+    u_int16_t       length;               // Length
+    u_int8_t        type;                 // Type
 };
 
 struct openmsg {
