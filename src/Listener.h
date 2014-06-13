@@ -36,6 +36,7 @@ class Listener : public Thread {
         // socket helper
         static bool SetNonBlock(sockfd sfd);
         static bool UnsetNonBlock(sockfd sfd);
+        static bool SetTTL(sockfd sfd, int ttl);
 
 };
 

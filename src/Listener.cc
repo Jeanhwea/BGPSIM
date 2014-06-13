@@ -65,25 +65,24 @@ void * Listener::Run()
             close(afd);
             continue;
         }
-        pPeer->sfd = afd;
-        //pPeer->wbuf->sfd = afd;
         pPeer->Lock();
-        if (pPeer->GetPeerState() == CONNECT ||
-                pPeer->GetPeerState() == ACTIVE ) {
+        if (pPeer->GetPeerState()==CONNECT || pPeer->GetPeerState()==ACTIVE){
             if (pPeer->sfd != -1) {
                 if (pPeer->GetPeerState() == CONNECT) {
                     g_sim->SimColseConnect(pPeer);
                 } else {
+                    g_log->Tips("shutdown accept socket fd");
                     shutdown(afd, SHUT_RDWR);
                     close(afd);
                 }
             }
+            pPeer->sfd = afd;
             if (!g_sim->SimSetupSocket(pPeer)) {
                     shutdown(afd, SHUT_RDWR);
                     close(afd);
             }
-            pPeer->Start(BGP_TRANS_CONN_OPEN);
             pPeer->conf.passive = true;
+            pPeer->Start(BGP_TRANS_CONN_OPEN);
         }
         pPeer->UnLock();
     }
@@ -114,7 +113,7 @@ Listener::InitConn(struct in_addr * pAd)
     } else
         g_log->Tips("Bind success");
 
-    SetNonBlock(lfd);
+    //SetNonBlock(lfd);
 
     if (listen(lfd, MAX_BACKLOG) == -1) {
         g_log->Error("Cannot listen peer socket");
@@ -150,15 +149,27 @@ Listener::GetLisAddr()
 bool
 Listener::SetNonBlock(sockfd sfd)
 {
-    int flag = 1 ;
-    int ret = setsockopt( sfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int)) ;
-    if (ret < 0)
+    int nodelay = 1 ;
+    if (setsockopt( sfd, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, sizeof(int)) == -1) {
         g_log->Error("Cannot set non-block");
+        return false;
+    }
     return true;
 }
 
 bool
 Listener::UnsetNonBlock(sockfd sfd)
 {
+    return true;
+}
+
+bool
+Listener::SetTTL(sockfd sfd, int ttl)
+{
+    int _ttl = ttl;
+    if (setsockopt(sfd, IPPROTO_IP, IP_TTL, &_ttl, sizeof(_ttl)) == -1) {
+        g_log->Error("failed to set TTL");
+        return false;
+    }
     return true;
 }

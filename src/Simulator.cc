@@ -312,16 +312,10 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 bool
 Simulator::SimSetupSocket(Peer * pPeer)
 {
-    int ttl = 64;
-    if (setsockopt(pPeer->sfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) == -1) {
-        g_log->Warning("failed to set TTL");
+    if (!Listener::SetTTL(pPeer->sfd, 64))
         return false;
-    }
-    int nodelay = 1;
-    if (setsockopt(pPeer->sfd, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) == -1) {
-        g_log->Warning("failed to set TCP nodelay");
+    if (!Listener::SetNonBlock(pPeer->sfd))
         return false;
-    }
     return true;
 }
 
@@ -360,8 +354,6 @@ Simulator::SimConnect(Peer * pPeer)
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         return false;
     }
-
-    SetNonBlock(pPeer->sfd);
 
     memcpy(&sad.sin_addr, &pPeer->conf.remote_addr, sizeof(sad.sin_addr));
     sad.sin_family = AF_INET;
@@ -689,18 +681,6 @@ Simulator::ParseUpdate(Peer * pPeer)
 bool
 Simulator::ParseKeepalive(Peer * pPeer)
 {
-}
-
-bool
-Simulator::SetNonBlock(sockfd sfd)
-{
-    return Listener::SetNonBlock(sfd);
-}
-
-bool
-Simulator::UnsetNonBlock(sockfd sfd)
-{
-    return Listener::UnsetNonBlock(sfd);
 }
 
 bool

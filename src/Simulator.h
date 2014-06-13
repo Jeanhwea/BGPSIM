@@ -65,8 +65,6 @@ class Simulator : public Thread {
         // socket helper
         bool SimSetupSocket(Peer *);
         bool InitPeerConn(Peer *);
-        bool SetNonBlock(sockfd sfd);
-        bool UnsetNonBlock(sockfd sfd);
 
         Peer * GetPeerByAddr(struct sockaddr_in * pSad);
         Peer * GetPeerByAddr(struct in_addr * pAd);
