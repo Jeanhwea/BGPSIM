@@ -32,7 +32,7 @@ class Simulator : public Thread {
 
         u_int16_t                   conf_as;
         u_int16_t                   conf_holdtime;
-        u_int16_t                   conf_bgpid;
+        u_int32_t                   conf_bgpid;
         struct in_addr              lisaddr;
 
         Timer                       tim;

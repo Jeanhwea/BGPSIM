@@ -330,6 +330,7 @@ Simulator::SimTCPEstablished(Peer * pPeer)
 {
     socklen_t len;
 
+    assert(pPeer->sfd != -1);
     len = sizeof(pPeer->sa_local);
     if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1)
         g_log->Warning("getsockname failed");
@@ -399,7 +400,7 @@ Simulator::SimOpen(Peer * pPeer)
     msg.msghdr.length = htons(len);
     msg.msghdr.type = OPEN;
     msg.version = BGP_VERSION;
-    msg.myas = htons(conf_as);
+    msg.myas = conf_as; // already in network order
     if (pPeer->holdtime > 0)
         msg.holdtime = htons(pPeer->holdtime);
     else
@@ -421,6 +422,7 @@ Simulator::SimOpen(Peer * pPeer)
         g_log->Error("simopen, failed to send.");
         g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
     }
+    g_log->Tips("Sim open send successful");
 }
 
 void
@@ -729,7 +731,7 @@ Simulator::LoadSimConf(const char * filename)
     if (!inet_aton(lad, &linad))
         g_log->Warning("not a valid ip");
     conf_as     = htons(as);
-    conf_bgpid  = htonl(linad.s_addr);
+    conf_bgpid  = linad.s_addr;
     memcpy(&lisaddr, &linad, sizeof(linad));
 
     while (fscanf(ffd, "%d%s", &as, rad) != EOF) {
