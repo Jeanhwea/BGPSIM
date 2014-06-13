@@ -67,7 +67,7 @@ Simulator::SimMain()
     while (mQuit == false) {
         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
             pPeer = * vit;
-            if (pPeer->sfd != NULL)
+            if (pPeer->sfd != -1)
                 SimRecvMsg(pPeer);
         }
     }

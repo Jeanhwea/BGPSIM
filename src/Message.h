@@ -3,7 +3,7 @@
 #define MESSAGE_DKT2MXIT
 
 #include "global.h"
-#include "Logger.h"
+#include "Buffer.h"
 
 
 #define MSGSIZE_HEADER              19
@@ -12,8 +12,7 @@
 #define MSGSIZE_OPEN_MIN            29
 #define MSGSIZE_UPDATE_MIN          23
 #define MSGSIZE_KEEPALIVE           19  /* 19 hdr */
-
-#define MSGBUFSIZE                  4096
+#define MSGSIZE_MAX                 4096
 
 typedef enum {
     OPEN = 1,
@@ -73,24 +72,15 @@ struct openmsg {
 using namespace std;
 
 
-class Message {
+class Message : public Buffer {
     private:
         static deque<Message *> mqMessage;
 
     public:
-        u_char    * buf;
-        ssize_t     size;
-        ssize_t     wpos;
-        ssize_t     rpos;
         sockfd      sfd;
 
-        Message(ssize_t len);
+        Message(int len);
         virtual ~Message();
-        bool Add(void *, ssize_t);
-        u_char * Reserve(ssize_t);
-        bool Close();
-        bool Write();
-        bool Write(sockfd, Message *);
 
 };
 

@@ -41,8 +41,8 @@ class Peer : public Thread {
         time_t              IdleHoldTimer;
         time_t              IdleHoldTime;
 
-        //Buffer            * rbuf;
         queue<Message *>    qMsg;
+        queue<Buffer *>     qBuf;
 
         Peer();
         virtual ~Peer ();

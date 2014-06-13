@@ -18,6 +18,8 @@ class Timer : public Thread {
         static Timer * GetInst();
         static void TimerHandler(int sig);
 
+        bool IsExpire(time_t timer);
+
     public:
         Timer();
         virtual ~Timer();

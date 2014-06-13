@@ -3,23 +3,25 @@
 #define BUFFER_3NKWNENG
 
 #include "global.h"
-#include "Logger.h"
 
 using namespace std;
-
-#define MAX_BUF_SIZE 65535
 
 class Buffer {
     private:
 
     public:
-        u_char      buf[MAX_BUF_SIZE];
-        u_char    * rptr;
+        u_char    * data;
+        ssize_t     size;
         ssize_t     wpos;
+        ssize_t     rpos;
 
-        Buffer();
+        Buffer(int len);
         virtual ~Buffer();
 
+        bool Add(void *, ssize_t);
+        u_char * Reserve(ssize_t);
+        bool Close();
+        bool Write(sockfd, Buffer *);
 };
 
 #endif /* end of include guard: BUFFER_3NKWNENG */

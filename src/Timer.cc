@@ -40,8 +40,7 @@ Timer::Schedule()
     Peer * pPeer;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
-        if (pPeer->KeepaliveTimer > 0 &&
-                pPeer->GetPeerState() <= time(NULL) ) {
+        if (IsExpire(pPeer->KeepaliveTimer)) {
             pPeer->Lock();
             if (pPeer->GetPeerState() == OPENCONFIRM ||
                     pPeer->GetPeerState() == ESTABLISHED ) {
@@ -49,23 +48,20 @@ Timer::Schedule()
             }
             pPeer->UnLock();
         }
-        if (pPeer->HoldTimer > 0 &&
-                pPeer->HoldTimer <= time(NULL) ) {
+        if (IsExpire(pPeer->HoldTimer)) {
             pPeer->Lock();
             if (pPeer->GetPeerState() == OPENSENT ||
                     pPeer->GetPeerState() == ESTABLISHED )
                 pPeer->Start(HOLD_TIMER_EXPIRED);
             pPeer->UnLock();
         }
-        if (pPeer->ConnetRetryTimer > 0 &&
-                pPeer->ConnetRetryTimer <= time(NULL)) {
+        if (IsExpire(pPeer->ConnetRetryTimer)) {
             pPeer->Lock();
             if (pPeer->GetPeerState() == ACTIVE)
                 pPeer->Start(CONN_RETRY_TIMER_EXPIRED);
             pPeer->UnLock();
         }
-        if (pPeer->IdleHoldTimer > 0 &&
-                pPeer->IdleHoldTimer <= time(NULL) ) {
+        if (IsExpire(pPeer->IdleHoldTimer)) {
             pPeer->Lock();
             pPeer->Start();
             pPeer->UnLock();
@@ -88,5 +84,13 @@ Timer::TimerHandler(int sig)
         cout << "Tick\t: " << ++ walltime << endl;
     alarm(Timer::interval);
     GetInst()->Schedule();
+}
+
+bool
+Timer::IsExpire(time_t timer)
+{
+    if (timer > 0 && timer <= time(NULL))
+        return true;
+    return false;
 }
 
