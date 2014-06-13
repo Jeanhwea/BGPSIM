@@ -86,11 +86,11 @@ class Message {
 
         Message(ssize_t len);
         virtual ~Message();
-        bool Add(void * data, ssize_t len);
-        u_char * Reserve(ssize_t len);
+        bool Add(void *, ssize_t);
+        u_char * Reserve(ssize_t);
         bool Close();
         bool Write();
-        bool Write(sockfd sfd, Message * buf);
+        bool Write(sockfd, Message *);
 
 };
 

@@ -83,6 +83,7 @@ void * Listener::Run()
                     close(afd);
             }
             pPeer->Start(BGP_TRANS_CONN_OPEN);
+            pPeer->conf.passive = true;
         }
         pPeer->UnLock();
     }

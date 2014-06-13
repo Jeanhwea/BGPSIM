@@ -55,11 +55,16 @@ class Peer : public Thread {
         void SetPeerState(state_t state) {
             mState = state;
         }
+        int GetId() {
+            return peerid;
+        }
         void Lock();
         void UnLock();
 
         void StartTimerHoldtime();
         void StartTimerKeepalive();
+
+        bool Send();
 };
 
 extern map<state_t, string> mapStateName;

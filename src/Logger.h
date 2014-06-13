@@ -6,6 +6,8 @@
 
 using namespace std;
 
+class Peer;
+
 class Logger {
     private:
         FILE * out;
@@ -26,9 +28,9 @@ class Logger {
         void ShowIPAddr(struct in_addr * ad);
         void ShowIPAddr(struct sockaddr_in * sad);
 
-        void LogStateChage(state_t from, state_t to, event_t eve);
+        void LogStateChage(Peer *, state_t to, event_t eve);
         void LogDumpMsg(u_char * data, size_t len);
-        void LogPeerEve(event_t eve);
+        void LogPeerEve(Peer * pPeer, event_t eve);
         void LogSimConf(int as, const char * ra);
 
         void LogPeerList();

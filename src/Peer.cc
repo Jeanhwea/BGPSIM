@@ -52,7 +52,7 @@ Peer::Run()
 void *
 Peer::Run(event_t eve)
 {
-    g_log->LogPeerEve(eve);
+    g_log->LogPeerEve(this, eve);
     if (isDebug)
         cout << "Peer_" << peerid << " Runs ..." << endl;
     g_sim->FSM(this, eve);
@@ -85,4 +85,25 @@ void
 Peer::UnLock()
 {
     pthread_mutex_unlock(&mutex);
+}
+
+bool
+Peer::Send()
+{
+    Message * pMsg = qMsg.front();
+
+    if (pMsg == NULL) {
+        g_log->Error("Peer :: send a empty msg");
+        return false;
+    }
+
+    if (! pMsg->Write(this->sfd, pMsg)) {
+        g_log->Error("Peer :: write msg err");
+        return false;
+    }
+
+    qMsg.pop();
+
+    delete pMsg;
+    return true;
 }

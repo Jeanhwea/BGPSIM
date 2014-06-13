@@ -58,16 +58,16 @@ Message::Write()
 }
 
 bool
-Message::Write(sockfd sfd, Message * buf)
+Message::Write(sockfd sfd, Message * pMsg)
 {
     ssize_t nleft, nwrite;
     u_char * ptr;
 
-    nleft = buf->size - buf->rpos;
-    ptr = buf->buf + buf->wpos;
+    nleft = pMsg->size - pMsg->rpos;
+    ptr = pMsg->buf + pMsg->wpos;
     while (nleft > 0) {
         nwrite = write(sfd, ptr, nleft);
-        if (nwrite < 0 && errno == EAGAIN) {
+        if (nwrite < 0) {
             g_log->Error("failed to write buf\n");
             return false;
         }

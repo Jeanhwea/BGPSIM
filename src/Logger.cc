@@ -84,20 +84,21 @@ Logger::ShowIPAddr(struct sockaddr_in * pSad)
 }
 
 void
-Logger::LogStateChage(state_t from, state_t to, event_t eve)
+Logger::LogStateChage(Peer * pPeer, state_t to, event_t eve)
 {
-    fprintf(out, "Peer\t: { %s }->{ %s } : [%s]\n",
-        mapStateName[from].c_str(),
-            mapStateName[to].c_str(),
-                mapEventName[eve].c_str());
+    fprintf(out, "Peer_%d\t: { %s }->{ %s } : [%s]\n",
+        pPeer->GetId(),
+            mapStateName[pPeer->GetPeerState()].c_str(),
+                mapStateName[to].c_str(),
+                    mapEventName[eve].c_str());
     fflush(out);
 }
 
 void
-Logger::LogPeerEve(event_t eve)
+Logger::LogPeerEve(Peer * pPeer, event_t eve)
 {
-    fprintf(out, "Peer runs, handling event : %s\n",
-            mapEventName[eve].c_str());
+    fprintf(out, "Peer_%d runs, handling event : %s\n",
+                pPeer->GetId(), mapEventName[eve].c_str());
     fflush(out);
 }
 

@@ -11,7 +11,6 @@ using namespace std;
 
 class Buffer {
     private:
-        Logger log;
 
     public:
         u_char      buf[MAX_BUF_SIZE];

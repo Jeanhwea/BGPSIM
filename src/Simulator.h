@@ -70,6 +70,7 @@ class Simulator : public Thread {
 
         Peer * GetPeerByAddr(struct sockaddr_in * pSad);
         Peer * GetPeerByAddr(struct in_addr * pAd);
+        Peer * GetPeerBySockfd(sockfd fd);
         bool LoadSimConf(const char * filename);
         bool LoadListConf(const char * filename);
 

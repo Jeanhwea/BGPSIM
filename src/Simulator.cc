@@ -305,7 +305,7 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
         case ESTABLISHED:
             break;
     }
-    g_log->LogStateChage(pPeer->GetPeerState(), state, eve);
+    g_log->LogStateChage(pPeer, state, eve);
     pPeer->SetPeerState(state);
 }
 
@@ -409,11 +409,18 @@ Simulator::SimOpen(Peer * pPeer)
 
     Message * pMsg;
     pMsg = new Message(MSGBUFSIZE);
+    if (pMsg == NULL) {
+        g_sim->FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
+        return ;
+    }
+    pMsg->sfd = pPeer->sfd;
     pMsg->Add(&msg, sizeof(msg));
     pPeer->qMsg.push(pMsg);
-    cout << pPeer->qMsg.size() << endl;
-    //pPeer->wbuf->Add(&msg, sizeof(msg));
-    //pPeer->wbuf->Write();
+    cout << "simopen msg size = " << pPeer->qMsg.size() << endl;
+    if( !pPeer->Send() ) {
+        g_log->Error("simopen, failed to send.");
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+    }
 }
 
 void
@@ -468,6 +475,27 @@ Simulator::GetPeerByAddr(struct in_addr * pAd)
 
     return ret;
 }
+
+Peer *
+Simulator::GetPeerBySockfd(sockfd fd)
+{
+    if (fd == -1)
+        return NULL;
+
+    vector<Peer *>::iterator vit;
+    Peer * pPeer, * ret;
+    ret = NULL;
+    for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+        pPeer = *vit;
+        if (pPeer->sfd == fd) {
+            ret = pPeer;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 
 bool
 Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & type)
