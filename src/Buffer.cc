@@ -21,10 +21,10 @@ Buffer::~Buffer()
 }
 
 bool
-Buffer::Add(void * data, ssize_t len)
+Buffer::Add(void * pData, ssize_t len)
 {
     assert(wpos + len <= size);
-    memcpy(data + wpos, data, len);
+    memcpy(data + wpos, pData, len);
     wpos += len;
     return true;
 }
