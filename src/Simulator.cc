@@ -65,12 +65,11 @@ Simulator::SimMain()
         pPeer->Start();
     }
     while (mQuit == false) {
-//         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
-//             pPeer = *vit;
-//             if (pPeer->IdleHoldTimer != 0 &&
-//                     pPeer->IdleHoldTimer <= time(NULL) )
-//             pPeer->Start();
-//         }
+        for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+            pPeer = * vit;
+            if (pPeer->sfd != NULL)
+                SimRecvMsg(pPeer);
+        }
     }
 }
 
@@ -401,7 +400,7 @@ Simulator::SimOpen(Peer * pPeer)
     msg.optparamlen = 0;
 
     Message * pMsg;
-    pMsg = new Message(MSGBUFSIZE);
+    pMsg = new Message(MSGSIZE_MAX);
     if (pMsg == NULL) {
         g_sim->FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         return ;
@@ -440,6 +439,35 @@ Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, s
     msg.length = htons(len);
     msg.type = NOTIFICATION;
 }
+
+bool
+Simulator::SimDispatchMsg()
+{
+
+}
+
+bool
+Simulator::SimRecvMsg(Peer* pPeer)
+{
+    u_char      buf[MSGSIZE_MAX];
+    int         nread;
+
+    assert(pPeer->sfd != -1);
+    nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
+    if (nread <= 0)
+        return false;
+
+    g_log->LogDumpMsg(buf, nread);
+
+    Buffer    * pBuf;
+    pBuf = new Buffer(MSGSIZE_MAX);
+    assert(pBuf != NULL);
+    pBuf->Add(buf, nread);
+
+    pPeer->qBuf.push(pBuf);
+    return true;
+}
+
 
 Peer *
 Simulator::GetPeerByAddr(struct sockaddr_in * pSad)
@@ -561,14 +589,14 @@ bool
 Simulator::ParseOpen(Peer * pPeer)
 {
     u_char    * pos;
-    // u_char    * op_val;
     u_int8_t    version, rversion;
     u_int16_t   as, msglen;
     u_int16_t   holdtime, oholdtime, myholdtime;
     u_int32_t   bgpid;
     u_int8_t    optparamlen, plen;
-    // u_int8_t    op_type, op_len;
 
+
+    Buffer    * pBuf;
     //pos = pPeer->rbuf->rptr;
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&msglen, pos, sizeof(msglen));
@@ -682,12 +710,6 @@ bool
 Simulator::ParseKeepalive(Peer * pPeer)
 {
 }
-
-bool
-Simulator::InitPeerConn(Peer * pPeer)
-{
-}
-
 
 bool
 Simulator::LoadSimConf(const char * filename)
