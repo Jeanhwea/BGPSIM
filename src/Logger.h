@@ -32,6 +32,7 @@ class Logger {
         void LogDumpMsg(u_char * data, size_t len);
         void LogPeerEve(Peer * pPeer, event_t eve);
         void LogSimConf(int as, const char * ra);
+        void LogDispatchMsg(u_int16_t len, u_int8_t type);
 
         void LogPeerList();
         void LogListenerList();

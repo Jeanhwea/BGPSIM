@@ -109,6 +109,14 @@ Logger::LogSimConf(int as, const char * ra)
     fprintf(out, "Load Simu Config : AS%d, %s\n", as, ra);
 }
 
+void
+Logger::LogDispatchMsg(u_int16_t len, u_int8_t type)
+{
+    fprintf(out, "Dipatch Message with type=%s, len=%d\n",
+            mapMsgName[(message_t)type].c_str(), len);
+}
+
+
 #define PRINT_ALIGN 16
 void
 Logger::LogDumpMsg(u_char * data, size_t len)

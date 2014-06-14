@@ -7,6 +7,7 @@
 #include "Message.h"
 #include "Thread.h"
 #include "Logger.h"
+#include "Dispatcher.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ class Peer : public Thread {
     private:
         static int      peer_cnt;
         pthread_mutex_t mutex;
-        int             peerid;
+        int             peer_id;
         state_t         mState;
 
     public:
@@ -41,8 +42,10 @@ class Peer : public Thread {
         time_t              IdleHoldTimer;
         time_t              IdleHoldTime;
 
-        queue<Message *>    qMsg;
-        queue<Buffer *>     qBuf;
+        queue<Message *>    qMsg; // messages to be sent to others
+        queue<Buffer *>     qBuf; // messages recieved from others
+
+        Dispatcher        * pDis;
 
         Peer();
         virtual ~Peer ();
@@ -56,7 +59,7 @@ class Peer : public Thread {
             mState = state;
         }
         int GetId() {
-            return peerid;
+            return peer_id;
         }
         void Lock();
         void UnLock();

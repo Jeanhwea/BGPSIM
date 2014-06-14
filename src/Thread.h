@@ -4,13 +4,6 @@
 
 #include "global.h"
 
-class Thread;
-
-struct arg_eve {
-    event_t     eve;
-    Thread    * thd;
-};
-
 class Thread {
     private:
         static pthread_t thread_cnt;
@@ -33,6 +26,11 @@ class Thread {
         bool Join();
         bool Detach();
         pthread_t Self();
+};
+
+struct arg_eve {
+    event_t     eve;
+    Thread    * thd;
 };
 
 #endif /* end of include guard: THREAD_Z0X3KQ1B */

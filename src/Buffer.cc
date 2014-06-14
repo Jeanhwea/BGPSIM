@@ -40,23 +40,10 @@ Buffer::Reserve(ssize_t len)
     return ret;
 }
 
-bool
-Buffer::Write(sockfd sfd, Buffer * pBuf)
-{
-    ssize_t nleft, nwrite;
-    u_char * ptr;
 
-    nleft = pBuf->wpos - pBuf->rpos;
-    ptr = pBuf->data + pBuf->rpos;
-    while (nleft > 0) {
-        nwrite = write(sfd, ptr, nleft);
-        if (nwrite < 0) {
-            g_log->Error("failed to write data\n");
-            return false;
-        }
-        nleft -= nwrite;
-        ptr += nwrite;
-    }
-    pBuf->rpos = pBuf->wpos;
-    return true;
+ssize_t
+Buffer::Length()
+{
+    return (wpos - rpos);
 }
+

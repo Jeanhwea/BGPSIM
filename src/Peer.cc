@@ -15,7 +15,7 @@ map<state_t, string> mapStateName = {
 
 Peer::Peer()
 {
-    peerid = ++peer_cnt;
+    peer_id = ++peer_cnt;
     mutex = PTHREAD_MUTEX_INITIALIZER;
     sfd = -1;
     holdtime = T_HOLD_INITIAL;
@@ -24,24 +24,21 @@ Peer::Peer()
     KeepaliveTimer = 0;
     IdleHoldTimer = 0;
     ConnetRetryTimer = 0;
-    //rbuf = NULL;
-    //wbuf = NULL;
+    pDis = NULL;
     mState = IDLE;
 }
 
 Peer::~Peer()
 {
-//     if (rbuf != NULL)
-//         delete rbuf;
-//     if (wbuf != NULL)
-//         delete wbuf;
+    if (pDis != NULL)
+        delete pDis;
 }
 
 void *
 Peer::Run()
 {
     if (isDebug)
-        cout << "Peer_" << peerid << " Runs ..." << endl;
+        cout << "Peer_" << peer_id << " Runs ..." << endl;
     if (mState == IDLE)
         g_sim->FSM(this, BGP_START);
     else
@@ -54,7 +51,7 @@ Peer::Run(event_t eve)
 {
     g_log->LogPeerEve(this, eve);
     if (isDebug)
-        cout << "Peer_" << peerid << " Runs ..." << endl;
+        cout << "Peer_" << peer_id << " Runs ..." << endl;
     g_sim->FSM(this, eve);
     return NULL;
 }

@@ -42,7 +42,6 @@ Simulator::Run()
 {
     tim.Start();
     SimMain();
-    tim.Join();
     return NULL;
 }
 
@@ -65,10 +64,15 @@ Simulator::SimMain()
         pPeer->Start();
     }
     while (mQuit == false) {
+        // simulator main loop
         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
             pPeer = * vit;
-            if (pPeer->sfd != -1)
-                SimRecvMsg(pPeer);
+            if (pPeer->pDis == NULL && pPeer->sfd != -1) {
+                pPeer->pDis = new Dispatcher;
+                assert(pPeer->pDis != NULL);
+                pPeer->pDis->SetReadFd(pPeer->sfd);
+                pPeer->pDis->Start();
+            }
         }
     }
 }
@@ -346,8 +350,6 @@ Simulator::SimConnect(Peer * pPeer)
         return false;
     }
 
-    //pPeer->wbuf->sfd = pPeer->sfd;
-
     if (!SimSetupSocket(pPeer)) {
         g_log->Warning("SimConnect sim setup failed");
         FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
@@ -440,14 +442,9 @@ Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, s
     msg.type = NOTIFICATION;
 }
 
-bool
-Simulator::SimDispatchMsg()
-{
-
-}
 
 bool
-Simulator::SimRecvMsg(Peer* pPeer)
+Simulator::SimRecvMsg(Peer * pPeer)
 {
     u_char      buf[MSGSIZE_MAX];
     int         nread;
@@ -520,14 +517,14 @@ Simulator::GetPeerBySockfd(sockfd fd)
 
 
 bool
-Simulator::ParseHeader(Peer * pPeer, u_char & data, u_int16_t & len, u_int8_t & type)
+Simulator::ParseHeader(Peer * pPeer, u_char * data, u_int16_t & len, u_int8_t & type)
 {
     u_char    * pos;
     u_char      one = 0xff;
     u_int16_t   olen;
 
     // parse at least 19 bytes, we do not check it right now
-    pos = &data;
+    pos = data;
     for (int i = 0; i < MSGSIZE_HEADER_MARKER; ++i) { // marker
         if (memcmp(pos, &one, 1)) {
             g_log->Warning("sync error in parse header");
@@ -597,7 +594,10 @@ Simulator::ParseOpen(Peer * pPeer)
 
 
     Buffer    * pBuf;
-    //pos = pPeer->rbuf->rptr;
+    pBuf = pPeer->qBuf.front();
+    assert(pBuf != NULL);
+
+    pos = pBuf->data;
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&msglen, pos, sizeof(msglen));
     msglen = ntohs(msglen);
@@ -680,7 +680,11 @@ Simulator::ParseNotification(Peer * pPeer)
     u_int16_t   datalen;
     // u_int8_t    capa_code, capa_len;
 
-    //pos = pPeer->rbuf->rptr;
+    Buffer * pBuf;
+    pBuf = pPeer->qBuf.front();
+    assert(pBuf != NULL);
+
+    pos = pBuf->data;
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&datalen, pos, sizeof(datalen));
     datalen = ntohs(datalen);
@@ -704,11 +708,13 @@ Simulator::ParseNotification(Peer * pPeer)
 bool
 Simulator::ParseUpdate(Peer * pPeer)
 {
+    // TODO
 }
 
 bool
 Simulator::ParseKeepalive(Peer * pPeer)
 {
+    return true;
 }
 
 bool

@@ -56,10 +56,9 @@ class Simulator : public Thread {
         void SimKeepalive(Peer *);
         void SimUpdate(Peer *, void *, ssize_t);
         void SimNotification(Peer *, u_int8_t, u_int8_t, void *, ssize_t);
-        bool SimDispatchMsg();
         bool SimRecvMsg(Peer * pPeer);
         // message parser
-        bool ParseHeader(Peer *, u_char &, u_int16_t &, u_int8_t &);
+        bool ParseHeader(Peer *, u_char *, u_int16_t &, u_int8_t &);
         bool ParseOpen(Peer *);
         bool ParseNotification(Peer *);
         bool ParseUpdate(Peer *);

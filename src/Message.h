@@ -82,6 +82,7 @@ class Message : public Buffer {
         Message(int len);
         virtual ~Message();
 
+        bool Write(sockfd, Message *);
 };
 
 extern std::map<message_t, string> mapMsgName;
