@@ -67,12 +67,13 @@ Simulator::SimMain()
         // simulator main loop
         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
             pPeer = * vit;
-            if (pPeer->pDis == NULL && pPeer->sfd != -1) {
+            if (pPeer->sfd == -1)
+                continue;
+            if (pPeer->pDis == NULL)
                 pPeer->pDis = new Dispatcher;
-                assert(pPeer->pDis != NULL);
-                pPeer->pDis->SetReadFd(pPeer->sfd);
-                pPeer->pDis->Start();
-            }
+            assert(pPeer->pDis != NULL);
+            pPeer->pDis->SetReadFd(pPeer->sfd);
+            pPeer->pDis->Start();
         }
     }
 }

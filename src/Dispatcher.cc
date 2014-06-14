@@ -22,10 +22,8 @@ Dispatcher::Run()
         return NULL;
     }
 
-    for (;;) {
-        if (ReadMsg()) {
-            DispatchMsg();
-        }
+    if (ReadMsg()) {
+        DispatchMsg();
     }
 
     return NULL;
@@ -41,6 +39,9 @@ Dispatcher::ReadMsg()
         //g_log->Warning("dispatch cannot get a peer with given sockfd");
         return false;
     }
+
+    if (pPeer->sfd == -1)
+        return false;
 
     return g_sim->SimRecvMsg(pPeer);
 }
