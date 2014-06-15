@@ -414,18 +414,38 @@ Simulator::SimOpen(Peer * pPeer)
     pMsg->sfd = pPeer->sfd;
     pMsg->Add(&msg, sizeof(msg));
     pPeer->qMsg.push(pMsg);
-    cout << "simopen msg size = " << pPeer->qMsg.size() << endl;
     if( !pPeer->Send() ) {
         g_log->Error("simopen, failed to send.");
         g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
     }
-    g_log->Tips("Sim open send successful");
+    g_log->Tips("Sim open msg send successful");
 }
 
 void
 Simulator::SimKeepalive(Peer * pPeer)
 {
+    struct bgphdr   hdr;
+    u_int16_t       len;
 
+    len = MSGSIZE_KEEPALIVE;
+    memset(hdr.marker, 0xff, sizeof(hdr.marker));
+    hdr.length = htons(len);
+    hdr.type = KEEPALIVE;
+
+    Message * pMsg;
+    pMsg = new Message(MSGSIZE_KEEPALIVE);
+    if (pMsg == NULL) {
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+        return;
+    }
+    pMsg->sfd = pPeer->sfd;
+    pMsg->Add(&hdr, sizeof(hdr));
+    pPeer->qMsg.push(pMsg);
+    if ( !pPeer->Send() ) {
+        g_log->Error("simkeepalive, failed to send");
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+    }
+    g_log->Tips("Sim keepalive msg send successful");
 }
 
 void
@@ -437,13 +457,33 @@ Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len)
 void
 Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, ssize_t datalen)
 {
-    struct bgphdr   msg;
+    struct bgphdr   hdr;
     ssize_t         len;
 
     len = MSGSIZE_NOTIFICATION_MIN + datalen;
-    memset(&msg.marker, 0xff, sizeof(msg.marker));
-    msg.length = htons(len);
-    msg.type = NOTIFICATION;
+    memset(&hdr.marker, 0xff, sizeof(hdr.marker));
+    hdr.length = htons(len);
+    hdr.type = NOTIFICATION;
+
+    Message * pMsg;
+    pMsg = new Message(MSGSIZE_MAX);
+    if (pMsg == NULL) {
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+        return;
+    }
+    pMsg->sfd = pPeer->sfd;
+    pMsg->Add(&hdr, sizeof(hdr));
+    pMsg->Add(&e, sizeof(e));
+    pMsg->Add(&es, sizeof(es));
+    if (datalen > 0)
+        pMsg->Add(data, datalen);
+
+    pPeer->qMsg.push(pMsg);
+    if ( !pPeer->Send() ) {
+        g_log->Error("sim notification, failed to send");
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+    }
+    g_log->Tips("sim notification msg send successful");
 }
 
 
