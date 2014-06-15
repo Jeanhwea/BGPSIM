@@ -6,7 +6,7 @@ using namespace std;
 pthread_t Thread::thread_cnt = 0;
 
 Thread::Thread()
-: mTid(0), isRunning(false), isDetached(false)
+: isRunning(false), isDetached(false)
 {
     ++ thread_cnt;
 //     if (isDebug)
@@ -16,9 +16,9 @@ Thread::Thread()
 Thread::~Thread()
 {
     if (isRunning && (!isDetached))
-        pthread_detach(mTid);
+        pthread_detach(tid);
     if (isRunning)
-        pthread_cancel(mTid);
+        pthread_cancel(tid);
 }
 
 void *
@@ -37,7 +37,7 @@ Thread::RunThread_two(void * arg)
 
 bool
 Thread::Start() {
-    int res = pthread_create(&mTid, NULL, RunThread_one, this);
+    int res = pthread_create(&tid, NULL, RunThread_one, this);
     if (res == 0)
         isRunning = true;
     return (res == 0);
@@ -50,7 +50,7 @@ Thread::Start(event_t eve)
     arg = (struct arg_eve *) malloc(sizeof(struct arg_eve));
     arg->thd = this;
     arg->eve = eve;
-    int res = pthread_create(&mTid, NULL, RunThread_two, arg);
+    int res = pthread_create(&tid, NULL, RunThread_two, arg);
     if (res == 0)
         isRunning = true;
     return (res == 0);
@@ -61,7 +61,7 @@ bool
 Thread::Join() {
     int res = -1;
     if (isRunning) {
-        res = pthread_join(mTid, NULL);
+        res = pthread_join(tid, NULL);
         if (res == 0)
             isDetached = true;
     }
@@ -72,7 +72,7 @@ bool
 Thread::Detach() {
     int res = -1;
     if (isRunning && (!isDetached) ) {
-        res = pthread_detach(mTid);
+        res = pthread_detach(tid);
         if (res == 0) isDetached = true;
     }
     return (res == 0);
@@ -81,5 +81,5 @@ Thread::Detach() {
 pthread_t
 Thread::Self()
 {
-    return mTid;
+    return tid;
 }

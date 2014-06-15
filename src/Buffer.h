@@ -21,6 +21,7 @@ class Buffer {
         bool Add(void *, ssize_t);
         u_char * Reserve(ssize_t);
         ssize_t Length();
+        u_char * ReadPos();
 };
 
 #endif /* end of include guard: BUFFER_3NKWNENG */

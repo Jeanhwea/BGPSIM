@@ -47,3 +47,9 @@ Buffer::Length()
     return (wpos - rpos);
 }
 
+u_char *
+Buffer::ReadPos()
+{
+    return (data + rpos);
+}
+

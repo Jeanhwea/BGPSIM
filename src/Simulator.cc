@@ -67,8 +67,9 @@ Simulator::SimMain()
         // simulator main loop
         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
             pPeer = * vit;
-            if (pPeer->sfd == -1)
+            if (pPeer->sfd == -1) {
                 continue;
+            }
             if (pPeer->pDis == NULL)
                 pPeer->pDis = new Dispatcher;
             assert(pPeer->pDis != NULL);
@@ -380,7 +381,9 @@ Simulator::SimColseConnect(Peer * pPeer)
         close(pPeer->sfd);
     }
     pPeer->sfd = -1;
-    //pPeer->wbuf->sfd = -1;
+    if (pPeer->pDis != NULL) {
+        pPeer->pDis->Detach();
+    }
 }
 
 void
@@ -598,12 +601,14 @@ Simulator::ParseOpen(Peer * pPeer)
     pBuf = pPeer->qBuf.front();
     assert(pBuf != NULL);
 
-    pos = pBuf->data;
+    g_log->LogDumpMsg(pBuf->data, pBuf->Length());
+
+    pos = pBuf->ReadPos();
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&msglen, pos, sizeof(msglen));
     msglen = ntohs(msglen);
 
-    //pos = pPeer->rbuf->rptr;
+    pos = pBuf->ReadPos();
     pos += MSGSIZE_HEADER;
 
     memcpy(&version, pos, sizeof(version));
@@ -621,7 +626,7 @@ Simulator::ParseOpen(Peer * pPeer)
 
     memcpy(&as, pos, sizeof(as));
     pos += sizeof(as);
-    if (pPeer->conf.remote_as != ntohs(as)) {
+    if (pPeer->conf.remote_as != as) {
         fprintf(errfd, "peer sent wrong AS %u\n", ntohs(as));
         SimNotification(pPeer, ERR_OPEN, ERR_OPEN_AS, NULL, 0);
         ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
@@ -660,14 +665,16 @@ Simulator::ParseOpen(Peer * pPeer)
 
     plen = optparamlen;
     while (plen > 0) {
+        // TODO: add ParseCapabilities ....
         if (plen < 2) {
             fprintf(errfd, "corrupt OPEN message received: length mismatch\n");
             SimNotification(pPeer, ERR_OPEN, 0, NULL, 0);
             ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
             return false;
         }
-        // TODO: add ParseCapabilities ....
     }
+
+    pPeer->qBuf.pop();
 
     return true;
 }
@@ -710,6 +717,7 @@ bool
 Simulator::ParseUpdate(Peer * pPeer)
 {
     // TODO
+    return true;
 }
 
 bool

@@ -7,7 +7,7 @@
 class Thread {
     private:
         static pthread_t thread_cnt;
-        pthread_t mTid;
+        pthread_t tid;
         bool isRunning;
         bool isDetached;
 
