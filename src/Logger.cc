@@ -163,7 +163,8 @@ Logger::LogPeerList()
         pPeer = *pit;
         assert(pPeer != NULL);
         as = ntohs(pPeer->conf.remote_as);
-        fprintf(out,"{ AS%d, %s } ", as, AddrToStr(&pPeer->conf.remote_addr));
+        fprintf(out,"{ AS%d, %s, sfd=%d } ", as, 
+                AddrToStr(&pPeer->conf.remote_addr), pPeer->sfd);
     }
     fprintf(out, "]\n");
 }

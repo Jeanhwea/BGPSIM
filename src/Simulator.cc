@@ -493,7 +493,8 @@ Simulator::SimRecvMsg(Peer * pPeer)
     u_char      buf[MSGSIZE_MAX];
     int         nread;
 
-    assert(pPeer->sfd != -1);
+    if (pPeer->sfd == -1)
+        return false;
     nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
     if (nread <= 0)
         return false;
