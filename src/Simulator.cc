@@ -453,12 +453,44 @@ Simulator::SimKeepalive(Peer * pPeer)
         g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
     }
     g_log->Tips("Sim keepalive msg send successful");
+    
+    pPeer->StartTimerKeepalive();
 }
 
 void
-Simulator::SimUpdate(Peer * pPeer, void * data, ssize_t len)
+Simulator::SimUpdate(u_int32_t bgpid, void * data, size_t datalen)
 {
-
+    Peer          * pPeer;
+    pPeer = GetPeerByAddr(bgpid);
+    if (pPeer == NULL) {
+        g_log->Warning("Cannot find peer in sim update");
+        return ;
+    }
+    
+    struct bgphdr   hdr;
+    u_int16_t       len;
+    
+    len = MSGSIZE_HEADER + datalen;
+    memset(hdr.marker, 0xff, sizeof(hdr.marker));
+    hdr.length = htons(len);
+    hdr.type = UPDATE;
+    
+    Message * pMsg;
+    pMsg = new Message(MSGSIZE_MAX);
+    if (pMsg == NULL) {
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+        return;
+    }
+    pMsg->sfd = pPeer->sfd;
+    pMsg->Add(&hdr, sizeof(hdr));
+    pMsg->Add(data, datalen);
+    pPeer->qMsg.push(pMsg);
+    if ( !pPeer->Send() ) {
+        g_log->Error("simupdate failed to send");
+        g_sim->FSM(pPeer, BGP_TRANS_FATAL_ERROR);
+    }
+    g_log->Tips("Sim update msg send successful");
+    pPeer->StartTimerKeepalive();
 }
 
 void
@@ -522,6 +554,24 @@ Simulator::GetPeerByAddr(struct in_addr * pAd)
 
     return ret;
 }
+
+Peer * 
+Simulator::GetPeerByAddr(u_int32_t bgpid)
+{
+    vector<Peer *>::iterator vit;
+    Peer * pPeer, * ret;
+    ret = NULL;
+    for (vit = vPeers.begin(); vit != vPeers.end(); ++ vit) {
+        pPeer = *vit;
+        if (memcpy(&pPeer->conf.remote_bgpid, &bgpid, sizeof(bgpid)) == 0) {
+            ret = pPeer;
+            break;
+        }
+    }
+    
+    return ret;
+}
+
 
 Peer *
 Simulator::GetPeerBySockfd(sockfd fd)

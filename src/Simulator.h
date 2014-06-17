@@ -54,7 +54,7 @@ class Simulator : public Thread {
         // message handler
         void SimOpen(Peer *);
         void SimKeepalive(Peer *);
-        void SimUpdate(Peer *, void *, ssize_t);
+        void SimUpdate(u_int32_t, void *, size_t);
         void SimNotification(Peer *, u_int8_t, u_int8_t, void *, ssize_t);
         // message parser
         bool ParseHeader(Peer *, u_char *, u_int16_t &, u_int8_t &);
@@ -67,6 +67,7 @@ class Simulator : public Thread {
         // peer blabla
         Peer * GetPeerByAddr(struct sockaddr_in * pSad);
         Peer * GetPeerByAddr(struct in_addr * pAd);
+        Peer * GetPeerByAddr(u_int32_t bgpid);
         Peer * GetPeerBySockfd(sockfd fd);
         // read config file
         bool LoadSimConf(const char * filename);
