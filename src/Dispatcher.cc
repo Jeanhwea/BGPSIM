@@ -5,8 +5,8 @@
 #include "Simulator.h"
 
 Dispatcher::Dispatcher()
+: sfd(-1), isReading(false)
 {
-    sfd = -1;
 }
 
 Dispatcher::~Dispatcher()
@@ -21,13 +21,22 @@ Dispatcher::Run()
         g_log->Error("dispatcher's sfd is -1, no valid, STOP");
         return NULL;
     }
-
+    
+    isReading = true;
     if (ReadMsg()) {
         DispatchMsg();
     }
+    isReading = false;
 
     return NULL;
 }
+
+bool
+Dispatcher::isRead()
+{
+    return isReading;
+}
+
 
 bool
 Dispatcher::ReadMsg()
@@ -43,7 +52,7 @@ Dispatcher::ReadMsg()
     if (pPeer->sfd == -1)
         return false;
 
-    return g_sim->SimRecvMsg(pPeer);
+    return ReadMsg(pPeer);
 }
 
 bool
@@ -105,5 +114,36 @@ Dispatcher::DispatchMsg(Peer * pPeer)
     }
     pPeer->UnLock();
 
+    return true;
+}
+
+bool
+Dispatcher::ReadMsg(Peer* pPeer)
+{
+    u_char      buf[MSGSIZE_MAX];
+    int         nread;
+
+    if (pPeer->sfd == -1)
+        return false;
+    
+    nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
+    
+    if (nread <= 0)
+        return false;
+    
+    if (nread >= MSGSIZE_MAX) {
+        g_log->Warning("dispatcher recv msg, too long");
+        return false;
+    }
+
+    g_log->Tips("dispatcher recv msg");
+    g_log->LogDumpMsg(buf, nread);
+
+    Buffer    * pBuf;
+    pBuf = new Buffer(MSGSIZE_MAX);
+    assert(pBuf != NULL);
+    pBuf->Add(buf, nread);
+
+    pPeer->qBuf.push(pBuf);
     return true;
 }

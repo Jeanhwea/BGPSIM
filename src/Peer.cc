@@ -50,8 +50,6 @@ void *
 Peer::Run(event_t eve)
 {
     g_log->LogPeerEve(this, eve);
-    if (isDebug)
-        cout << "Peer_" << peer_id << " Runs ..." << endl;
     g_sim->FSM(this, eve);
     return NULL;
 }

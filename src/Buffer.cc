@@ -2,10 +2,11 @@
 #include "Logger.h"
 
 Buffer::Buffer(int len)
+: wpos(0), rpos(0)
 {
     data = (u_char *) malloc(len * sizeof(u_char));
-    rpos = 0;
     wpos = 0;
+    rpos = 0;
     if (data == NULL) {
         size = 0;
         g_log->Error("cannot malloc Message");

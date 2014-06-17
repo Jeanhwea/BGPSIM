@@ -9,7 +9,8 @@ class Peer;
 
 class Dispatcher : public Thread {
     private:
-        sockfd      sfd;
+        sockfd          sfd;
+        bool            isReading;
 
     public:
         Dispatcher();
@@ -23,7 +24,9 @@ class Dispatcher : public Thread {
             return sfd;
         }
 
+        bool isRead();
         bool ReadMsg();
+        bool ReadMsg(Peer * pPeer);
         bool DispatchMsg();
         bool DispatchMsg(Peer * pPeer);
 };
