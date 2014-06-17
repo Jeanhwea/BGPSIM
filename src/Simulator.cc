@@ -45,7 +45,6 @@ Simulator::Run()
     return NULL;
 }
 
-
 void
 Simulator::SimMain()
 {
@@ -68,13 +67,19 @@ Simulator::SimMain()
         for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
             pPeer = * vit;
             if (pPeer->sfd == -1) {
+                if (pPeer->pDis != NULL) {
+//                     delete pPeer->pDis;
+//                     pPeer->pDis = NULL;
+                }
                 continue;
             }
             if (pPeer->pDis == NULL)
                 pPeer->pDis = new Dispatcher;
             assert(pPeer->pDis != NULL);
-            pPeer->pDis->SetReadFd(pPeer->sfd);
-            pPeer->pDis->Start();
+            if (!pPeer->pDis->isRead()) {
+                pPeer->pDis->SetReadFd(pPeer->sfd);
+                pPeer->pDis->Start();
+            }
         }
     }
 }
@@ -487,30 +492,6 @@ Simulator::SimNotification(Peer * pPeer, u_int8_t e, u_int8_t es, void * data, s
 }
 
 
-bool
-Simulator::SimRecvMsg(Peer * pPeer)
-{
-    u_char      buf[MSGSIZE_MAX];
-    int         nread;
-
-    if (pPeer->sfd == -1)
-        return false;
-    nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
-    if (nread <= 0)
-        return false;
-
-    g_log->LogDumpMsg(buf, nread);
-
-    Buffer    * pBuf;
-    pBuf = new Buffer(MSGSIZE_MAX);
-    assert(pBuf != NULL);
-    pBuf->Add(buf, nread);
-
-    pPeer->qBuf.push(pBuf);
-    return true;
-}
-
-
 Peer *
 Simulator::GetPeerByAddr(struct sockaddr_in * pSad)
 {
@@ -642,6 +623,7 @@ Simulator::ParseOpen(Peer * pPeer)
     pBuf = pPeer->qBuf.front();
     assert(pBuf != NULL);
 
+    g_log->Tips("parse open msg");
     g_log->LogDumpMsg(pBuf->data, pBuf->Length());
 
     pos = pBuf->ReadPos();
