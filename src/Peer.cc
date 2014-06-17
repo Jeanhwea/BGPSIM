@@ -102,3 +102,9 @@ Peer::Send()
     delete pMsg;
     return true;
 }
+
+bool
+Peer::RefuseMsg()
+{
+    return (mState == IDLE || mState == CONNECT || mState == ACTIVE);
+}

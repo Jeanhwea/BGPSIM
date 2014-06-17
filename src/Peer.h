@@ -68,6 +68,8 @@ class Peer : public Thread {
         void StartTimerKeepalive();
 
         bool Send();
+        
+        bool RefuseMsg();
 };
 
 extern map<state_t, string> mapStateName;

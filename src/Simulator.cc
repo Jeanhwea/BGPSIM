@@ -73,6 +73,8 @@ Simulator::SimMain()
                 }
                 continue;
             }
+            if (pPeer->RefuseMsg())
+                continue;
             if (pPeer->pDis == NULL)
                 pPeer->pDis = new Dispatcher;
             assert(pPeer->pDis != NULL);
