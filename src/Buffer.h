@@ -20,6 +20,7 @@ class Buffer {
 
         bool Add(void *, ssize_t);
         u_char * Reserve(ssize_t);
+        bool Skip(ssize_t);
         ssize_t Length();
         u_char * ReadPos();
 };

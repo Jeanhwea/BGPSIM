@@ -41,6 +41,13 @@ Buffer::Reserve(ssize_t len)
     return ret;
 }
 
+bool
+Buffer::Skip(ssize_t len)
+{
+    assert(rpos + len <= wpos);
+    rpos += len;
+    return true;
+}
 
 ssize_t
 Buffer::Length()

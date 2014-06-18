@@ -133,6 +133,8 @@ Dispatcher::ReadMsg(Peer* pPeer)
     
     while ( preBuf->Length() < MSGSIZE_HEADER ) {
         nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
+        g_log->Tips("dispatcher recv msg");
+        g_log->LogDumpMsg(buf, nread);
         preBuf->Add(buf, nread);
     }
     
@@ -143,14 +145,12 @@ Dispatcher::ReadMsg(Peer* pPeer)
         return false;
     }
 
-    g_log->Tips("dispatcher recv msg");
-    g_log->LogDumpMsg(buf, nread);
 
     Buffer    * pBuf;
     pBuf = new Buffer(len);
     assert(pBuf != NULL);
     pBuf->Add(preBuf->ReadPos(), len);
-    preBuf->Reserve(len);
+    preBuf->Skip(len);
 
     pPeer->qBuf.push(pBuf);
     return true;
