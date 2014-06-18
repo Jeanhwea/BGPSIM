@@ -1,17 +1,22 @@
 #include "Dispatcher.h"
 #include "Logger.h"
+#include "Buffer.h"
 #include "Message.h"
 #include "Peer.h"
 #include "Simulator.h"
 
+#define BUFSIZE_MAX 65536
+
 Dispatcher::Dispatcher()
 : sfd(-1), isReading(false)
 {
+    preBuf = new Buffer(BUFSIZE_MAX);
 }
 
 Dispatcher::~Dispatcher()
 {
-
+    if (preBuf != NULL)
+        delete preBuf;
 }
 
 void *
@@ -126,13 +131,15 @@ Dispatcher::ReadMsg(Peer* pPeer)
     if (pPeer->sfd == -1)
         return false;
     
-    nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
+    while ( preBuf->Length() < MSGSIZE_HEADER ) {
+        nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
+        preBuf->Add(buf, nread);
+    }
     
-    if (nread <= 0)
-        return false;
+    u_int16_t len;
     
-    if (nread >= MSGSIZE_MAX) {
-        g_log->Warning("dispatcher recv msg, too long");
+    if (! GetMsgLen(preBuf->ReadPos(), len) ) {
+        g_log->Tips("Dispatcher read error message length");
         return false;
     }
 
@@ -140,10 +147,24 @@ Dispatcher::ReadMsg(Peer* pPeer)
     g_log->LogDumpMsg(buf, nread);
 
     Buffer    * pBuf;
-    pBuf = new Buffer(MSGSIZE_MAX);
+    pBuf = new Buffer(len);
     assert(pBuf != NULL);
-    pBuf->Add(buf, nread);
+    pBuf->Add(preBuf->ReadPos(), len);
+    preBuf->Reserve(len);
 
     pPeer->qBuf.push(pBuf);
+    return true;
+}
+
+bool
+Dispatcher::GetMsgLen(u_char * data, u_int16_t & len)
+{
+    u_int16_t olen;
+    memcpy(&olen, data + MSGSIZE_HEADER_MARKER, 2);
+    len = ntohs(olen);
+    
+    if (len < 0 || len > MSGSIZE_MAX)  
+        return false;
+    
     return true;
 }

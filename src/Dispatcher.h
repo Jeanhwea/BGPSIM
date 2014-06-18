@@ -5,12 +5,14 @@
 #include "global.h"
 #include "Thread.h"
 
+class Buffer;
 class Peer;
 
 class Dispatcher : public Thread {
     private:
         sockfd          sfd;
         bool            isReading;
+        Buffer        * preBuf;
 
     public:
         Dispatcher();
@@ -29,6 +31,7 @@ class Dispatcher : public Thread {
         bool ReadMsg(Peer * pPeer);
         bool DispatchMsg();
         bool DispatchMsg(Peer * pPeer);
+        bool GetMsgLen(u_char * data, u_int16_t & len);
 };
 
 #endif /* end of include guard: DISPATCHER_Q0GBWRKL */
