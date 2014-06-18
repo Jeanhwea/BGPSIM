@@ -767,7 +767,7 @@ Simulator::ParseNotification(Peer * pPeer)
     pBuf = pPeer->qBuf.front();
     assert(pBuf != NULL);
 
-    pos = pBuf->data;
+    pos = pBuf->ReadPos();
     pos += MSGSIZE_HEADER_MARKER;
     memcpy(&datalen, pos, sizeof(datalen));
     datalen = ntohs(datalen);

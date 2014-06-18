@@ -95,7 +95,7 @@ Dispatcher::DispatchMsg(Peer * pPeer)
     u_int16_t len;
     u_int8_t type;
 
-    if ( !g_sim->ParseHeader(pPeer, pBuf->data, len, type) )
+    if ( !g_sim->ParseHeader(pPeer, pBuf->ReadPos(), len, type) )
         return false;
 
     g_log->LogDispatchMsg(len, type);
