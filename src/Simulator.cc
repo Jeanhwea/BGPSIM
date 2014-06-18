@@ -64,7 +64,6 @@ Simulator::SimMain()
     }
     while (mQuit == false) {
         // simulator main loop
-        DoDispath();
     }
 }
 
@@ -576,7 +575,7 @@ Simulator::GetPeerBySockfd(sockfd fd)
 }
 
 void
-Simulator::DoDispath()
+Simulator::DoDispatch()
 {
     vector<Peer *>::iterator vit;
     Peer * pPeer;

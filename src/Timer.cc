@@ -34,7 +34,7 @@ Timer::Run()
 }
 
 void
-Timer::Schedule()
+Timer::DoSchedule()
 {
     vector<Peer *>::iterator vit;
     Peer * pPeer;
@@ -67,6 +67,7 @@ Timer::Schedule()
             pPeer->Unlock();
         }
     }
+    g_sim->DoDispatch();
 }
 
 Timer *
@@ -83,7 +84,7 @@ Timer::TimerHandler(int sig)
     if (isDebug)
         cout << "Tick\t: " << ++ walltime << endl;
     alarm(Timer::interval);
-    GetInst()->Schedule();
+    GetInst()->DoSchedule();
 }
 
 bool

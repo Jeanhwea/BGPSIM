@@ -25,7 +25,7 @@ class Timer : public Thread {
         virtual ~Timer();
 
         void * Run();
-        void Schedule();
+        void DoSchedule();
 };
 
 #endif /* end of include guard: TIMER_1889413Y */
