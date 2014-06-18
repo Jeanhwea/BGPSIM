@@ -28,9 +28,8 @@ Dispatcher::Run()
     }
     
     isReading = true;
-    if (ReadMsg()) {
-        DispatchMsg();
-    }
+    ReadMsg();
+    DispatchMsg();
     isReading = false;
 
     return NULL;
@@ -49,10 +48,8 @@ Dispatcher::ReadMsg()
     Peer * pPeer;
     pPeer = g_sim->GetPeerBySockfd(sfd);
 
-    if (pPeer == NULL) {
-        //g_log->Warning("dispatch cannot get a peer with given sockfd");
+    if (pPeer == NULL) 
         return false;
-    }
 
     if (pPeer->sfd == -1)
         return false;
@@ -68,6 +65,11 @@ Dispatcher::DispatchMsg()
 
     if (pPeer == NULL) {
         g_log->Warning("dispatch cannot get a peer with given sockfd");
+        return false;
+    }
+    
+    if (pPeer->qBuf.empty()) {
+        return false;
     }
 
     return DispatchMsg(pPeer);
