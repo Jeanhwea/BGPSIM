@@ -133,6 +133,8 @@ Dispatcher::ReadMsg(Peer* pPeer)
     
     while ( preBuf->Length() < MSGSIZE_HEADER ) {
         nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
+        if (nread <= 0 || nread > MSGSIZE_MAX)
+            return false;
         g_log->Tips("dispatcher recv msg");
         g_log->LogDumpMsg(buf, nread);
         preBuf->Add(buf, nread);
