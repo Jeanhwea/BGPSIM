@@ -2,7 +2,7 @@
 #include "Logger.h"
 
 Buffer::Buffer(int len)
-: wpos(0), rpos(0)
+: wpos(0), rpos(0), isDispathed(false)
 {
     data = (u_char *) malloc(len * sizeof(u_char));
     wpos = 0;

@@ -14,6 +14,8 @@ class Buffer {
         ssize_t     size;
         ssize_t     wpos;
         ssize_t     rpos;
+        
+        bool        isDispathed;
 
         Buffer(int len);
         virtual ~Buffer();

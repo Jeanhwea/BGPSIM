@@ -91,6 +91,11 @@ Dispatcher::DispatchMsg(Peer * pPeer)
         g_log->Warning("dispatch a message with len less than message header");
         return false;
     }
+    
+    if (pBuf->isDispathed == true)
+        return false;
+    
+    pBuf->isDispathed = true;
 
     u_int16_t len;
     u_int8_t type;
