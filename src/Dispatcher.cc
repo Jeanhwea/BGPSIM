@@ -8,8 +8,9 @@
 #define BUFSIZE_MAX 65536
 
 Dispatcher::Dispatcher()
-: sfd(-1), isReading(false)
+: sfd(-1)
 {
+    isReading = PTHREAD_MUTEX_INITIALIZER;
     preBuf = new Buffer(BUFSIZE_MAX);
 }
 
@@ -27,18 +28,23 @@ Dispatcher::Run()
         return NULL;
     }
     
-    isReading = true;
     ReadMsg();
     DispatchMsg();
-    isReading = false;
 
     return NULL;
 }
 
-bool
-Dispatcher::isRead()
+void 
+Dispatcher::Lock()
 {
-    return isReading;
+    pthread_mutex_lock(&isReading);
+}
+
+
+void 
+Dispatcher::Unlock()
+{
+    pthread_mutex_unlock(&isReading);
 }
 
 
@@ -124,7 +130,7 @@ Dispatcher::DispatchMsg(Peer * pPeer)
         default:
             g_log->Error("dispatch non-valid message type");
     }
-    pPeer->UnLock();
+    pPeer->Unlock();
 
     return true;
 }

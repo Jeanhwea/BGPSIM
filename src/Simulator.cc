@@ -64,25 +64,7 @@ Simulator::SimMain()
     }
     while (mQuit == false) {
         // simulator main loop
-        for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
-            pPeer = * vit;
-            if (pPeer->sfd == -1) {
-                if (pPeer->pDis != NULL) {
-//                     delete pPeer->pDis;
-//                     pPeer->pDis = NULL;
-                }
-                continue;
-            }
-            if (pPeer->RefuseMsg())
-                continue;
-            if (pPeer->pDis == NULL)
-                pPeer->pDis = new Dispatcher;
-            assert(pPeer->pDis != NULL);
-            if (!pPeer->pDis->isRead()) {
-                pPeer->pDis->SetReadFd(pPeer->sfd);
-                pPeer->pDis->Start();
-            }
-        }
+        DoDispath();
     }
 }
 
@@ -592,6 +574,31 @@ Simulator::GetPeerBySockfd(sockfd fd)
 
     return ret;
 }
+
+void
+Simulator::DoDispath()
+{
+    vector<Peer *>::iterator vit;
+    Peer * pPeer;
+    for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
+        pPeer = * vit;
+        if (pPeer->sfd == -1) {
+            if (pPeer->pDis != NULL) {
+            }
+            continue;
+        }
+        if (pPeer->RefuseMsg())
+            continue;
+        if (pPeer->pDis == NULL)
+            pPeer->pDis = new Dispatcher;
+        assert(pPeer->pDis != NULL);
+        pPeer->pDis->Lock();
+        pPeer->pDis->SetReadFd(pPeer->sfd);
+        pPeer->pDis->Start();
+        pPeer->pDis->Unlock();
+    }
+}
+
 
 
 bool

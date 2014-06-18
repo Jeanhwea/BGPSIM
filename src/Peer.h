@@ -62,7 +62,7 @@ class Peer : public Thread {
             return peer_id;
         }
         void Lock();
-        void UnLock();
+        void Unlock();
 
         void StartTimerHoldtime();
         void StartTimerKeepalive();

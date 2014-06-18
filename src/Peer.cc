@@ -77,7 +77,7 @@ Peer::Lock()
 }
 
 void
-Peer::UnLock()
+Peer::Unlock()
 {
     pthread_mutex_unlock(&mutex);
 }

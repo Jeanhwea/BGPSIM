@@ -69,6 +69,7 @@ class Simulator : public Thread {
         Peer * GetPeerByAddr(struct in_addr * pAd);
         Peer * GetPeerByAddr(u_int32_t bgpid);
         Peer * GetPeerBySockfd(sockfd fd);
+        void DoDispath();
         // read config file
         bool LoadSimConf(const char * filename);
         bool LoadListConf(const char * filename);

@@ -46,25 +46,25 @@ Timer::Schedule()
                     pPeer->GetPeerState() == ESTABLISHED ) {
                 pPeer->Start(KEEPALIVE_TIMER_EXPIRED);
             }
-            pPeer->UnLock();
+            pPeer->Unlock();
         }
         if (IsExpire(pPeer->HoldTimer)) {
             pPeer->Lock();
             if (pPeer->GetPeerState() == OPENSENT ||
                     pPeer->GetPeerState() == ESTABLISHED )
                 pPeer->Start(HOLD_TIMER_EXPIRED);
-            pPeer->UnLock();
+            pPeer->Unlock();
         }
         if (IsExpire(pPeer->ConnetRetryTimer)) {
             pPeer->Lock();
             if (pPeer->GetPeerState() == ACTIVE)
                 pPeer->Start(CONN_RETRY_TIMER_EXPIRED);
-            pPeer->UnLock();
+            pPeer->Unlock();
         }
         if (IsExpire(pPeer->IdleHoldTimer)) {
             pPeer->Lock();
             pPeer->Start();
-            pPeer->UnLock();
+            pPeer->Unlock();
         }
     }
 }

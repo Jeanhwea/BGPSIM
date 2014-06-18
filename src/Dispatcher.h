@@ -10,9 +10,9 @@ class Peer;
 
 class Dispatcher : public Thread {
     private:
-        sockfd          sfd;
-        bool            isReading;
-        Buffer        * preBuf;
+        sockfd              sfd;
+        pthread_mutex_t     isReading;
+        Buffer            * preBuf;
 
     public:
         Dispatcher();
@@ -26,12 +26,14 @@ class Dispatcher : public Thread {
             return sfd;
         }
 
-        bool isRead();
         bool ReadMsg();
         bool ReadMsg(Peer * pPeer);
         bool DispatchMsg();
         bool DispatchMsg(Peer * pPeer);
         bool GetMsgLen(u_char * data, u_int16_t & len);
+        
+        void Lock();
+        void Unlock();
 };
 
 #endif /* end of include guard: DISPATCHER_Q0GBWRKL */

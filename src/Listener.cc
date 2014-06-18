@@ -84,7 +84,7 @@ void * Listener::Run()
             pPeer->conf.passive = true;
             pPeer->Start(BGP_TRANS_CONN_OPEN);
         }
-        pPeer->UnLock();
+        pPeer->Unlock();
     }
     return NULL;
 }
