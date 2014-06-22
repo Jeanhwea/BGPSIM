@@ -1,4 +1,5 @@
 #include "Simulator.h"
+#include "Interface.h"
 
 #define INIT_MSG_LEN 65535
 using namespace std;
@@ -9,7 +10,8 @@ Simulator::Simulator()
     mQuit = false;
     conf_holdtime = T_HOLD_INITIAL;
     LoadSimConf("/home/fuzl/.bgpconf/peer.conf");
-    LoadListConf("/home/fuzl/.bgpconf/listen.conf");
+    //LoadListConf("/home/fuzl/.bgpconf/listen.conf");
+    LoadListConf();
 
     // instantiation of listeners
     vector<struct in_addr>::iterator lit;
@@ -865,7 +867,7 @@ Simulator::LoadListConf(const char * filename)
 {
     FILE           * ffd;
     char             ad[32];
-    struct in_addr * inad;
+    struct in_addr * pAd;
 
     ffd = fopen(filename, "r");
     if (ffd == NULL) {
@@ -874,11 +876,31 @@ Simulator::LoadListConf(const char * filename)
     }
 
     while (fscanf(ffd, "%s", ad) != EOF) {
-        inad = (struct in_addr *) malloc(sizeof(struct in_addr));
-        if(!inet_aton(ad, inad))
+        pAd = (struct in_addr *) malloc(sizeof(struct in_addr));
+        if(!inet_aton(ad, pAd))
             g_log->Warning("not a lister valid ip");
-        vLisAddr.push_back(*inad);
+        vLisAddr.push_back(*pAd);
     }
     fclose(ffd);
+    return true;
+}
+
+bool
+Simulator::LoadListConf()
+{
+    vector<Interface *>::iterator iit;
+    Interface * pInt;
+    struct in_addr * pAd;
+    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
+        pInt = * iit;
+        if ( strcmp(pInt->conf.name, "lo") == 0)
+            continue;
+        pAd = (struct in_addr *) malloc(sizeof(struct in_addr));
+        assert(pInt != NULL);
+        assert(pAd != NULL);
+        memcpy(pAd, & pInt->conf.ipaddr, sizeof(pInt->conf.ipaddr));
+        vLisAddr.push_back(*pAd);
+    }
+    
     return true;
 }

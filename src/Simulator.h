@@ -75,7 +75,7 @@ class Simulator : public Thread {
         // read config file
         bool LoadSimConf(const char * filename);
         bool LoadListConf(const char * filename);
-
+        bool LoadListConf();
 };
 
 
