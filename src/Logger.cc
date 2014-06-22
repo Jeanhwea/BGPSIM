@@ -2,6 +2,7 @@
 #include "Peer.h"
 #include "Event.h"
 #include "Listener.h"
+#include "Interface.h"
 
 using namespace std;
 
@@ -67,6 +68,18 @@ Logger::AddrToStr(struct sockaddr_in * pSad)
 {
     assert(pSad != NULL);
     return AddrToStr(&pSad->sin_addr);
+}
+
+char * 
+Logger::MacToStr(u_char * mac_addr)
+{
+    char * ret;
+    ret = (char *) malloc(ETH_ALEN * 3 * sizeof(u_char));
+    
+    sprintf(ret, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac_addr[0], mac_addr[1], mac_addr[2], 
+            mac_addr[3], mac_addr[4], mac_addr[5]);
+    
+    return ret;
 }
 
 
@@ -167,4 +180,21 @@ Logger::LogPeerList()
                 AddrToStr(&pPeer->conf.remote_addr), pPeer->sfd);
     }
     fprintf(out, "]\n");
+}
+
+void 
+Logger::LogIntList()
+{
+    vector<Interface *>::iterator iit;
+    Interface * pInt;
+    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
+        pInt = *iit;
+        assert(pInt != NULL);
+        fprintf(out, "%s\t: id(%d)\n", pInt->conf.name, pInt->conf.id);
+        fprintf(out, "\tmac = %s\n", MacToStr(pInt->conf.mac));
+        fprintf(out, "\tip = %s\n", AddrToStr(&pInt->conf.ipaddr));
+        fprintf(out, "\tmask = %s\n", AddrToStr(&pInt->conf.netmask));
+        fprintf(out, "\tbroadcast = %s\n", AddrToStr(&pInt->conf.broadcast));
+        fflush(out);
+    }
 }

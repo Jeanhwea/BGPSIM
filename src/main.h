@@ -3,6 +3,7 @@
 #define MAIN_H
 
 #include "global.h"
+#include "Interface.h"
 #include "Listener.h"
 #include "Peer.h"
 #include "Simulator.h"

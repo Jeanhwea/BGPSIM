@@ -10,12 +10,21 @@ main(int argc, char const *argv[])
 {
     if (isDebug)
         cout << "Debug is on ..." << endl;
-
     g_log = new Logger;
+    
+    Interface intface;
+    intface.LoadInfo();
+    g_log->LogIntList();
+
     g_sim = new Simulator;
+    
 
     g_sim->Start();
     g_sim->Join();
 
+    if (g_sim != NULL)
+        delete g_sim;
+    if (g_log != NULL)
+        delete g_log;
     return 0;
 }

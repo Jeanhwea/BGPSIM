@@ -797,7 +797,22 @@ Simulator::ParseNotification(Peer * pPeer)
 bool
 Simulator::ParseUpdate(Peer * pPeer)
 {
-    // TODO
+    Buffer * pBuf;
+    pBuf = pPeer->qBuf.front();
+    assert(pBuf != NULL);
+    
+    u_char    * pos;
+    u_int16_t   datalen;
+    pos = pBuf->ReadPos();
+    pos += MSGSIZE_HEADER_MARKER;
+    memcpy(&datalen, pos, sizeof(datalen));
+    datalen = ntohs(datalen);
+    
+    pos = pBuf->ReadPos();
+    pos += MSGSIZE_HEADER;
+    datalen -= MSGSIZE_HEADER;
+    
+    // TODO :  anything you can do with update msg
     return true;
 }
 

@@ -16,6 +16,7 @@ class Logger {
 
         char * AddrToStr(struct in_addr * ad);
         char * AddrToStr(struct sockaddr_in * sad);
+        char * MacToStr(u_char * mac_addr);
 
     public:
         Logger();
@@ -34,6 +35,7 @@ class Logger {
         void LogSimConf(int as, const char * ra);
         void LogDispatchMsg(u_int16_t len, u_int8_t type);
 
+        void LogIntList();
         void LogPeerList();
         void LogListenerList();
 };
