@@ -30,6 +30,7 @@ class Route {
         virtual ~Route();
         
         void LoadKernelRoute();
+        char * GetInterface();
 };
 
 

@@ -191,7 +191,8 @@ Logger::LogIntList()
     for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
         pInt = *iit;
         assert(pInt != NULL);
-        fprintf(out, "%s\t: id(%d)\n", pInt->conf.name, pInt->conf.id);
+        fprintf(out, "%s", pInt->conf.name);
+        fprintf(out, "\tid = %d\n",pInt->conf.id);
         fprintf(out, "\tmac = %s\n", MacToStr(pInt->conf.mac));
         fprintf(out, "\tip = %s\n", AddrToStr(&pInt->conf.ipaddr));
         fprintf(out, "\tmask = %s\n", AddrToStr(&pInt->conf.netmask));
@@ -206,13 +207,14 @@ Logger::LogRouteList()
 {
     vector<Route *>::iterator rit;
     Route * pRt;
-    fprintf(out, "Destination\tNextHop\t\tNetMast\n");
+    fprintf(out, "Destination\tNextHop\t\tNetMast\t\tInterface\n");
     for (rit = vRoute.begin(); rit != vRoute.end(); ++rit) {
         pRt = *rit;
         assert(pRt != NULL);
         fprintf(out, "%-16s", AddrToStr(&pRt->conf.dest));
         fprintf(out, "%-16s", AddrToStr(&pRt->conf.nhop));
         fprintf(out, "%-16s", AddrToStr(&pRt->conf.mask));
+        fprintf(out, "%-16s", pRt->GetInterface());
         fprintf(out, "\n");
         fflush(out);
     }

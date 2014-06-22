@@ -1,5 +1,6 @@
 #include "Route.h"
 #include "Logger.h"
+#include "Interface.h"
 
 using namespace std;
 
@@ -22,15 +23,32 @@ Route::MaskToAddr(int mask)
 {
     u_int32_t u_addr;
     
-    memset(&u_addr, 0xff, sizeof(u_addr));
-    u_addr = u_addr << (32 - mask);
-    
-    if (mask > 32 || mask <= 0)
+    if (mask > 32 || mask <= 0) {
         memset(&u_addr, 0, sizeof(u_addr));
+    } else {
+        memset(&u_addr, 0xff, sizeof(u_addr));
+        u_addr = u_addr << (32 - mask);
+    }
     
     u_addr = htonl(u_addr);
     
     return *(struct in_addr *) &u_addr;
+}
+
+char *
+Route::GetInterface()
+{
+   Interface * pInt;
+   vector<Interface *>::iterator iit;
+   
+   for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
+       pInt = *iit;
+       if (pInt->conf.id == inter_id) {
+           return pInt->conf.name;
+       }
+   }
+   
+   return NULL;
 }
 
 
@@ -64,7 +82,7 @@ Route::LoadKernelRoute()
         g_log->ShowErrno();
     }
     
-    int nread;
+    size_t nread;
     
     while (true) {
         
