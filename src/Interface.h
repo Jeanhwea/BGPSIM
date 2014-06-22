@@ -14,7 +14,7 @@ struct ifcon {
         struct in_addr      ipaddr;
         struct in_addr      broadcast;
         int                 id;
-        char                name[128];
+        char                name[IFNAMSIZ];
 };
 #pragma pack(pop)
 

@@ -84,7 +84,7 @@ Interface::LoadInfo()
         memcpy(&(pInt->conf.netmask), &(pSad->sin_addr), sizeof(pSad->sin_addr));
         
         // interface name
-        strcpy(pInt->conf.name, pIfreq->ifr_name);
+        strncpy(pInt->conf.name, pIfreq->ifr_name, IFNAMSIZ-1);
         
         // move to next interface
         pIfreq ++;

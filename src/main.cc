@@ -15,6 +15,10 @@ main(int argc, char const *argv[])
     Interface intface;
     intface.LoadInfo();
     g_log->LogIntList();
+    
+    Route route;
+    route.LoadKernelRoute();
+    g_log->LogRouteList();
 
     g_sim = new Simulator;
     

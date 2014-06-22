@@ -14,8 +14,10 @@
 
 #include <arpa/inet.h>
 #include <linux/if.h>
+#include <linux/if_addr.h>
 #include <linux/if_ether.h>
 #include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>

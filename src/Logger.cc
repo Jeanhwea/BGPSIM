@@ -3,6 +3,7 @@
 #include "Event.h"
 #include "Listener.h"
 #include "Interface.h"
+#include "Route.h"
 
 using namespace std;
 
@@ -194,7 +195,27 @@ Logger::LogIntList()
         fprintf(out, "\tmac = %s\n", MacToStr(pInt->conf.mac));
         fprintf(out, "\tip = %s\n", AddrToStr(&pInt->conf.ipaddr));
         fprintf(out, "\tmask = %s\n", AddrToStr(&pInt->conf.netmask));
-        fprintf(out, "\tbroadcast = %s\n", AddrToStr(&pInt->conf.broadcast));
+        fprintf(out, "\tbroadcast = %s", AddrToStr(&pInt->conf.broadcast));
+        fprintf(out, "\n");
         fflush(out);
     }
 }
+
+void
+Logger::LogRouteList()
+{
+    vector<Route *>::iterator rit;
+    Route * pRt;
+    fprintf(out, "Destination\tNextHop\t\tNetMast\n");
+    for (rit = vRoute.begin(); rit != vRoute.end(); ++rit) {
+        pRt = *rit;
+        assert(pRt != NULL);
+        fprintf(out, "%-16s", AddrToStr(&pRt->conf.dest));
+        fprintf(out, "%-16s", AddrToStr(&pRt->conf.nhop));
+        fprintf(out, "%-16s", AddrToStr(&pRt->conf.mask));
+        fprintf(out, "\n");
+        fflush(out);
+    }
+    
+}
+
