@@ -58,6 +58,13 @@ Logger::ShowErrno()
 }
 
 char *
+Logger::AddrToStr(u_int32_t addr)
+{
+    return AddrToStr((struct in_addr *) &addr);
+}
+
+
+char *
 Logger::AddrToStr(struct in_addr * pAd)
 {
     assert(pAd != NULL);
@@ -130,6 +137,14 @@ Logger::LogDispatchMsg(u_int16_t len, u_int8_t type)
             mapMsgName[(message_t)type].c_str(), len);
 }
 
+void 
+Logger::LogIPMsg(struct iphdr * pIphdr)
+{
+    fprintf(out, "recv ip from[%s] to[%s] frag_off<%d>\n",
+        AddrToStr(pIphdr->saddr), AddrToStr(pIphdr->daddr), pIphdr->frag_off );
+    fflush(out);
+}
+
 
 #define PRINT_ALIGN 16
 void
@@ -192,7 +207,7 @@ Logger::LogIntList()
         pInt = *iit;
         assert(pInt != NULL);
         fprintf(out, "%s", pInt->conf.name);
-        fprintf(out, "\tid = %d\n",pInt->conf.id);
+        //fprintf(out, "\tid = %d\n",pInt->conf.id);
         fprintf(out, "\tmac = %s\n", MacToStr(pInt->conf.mac));
         fprintf(out, "\tip = %s\n", AddrToStr(&pInt->conf.ipaddr));
         fprintf(out, "\tmask = %s\n", AddrToStr(&pInt->conf.netmask));

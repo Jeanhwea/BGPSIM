@@ -5,6 +5,7 @@
 #include "global.h"
 #include "Interface.h"
 #include "Route.h"
+#include "Watcher.h"
 #include "Listener.h"
 #include "Peer.h"
 #include "Simulator.h"

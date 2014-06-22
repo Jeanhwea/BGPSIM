@@ -83,7 +83,6 @@ Route::LoadKernelRoute()
     }
     
     size_t nread;
-    
     while (true) {
         
         // read message from kernel

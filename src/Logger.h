@@ -14,6 +14,7 @@ class Logger {
         FILE * war;
         FILE * err;
 
+        char * AddrToStr(u_int32_t addr);
         char * AddrToStr(struct in_addr * ad);
         char * AddrToStr(struct sockaddr_in * sad);
         char * MacToStr(u_char * mac_addr);
@@ -34,6 +35,7 @@ class Logger {
         void LogPeerEve(Peer * pPeer, event_t eve);
         void LogSimConf(int as, const char * ra);
         void LogDispatchMsg(u_int16_t len, u_int8_t type);
+        void LogIPMsg(struct iphdr * pIphdr);
 
         void LogIntList();
         void LogPeerList();

@@ -19,6 +19,9 @@ main(int argc, char const *argv[])
     Route route;
     route.LoadKernelRoute();
     g_log->LogRouteList();
+    
+    Watcher watch;
+    watch.Start();
 
     g_sim = new Simulator;
     
