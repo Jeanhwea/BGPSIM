@@ -1,4 +1,5 @@
 #include "Watcher.h"
+#include "Message.h"
 #include "Interface.h"
 #include "Logger.h"
 #include "Router.h"
@@ -62,6 +63,7 @@ Watcher::StartListen()
 {
     struct iphdr  * pIphdr;
     struct ethhdr * pEthhdr;
+    struct eth_arphdr * pArphdr;
     u_char          buf[BUFSIZE_ETH];
     
     while (true) {
@@ -70,23 +72,35 @@ Watcher::StartListen()
             g_log->Error("cannot catch packet");
         
         pEthhdr = (struct ethhdr *) buf;
-        pIphdr  = (struct iphdr *) (buf + sizeof(struct ethhdr));
-        
-        if (pEthhdr->h_proto != htons(ETH_P_IP) ) {
-            if (pEthhdr->h_proto == htons(ETH_P_ARP) ) {
-                if (!CheckInter(pEthhdr->h_dest)) {
-                    // send arp request
-                }
-            } 
-            continue;
-        }
         
         if (isDebug)
-            g_log->LogIPMsg(pIphdr);
-        
-        if (!CheckInter(pIphdr->daddr)) {
-            // try to forward packet
+            g_log->LogRecvedMsg(pEthhdr);
+            
+        switch (ntohs(pEthhdr->h_proto)) {
+            case ETH_P_ARP:
+                pArphdr = (struct eth_arphdr *) (buf + sizeof(struct ethhdr));
+                if (!CheckInter(pArphdr->ar_tip)) {
+                    // send arp request is the mac is unknown
+                    Message * pMsg;
+                    pMsg = new Message(BUFSIZE_ETH);
+                    pMsg->Add(buf, len);
+                    g_rtr->ARPRosp(pMsg);
+                }
+                break;
+            case ETH_P_IP:
+                pIphdr  = (struct iphdr *) (buf + sizeof(struct ethhdr));
+                if (!CheckInter(pIphdr->daddr)) {
+                    // try to forward packet, if ip des is not in my Interface
+                    Message * pMsg;
+                    pMsg = new Message(BUFSIZE_ETH); 
+                    pMsg->Add(buf, len);
+                    g_rtr->Forward(pMsg);
+                }
+                break;
+            default:
+                continue;
         }
+        
     }
 }
 

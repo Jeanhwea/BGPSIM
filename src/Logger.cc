@@ -139,10 +139,25 @@ Logger::LogDispatchMsg(u_int16_t len, u_int8_t type)
 }
 
 void 
-Logger::LogIPMsg(struct iphdr * pIphdr)
-{
-    fprintf(out, "ipmsg from[%s] to[%s] frag_off<%d>\n",
-        AddrToStr(pIphdr->saddr), AddrToStr(pIphdr->daddr), pIphdr->frag_off );
+Logger::LogRecvedMsg(struct ethhdr * pEthhdr)
+{    
+    switch (ntohs(pEthhdr->h_proto)) {
+        case ETH_P_ARP:
+            struct eth_arphdr * pArphdr;
+            pArphdr = (struct eth_arphdr *) ( ((u_char *)pEthhdr) + sizeof(struct ethhdr) );
+            fprintf(out, "ARP.fr[%s][%s] to[%s][%s]\n",
+                    MacToStr(pArphdr->ar_sha), AddrToStr(pArphdr->ar_sip),
+                        MacToStr(pArphdr->ar_tha), AddrToStr(pArphdr->ar_tip) );
+            break;
+        case ETH_P_IP:
+            struct iphdr * pIphdr;
+            pIphdr = (struct iphdr *) ( ((u_char *)pEthhdr) + sizeof(struct ethhdr) );
+            fprintf(out, "IP..fr[%s] to[%s] frag_off<%d>\n",
+                    AddrToStr(pIphdr->saddr), AddrToStr(pIphdr->daddr), pIphdr->frag_off );
+            break;
+        default:
+            break;
+    }
     fflush(out);
 }
 

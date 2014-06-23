@@ -1,10 +1,13 @@
 #include "Router.h"
 #include "Logger.h"
 #include "Interface.h"
+#include "Message.h"
 
 using namespace std;
 
+vector<struct arpcon *> vARPConf;
 vector<struct rtcon *> vRtConf;
+
 int Router::rtseq = 0;
 
 Router::Router()
@@ -127,4 +130,16 @@ Router::LoadKernelRoute()
             break;
     }
     
+}
+
+
+void
+Router::Forward(Message * pMsg)
+{
+}
+
+void
+Router::ARPRosp(Message * pMsg)
+{
+
 }

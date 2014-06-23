@@ -16,7 +16,22 @@ struct rtcon {
     int             ifid;
 };
 
+struct arpcon {
+    u_char          mac[ETH_ALEN];
+    struct in_addr  ipadd;
+};
+
+struct eth_arphdr {
+    struct arphdr   hdr;                // origin arphdr see <linux/if_arp.h>
+    u_char          ar_sha[ETH_ALEN];   /* sender hardware address  */
+    u_int32_t       ar_sip;             /* sender IP address        */
+    u_char          ar_tha[ETH_ALEN];   /* target hardware address  */
+    u_int32_t       ar_tip;             /* target IP address        */
+};
+
 #pragma pack(pop)
+
+class Message;
 
 class Router {
     private:
@@ -28,8 +43,12 @@ class Router {
         virtual ~Router();
         
         void LoadKernelRoute();
+        
+        void Forward(Message * pMsg);
+        void ARPRosp(Message * pMsg);
 };
 
 
+extern vector<struct arpcon *> vARPConf;
 extern vector<struct rtcon *> vRtConf;
 #endif /* end of include guard: ROUTE_J2V5X69X */

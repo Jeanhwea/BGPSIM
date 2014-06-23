@@ -16,6 +16,7 @@
 #include <linux/if.h>
 #include <linux/if_addr.h>
 #include <linux/if_ether.h>
+#include <linux/if_arp.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <netinet/in.h>
@@ -80,6 +81,15 @@ extern FILE * logfd;
 
 class Logger;
 extern Logger * g_log;
+
+class Interface;
+extern Interface * g_int;
+
+class Router;
+extern Router * g_rtr;
+
+class Watcher;
+extern Watcher * g_wtc;
 
 class Simulator;
 extern Simulator * g_sim;
