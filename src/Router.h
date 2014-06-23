@@ -44,8 +44,12 @@ class Router {
         
         void LoadKernelRoute();
         
-        void Forward(Message * pMsg);
-        void ARPRosp(Message * pMsg);
+        void PacketForward(Message * pMsg);
+        
+        // arp utils
+        void ARPRos(Message * pMsg);
+        void ARPReq(struct in_addr * pAd, struct ifcon * pInt);
+        struct arpcon * LookupARPCache(struct in_addr * pAd);
 };
 
 

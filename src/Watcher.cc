@@ -73,8 +73,8 @@ Watcher::StartListen()
         
         pEthhdr = (struct ethhdr *) buf;
         
-        if (isDebug)
-            g_log->LogRecvedMsg(pEthhdr);
+        //if (isDebug)
+        //   g_log->LogRecvedMsg(pEthhdr);
             
         switch (ntohs(pEthhdr->h_proto)) {
             case ETH_P_ARP:
@@ -84,7 +84,7 @@ Watcher::StartListen()
                     Message * pMsg;
                     pMsg = new Message(BUFSIZE_ETH);
                     pMsg->Add(buf, len);
-                    g_rtr->ARPRosp(pMsg);
+                    g_rtr->ARPRos(pMsg);
                 }
                 break;
             case ETH_P_IP:
@@ -94,7 +94,7 @@ Watcher::StartListen()
                     Message * pMsg;
                     pMsg = new Message(BUFSIZE_ETH); 
                     pMsg->Add(buf, len);
-                    g_rtr->Forward(pMsg);
+                    g_rtr->PacketForward(pMsg);
                 }
                 break;
             default:
