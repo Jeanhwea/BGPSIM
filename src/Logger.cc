@@ -3,7 +3,7 @@
 #include "Event.h"
 #include "Listener.h"
 #include "Interface.h"
-#include "Route.h"
+#include "Router.h"
 
 using namespace std;
 
@@ -47,13 +47,14 @@ Logger::Fatal(const char * emsg)
 {
     if (emsg != NULL)
         fprintf(err, "Fatal\t: %s\n", emsg);
+    ShowErrno();
     exit(1);
 }
 
 void
 Logger::ShowErrno()
 {
-    fprintf(err, "Errno%d\t: %s\n", errno, strerror(errno));
+    fprintf(err, "Errno = (%d)\t: %s\n", errno, strerror(errno));
     fflush(err);
 }
 
@@ -140,7 +141,7 @@ Logger::LogDispatchMsg(u_int16_t len, u_int8_t type)
 void 
 Logger::LogIPMsg(struct iphdr * pIphdr)
 {
-    fprintf(out, "recv ip from[%s] to[%s] frag_off<%d>\n",
+    fprintf(out, "ipmsg from[%s] to[%s] frag_off<%d>\n",
         AddrToStr(pIphdr->saddr), AddrToStr(pIphdr->daddr), pIphdr->frag_off );
     fflush(out);
 }
@@ -201,17 +202,17 @@ Logger::LogPeerList()
 void 
 Logger::LogIntList()
 {
-    vector<Interface *>::iterator iit;
-    Interface * pInt;
-    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
-        pInt = *iit;
-        assert(pInt != NULL);
-        fprintf(out, "%s", pInt->conf.name);
+    vector<struct ifcon *>::iterator iit;
+    struct ifcon * pIntCon;
+    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+        pIntCon = * iit;
+        assert(pIntCon != NULL);
+        fprintf(out, "%s", pIntCon->name);
         //fprintf(out, "\tid = %d\n",pInt->conf.id);
-        fprintf(out, "\tmac = %s\n", MacToStr(pInt->conf.mac));
-        fprintf(out, "\tip = %s\n", AddrToStr(&pInt->conf.ipaddr));
-        fprintf(out, "\tmask = %s\n", AddrToStr(&pInt->conf.netmask));
-        fprintf(out, "\tbroadcast = %s", AddrToStr(&pInt->conf.broadcast));
+        fprintf(out, "\tmac = %s\n", MacToStr(pIntCon->mac));
+        fprintf(out, "\tip = %s\n", AddrToStr(&pIntCon->ipaddr));
+        fprintf(out, "\tmask = %s\n", AddrToStr(&pIntCon->netmask));
+        fprintf(out, "\tbroadcast = %s", AddrToStr(&pIntCon->broadcast));
         fprintf(out, "\n");
         fflush(out);
     }
@@ -220,16 +221,16 @@ Logger::LogIntList()
 void
 Logger::LogRouteList()
 {
-    vector<Route *>::iterator rit;
-    Route * pRt;
+    vector<struct rtcon *>::iterator rit;
+    struct rtcon * pRtCon;
     fprintf(out, "Destination\tNextHop\t\tNetMast\t\tInterface\n");
-    for (rit = vRoute.begin(); rit != vRoute.end(); ++rit) {
-        pRt = *rit;
-        assert(pRt != NULL);
-        fprintf(out, "%-16s", AddrToStr(&pRt->conf.dest));
-        fprintf(out, "%-16s", AddrToStr(&pRt->conf.nhop));
-        fprintf(out, "%-16s", AddrToStr(&pRt->conf.mask));
-        fprintf(out, "%-16s", pRt->GetInterface());
+    for (rit = vRtConf.begin(); rit != vRtConf.end(); ++rit) {
+        pRtCon = *rit;
+        assert(pRtCon != NULL);
+        fprintf(out, "%-16s", AddrToStr(&pRtCon->dest));
+        fprintf(out, "%-16s", AddrToStr(&pRtCon->nhop));
+        fprintf(out, "%-16s", AddrToStr(&pRtCon->mask));
+        fprintf(out, "%-16s", Interface::GetIfNameById(pRtCon->ifid));
         fprintf(out, "\n");
         fflush(out);
     }

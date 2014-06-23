@@ -888,17 +888,17 @@ Simulator::LoadListConf(const char * filename)
 bool
 Simulator::LoadListConf()
 {
-    vector<Interface *>::iterator iit;
-    Interface * pInt;
+    vector<struct ifcon *>::iterator iit;
+    struct ifcon * pIntCon;
     struct in_addr * pAd;
-    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
-        pInt = * iit;
-        if ( strcmp(pInt->conf.name, "lo") == 0)
+    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+        pIntCon = * iit;
+        if ( strcmp(pIntCon->name, "lo") == 0)
             continue;
         pAd = (struct in_addr *) malloc(sizeof(struct in_addr));
-        assert(pInt != NULL);
+        assert(pIntCon != NULL);
         assert(pAd != NULL);
-        memcpy(pAd, & pInt->conf.ipaddr, sizeof(pInt->conf.ipaddr));
+        memcpy(pAd, & pIntCon->ipaddr, sizeof(pIntCon->ipaddr));
         vLisAddr.push_back(*pAd);
     }
     

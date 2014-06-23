@@ -16,7 +16,7 @@ main(int argc, char const *argv[])
     intface.LoadInfo();
     g_log->LogIntList();
     
-    Route route;
+    Router route;
     route.LoadKernelRoute();
     g_log->LogRouteList();
     

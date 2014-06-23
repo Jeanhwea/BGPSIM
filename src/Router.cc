@@ -1,25 +1,25 @@
-#include "Route.h"
+#include "Router.h"
 #include "Logger.h"
 #include "Interface.h"
 
 using namespace std;
 
-vector<Route *> vRoute;
-int Route::rtseq = 0;
+vector<struct rtcon *> vRtConf;
+int Router::rtseq = 0;
 
-Route::Route()
+Router::Router()
 {
 
 }
 
 
-Route::~Route()
+Router::~Router()
 {
 
 }
 
 struct in_addr
-Route::MaskToAddr(int mask)
+Router::MaskToAddr(int mask)
 {
     u_int32_t u_addr;
     
@@ -35,26 +35,11 @@ Route::MaskToAddr(int mask)
     return *(struct in_addr *) &u_addr;
 }
 
-char *
-Route::GetInterface()
-{
-   Interface * pInt;
-   vector<Interface *>::iterator iit;
-   
-   for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
-       pInt = *iit;
-       if (pInt->conf.id == inter_id) {
-           return pInt->conf.name;
-       }
-   }
-   
-   return NULL;
-}
 
 
 #define BUFSIZE_MAXRT 8096
 void 
-Route::LoadKernelRoute()
+Router::LoadKernelRoute()
 {
     // create kernel socket
     sockfd sfd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -107,24 +92,24 @@ Route::LoadKernelRoute()
             }
             
             int rt_len = IFA_PAYLOAD(pNlhdr);
-            Route * pRt = new Route;
-            pRt->netmask = pRtmsg->rtm_dst_len;
-            pRt->conf.mask = MaskToAddr(pRt->netmask);
+            struct rtcon * pRtCon = (struct rtcon *) malloc( sizeof( struct rtcon));
+            assert(pRtCon != NULL);
+            pRtCon->mask = MaskToAddr(pRtmsg->rtm_dst_len);
            
             // read route config
             while ( RTA_OK(pRtattr, rt_len) ) {
                 switch (pRtattr->rta_type) {
                     case RTA_OIF:
                         // set interface id
-                        pRt->inter_id = *(int *) RTA_DATA(pRtattr);
+                        pRtCon->ifid = *(int *) RTA_DATA(pRtattr);
                         break;
                     case RTA_DST:
                         // set destination address
-                        *(u_int32_t *)&(pRt->conf.dest) = *(u_int32_t *)RTA_DATA(pRtattr);
+                        *(u_int32_t *)&(pRtCon->dest) = *(u_int32_t *)RTA_DATA(pRtattr);
                         break;
                     case RTA_GATEWAY:
                         // set next hop
-                        *(u_int32_t *)&(pRt->conf.nhop) = *(u_int32_t *)RTA_DATA(pRtattr);
+                        *(u_int32_t *)&(pRtCon->nhop) = *(u_int32_t *)RTA_DATA(pRtattr);
                         break;
                     default:
                         break;
@@ -133,7 +118,7 @@ Route::LoadKernelRoute()
             }
             
             // add to route table
-            vRoute.push_back(pRt);
+            vRtConf.push_back(pRtCon);
             
             pNlhdr = NLMSG_NEXT(pNlhdr, nread);
         }

@@ -3,7 +3,7 @@
 
 using namespace std;
 
-vector<Interface *> vInt;
+vector<struct ifcon *> vIntConf;
 
 Interface::Interface() 
 {
@@ -14,6 +14,22 @@ Interface::Interface()
 Interface::~Interface() 
 {
     
+}
+
+char *
+Interface::GetIfNameById(int ifid)
+{
+   struct ifcon * pIntCon;
+   vector<struct ifcon *>::iterator iit;
+   
+   for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+       pIntCon = *iit;
+       if (pIntCon->ifid == ifid) {
+           return pIntCon->name;
+       }
+   }
+   
+   return NULL;
 }
 
 #define BUFSIZE_MAXIF 8096
@@ -39,57 +55,57 @@ Interface::LoadInfo()
     }
     
     int n, i;
-    Interface     * pInt;
-    struct ifreq * pIfreq;
+    struct ifcon       * pIntCon;
+    struct ifreq       * pIfreq;
     struct sockaddr_in * pSad;
     
     n = ifc->ifc_len / sizeof(struct ifreq);
     pIfreq = (struct ifreq *) buf;
     
     for (i = 0; i < n; ++i) {
-        pInt = new Interface;
-        assert(pInt != NULL);
+        pIntCon = (struct ifcon *) malloc(sizeof(struct ifcon));
+        assert(pIntCon != NULL);
         
         // get inter id
         if (ioctl(sfd, SIOCGIFINDEX, (char *)pIfreq) == -1) {
             g_log->Fatal("cannot load interface id");
         }
-        pInt->conf.id = pIfreq->ifr_ifindex;
+        pIntCon->ifid = pIfreq->ifr_ifindex;
         
         // set mac address
         if (ioctl(sfd, SIOCGIFHWADDR, (char *)pIfreq) == -1) {
             g_log->Fatal("cannot load mac address");
         }
-        memcpy(pInt->conf.mac, pIfreq->ifr_hwaddr.sa_data, sizeof(pIfreq->ifr_hwaddr.sa_data));
+        memcpy(pIntCon->mac, pIfreq->ifr_hwaddr.sa_data, sizeof(pIfreq->ifr_hwaddr.sa_data));
         
         // get ip address
         if (ioctl(sfd, SIOCGIFADDR, (char *)pIfreq) == -1) {
             g_log->Fatal("cannot load ip address");
         }
         pSad = (struct sockaddr_in *) &(pIfreq->ifr_addr);
-        memcpy(&(pInt->conf.ipaddr), &(pSad->sin_addr), sizeof(pSad->sin_addr));
+        memcpy(&(pIntCon->ipaddr), &(pSad->sin_addr), sizeof(pSad->sin_addr));
         
         // get broadcast address
         if (ioctl(sfd, SIOCGIFBRDADDR, (char *)pIfreq) == -1) {
             g_log->Fatal("cannot load broadcast");
         } 
         pSad = (struct sockaddr_in *) &(pIfreq->ifr_broadaddr);
-        memcpy(&(pInt->conf.broadcast), &(pSad->sin_addr), sizeof(pSad->sin_addr));
+        memcpy(&(pIntCon->broadcast), &(pSad->sin_addr), sizeof(pSad->sin_addr));
         
         // get netmask
         if (ioctl(sfd, SIOCGIFNETMASK, (char *)pIfreq) == -1) {
             g_log->Fatal("cannot load net mask");
         }
         pSad = (struct sockaddr_in *) &(pIfreq->ifr_netmask);
-        memcpy(&(pInt->conf.netmask), &(pSad->sin_addr), sizeof(pSad->sin_addr));
+        memcpy(&(pIntCon->netmask), &(pSad->sin_addr), sizeof(pSad->sin_addr));
         
         // interface name
-        strncpy(pInt->conf.name, pIfreq->ifr_name, IFNAMSIZ-1);
+        strncpy(pIntCon->name, pIfreq->ifr_name, IFNAMSIZ-1);
         
         // move to next interface
         pIfreq ++;
         
-        vInt.push_back(pInt);
+        vIntConf.push_back(pIntCon);
     }
         
 }

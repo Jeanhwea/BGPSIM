@@ -1,19 +1,17 @@
 #include "Watcher.h"
 #include "Interface.h"
 #include "Logger.h"
-#include "Route.h"
+#include "Router.h"
 
 using namespace std;
 
 
 Watcher::Watcher() 
 {
-    
 }
 
 Watcher::~Watcher() 
 {
-    
 }
 
 void * 
@@ -37,14 +35,14 @@ bool
 Watcher::SetPromisc()
 {
     struct ifreq ifr;
-    vector<Interface *>::iterator iit;
-    Interface * pInt;
+    vector<struct ifcon *>::iterator iit;
+    struct ifcon * pIntCon;
     
-    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
-        pInt = *iit;
-        assert(pInt != NULL);
+    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+        pIntCon = *iit;
+        assert(pIntCon != NULL);
         
-        strcpy(ifr.ifr_name, pInt->conf.name);
+        strcpy(ifr.ifr_name, pIntCon->name);
         if (ioctl(sfd, SIOCGIFFLAGS, &ifr) != 0) {
             g_log->Fatal("cannot SetPromisc");
         }
@@ -95,12 +93,12 @@ Watcher::StartListen()
 bool
 Watcher::CheckInter(u_char mac[])
 {
-    vector<Interface *>::iterator iit;
-    Interface * pInt;
-    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
-        pInt = *iit;
-        assert(pInt != NULL);
-        if (memcmp(mac, pInt->conf.mac, ETH_ALEN) == 0)
+    vector<struct ifcon *>::iterator iit;
+    struct ifcon * pIntCon;
+    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+        pIntCon = * iit;
+        assert(pIntCon != NULL);
+        if (memcmp(mac, pIntCon->mac, ETH_ALEN) == 0)
             return true;
     }
     
@@ -116,14 +114,14 @@ Watcher::CheckInter(u_int32_t ipaddr)
 bool
 Watcher::CheckInter(struct in_addr * pAd)
 {
-    vector<Interface *>::iterator iit;
-    Interface * pInt;
-    for (iit = vInt.begin(); iit != vInt.end(); ++iit) {
-        pInt = *iit;
-        assert(pInt != NULL);
+    vector<struct ifcon *>::iterator iit;
+    struct ifcon * pIntCon;
+    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+        pIntCon = * iit;
+        assert(pIntCon != NULL);
         u_int32_t src, des, mask;
-        mask = pInt->conf.netmask.s_addr;
-        src  = pInt->conf.ipaddr.s_addr;
+        mask = pIntCon->netmask.s_addr;
+        src  = pIntCon->ipaddr.s_addr;
         des  = pAd->s_addr;
         src  &= mask;
         des  &= mask;

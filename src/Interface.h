@@ -13,7 +13,7 @@ struct ifcon {
         struct in_addr      netmask;
         struct in_addr      ipaddr;
         struct in_addr      broadcast;
-        int                 id;
+        int                 ifid;
         char                name[IFNAMSIZ];
 };
 #pragma pack(pop)
@@ -22,12 +22,13 @@ class Interface {
     private:
 
     public:
-        ifcon  conf;
         
         Interface();
         virtual ~Interface();
         void LoadInfo();
+        
+        static char * GetIfNameById(int ifid);
 };
 
-extern vector<Interface *> vInt;
+extern vector<struct ifcon *> vIntConf;
 #endif /* end of include guard: INTERFACE_870ABUR8 */
