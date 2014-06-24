@@ -136,7 +136,95 @@ Router::LoadKernelRoute()
 void
 Router::PacketForward(Message * pMsg)
 {
+    if (pMsg == NULL)
+        return;
+    
+    //struct ethhdr * pEthhdr;
+    struct iphdr  * pIphdr;
+    
+    //pEthhdr = (struct ethhdr *) pMsg->ReadPos();
+    pIphdr = (struct iphdr *) (pMsg->ReadPos() + sizeof(struct ethhdr));
+    
+    struct rtcon * pRtCon;
+    pRtCon = LookupRoutingTable(pIphdr->daddr);
+    
+    if (pRtCon == NULL)
+        return ;
+    
+    struct ifcon * pIfCon;
+    pIfCon = Interface::GetIfconById(pRtCon->ifid);
+    
+    
 }
+
+struct rtcon *
+Router::LookupRoutingTable(u_int32_t ipaddr)
+{
+    return LookupRoutingTable((struct in_addr *) &ipaddr);
+}
+
+
+struct rtcon *
+Router::LookupRoutingTable(struct in_addr * pAd)
+{
+    vector<struct rtcon *>::iterator rit;
+    struct rtcon * pRtCon;
+    struct rtcon * ret = NULL;
+    u_int32_t flag_mask = 0;
+    for (rit = vRtConf.begin(); rit != vRtConf.end(); ++rit) {
+        pRtCon = *rit;
+        assert(pRtCon != NULL);
+        u_int32_t src, des, mask;
+        src = pAd->s_addr;
+        des = pRtCon->dest.s_addr;
+        mask = pRtCon->mask.s_addr;
+        src &= mask;
+        des &= mask;
+        if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
+            if (mask > flag_mask) {
+                ret = pRtCon;
+                flag_mask = mask;
+            } else if (mask == flag_mask) {
+                ret = pRtCon;
+            }
+        }
+    }
+    
+    return ret;
+}
+
+void
+Router::CalIpChecksum(struct iphdr * pIphdr)
+{
+    pIphdr->check = 0;
+    pIphdr->check = CalChechsum((unsigned short *)pIphdr, pIphdr->ihl<<2);
+}
+
+
+unsigned short
+Router::CalChechsum(short unsigned int* addr, unsigned int count)
+{
+    unsigned long sum = 0;
+    while (count > 1) {
+        sum += * addr++;
+        count -= 2;
+    }
+    
+    //if any bytes left, pad the bytes and add
+    if(count > 0) {
+        sum += ((*addr)&htons(0xff00));
+    }
+    
+    //Fold sum to 16 bits: add carrier to result
+    while (sum>>16) {
+        sum = (sum & 0xffff) + (sum >> 16);
+    }
+    
+    //one's complement
+    sum = ~sum;
+    return ((unsigned short)sum);
+}
+
 
 void
 Router::ARPRos(Message * pMsg)

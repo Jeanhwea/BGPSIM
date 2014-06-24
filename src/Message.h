@@ -74,7 +74,6 @@ using namespace std;
 
 class Message : public Buffer {
     private:
-        static deque<Message *> mqMessage;
 
     public:
         sockfd      sfd;

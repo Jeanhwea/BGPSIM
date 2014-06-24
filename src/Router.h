@@ -45,6 +45,10 @@ class Router {
         void LoadKernelRoute();
         
         void PacketForward(Message * pMsg);
+        struct rtcon * LookupRoutingTable(u_int32_t ipaddr);
+        struct rtcon * LookupRoutingTable(struct in_addr * pAd);
+        void CalIpChecksum(struct iphdr * pIphdr);
+        unsigned short CalChechsum(unsigned short * addr, unsigned int count);
         
         // arp utils
         void ARPRos(Message * pMsg);
@@ -53,6 +57,6 @@ class Router {
 };
 
 
-extern vector<struct arpcon *> vARPConf;
-extern vector<struct rtcon *> vRtConf;
+extern vector<struct arpcon *> vARPConf;    // arp cache
+extern vector<struct rtcon *> vRtConf;      // routing table
 #endif /* end of include guard: ROUTE_J2V5X69X */

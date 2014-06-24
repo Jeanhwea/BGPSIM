@@ -42,7 +42,7 @@ Simulator::~Simulator()
 void *
 Simulator::Run()
 {
-    tim.Start();
+    timer.Start();
     SimMain();
     return NULL;
 }

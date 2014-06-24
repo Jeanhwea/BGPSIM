@@ -37,7 +37,7 @@ class Simulator : public Thread {
         u_int32_t                   conf_bgpid;
         struct in_addr              lisaddr;
 
-        Timer                       tim;
+        Timer                       timer;
 
     public:
         Simulator();

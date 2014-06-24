@@ -28,6 +28,7 @@ class Interface {
         void LoadInfo();
         
         static char * GetIfNameById(int ifid);
+        static struct ifcon * GetIfconById(int ifid);
 };
 
 extern vector<struct ifcon *> vIntConf;

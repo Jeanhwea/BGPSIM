@@ -67,8 +67,8 @@ Watcher::StartListen()
     u_char          buf[BUFSIZE_ETH];
     
     while (true) {
-        size_t len = read(sfd, buf, BUFSIZE_ETH);
-        if (len < 0)
+        size_t nread = read(sfd, buf, BUFSIZE_ETH);
+        if (nread < 0)
             g_log->Error("cannot catch packet");
         
         pEthhdr = (struct ethhdr *) buf;
@@ -83,7 +83,7 @@ Watcher::StartListen()
                     // send arp request is the mac is unknown
                     Message * pMsg;
                     pMsg = new Message(BUFSIZE_ETH);
-                    pMsg->Add(buf, len);
+                    pMsg->Add(buf, nread);
                     g_rtr->ARPRos(pMsg);
                 }
                 break;
@@ -93,7 +93,7 @@ Watcher::StartListen()
                     // try to forward packet, if ip des is not in my Interface
                     Message * pMsg;
                     pMsg = new Message(BUFSIZE_ETH); 
-                    pMsg->Add(buf, len);
+                    pMsg->Add(buf, nread);
                     g_rtr->PacketForward(pMsg);
                 }
                 break;
