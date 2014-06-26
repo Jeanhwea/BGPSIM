@@ -37,26 +37,28 @@ class Router {
     private:
         static int rtseq;
         struct in_addr MaskToAddr(int mask);
+        bool isDefaultAddr(u_int32_t ipaddr);
+        bool isDefaultAddr(struct in_addr * pAd);
+        void CalIpChecksum(struct iphdr * pIphdr);
+        unsigned short CalChechsum(unsigned short * addr, unsigned int count);
 
     public:
         Router();
         virtual ~Router();
         
-        void LoadKernelRoute();
+        void LoadKernelRouter();
         
-        void PacketForward(Message * pMsg);
+        // ip packet toolkits
+        bool PacketForward(Message * pMsg);
         struct rtcon * LookupRoutingTable(u_int32_t ipaddr);
         struct rtcon * LookupRoutingTable(struct in_addr * pAd);
-        void CalIpChecksum(struct iphdr * pIphdr);
-        unsigned short CalChechsum(unsigned short * addr, unsigned int count);
         
         // arp utils
         void ARPRos(Message * pMsg);
-        void ARPReq(struct in_addr * pAd, struct ifcon * pInt);
+        void ARPReq(struct in_addr * pAd);
+        void ARPReq(u_int32_t ipaddr);
         struct arpcon * LookupARPCache(struct in_addr * pAd);
 };
-
-
 extern vector<struct arpcon *> vARPConf;    // arp cache
 extern vector<struct rtcon *> vRtConf;      // routing table
-#endif /* end of include guard: ROUTE_J2V5X69X */
+#endif /* end of include guard: ROUTER_J2V5X69X */

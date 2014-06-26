@@ -20,6 +20,11 @@ Watcher::Run()
 {
     if (InitMainSocket())
         StartListen();
+    else {
+        g_log->Error("failed to set main socket");
+        g_log->ShowErrno();
+        exit(-1);
+    }
     return NULL;
 }
 

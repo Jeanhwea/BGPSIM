@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "Interface.h"
 #include "Message.h"
+#include "Watcher.h"
 
 using namespace std;
 
@@ -42,7 +43,7 @@ Router::MaskToAddr(int mask)
 
 #define BUFSIZE_MAXRT 8096
 void 
-Router::LoadKernelRoute()
+Router::LoadKernelRouter()
 {
     // create kernel socket
     sockfd sfd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -133,29 +134,100 @@ Router::LoadKernelRoute()
 }
 
 
-void
+bool
 Router::PacketForward(Message * pMsg)
 {
-    if (pMsg == NULL)
-        return;
+    // return false, if the *pMsg do not send ...
     
-    //struct ethhdr * pEthhdr;
+    if (pMsg == NULL)
+        return false;
+    
+    struct ethhdr * pEthhdr;
     struct iphdr  * pIphdr;
     
-    //pEthhdr = (struct ethhdr *) pMsg->ReadPos();
+    pEthhdr = (struct ethhdr *) pMsg->ReadPos();
     pIphdr = (struct iphdr *) (pMsg->ReadPos() + sizeof(struct ethhdr));
     
     struct rtcon * pRtCon;
     pRtCon = LookupRoutingTable(pIphdr->daddr);
     
     if (pRtCon == NULL)
-        return ;
+        return false;
     
-    struct ifcon * pIfCon;
-    pIfCon = Interface::GetIfconById(pRtCon->ifid);
+    // try to forward the packet
+    // or just push the packet in the waiting message queue
+    //      to let it be forwarded in next schedule
+    struct arpcon * pArpCon;
     
+    if (isDefaultAddr(pIphdr->daddr)) {
+        pArpCon = LookupARPCache(&pRtCon->nhop);
+    } else {
+        pArpCon = LookupARPCache(&pRtCon->dest);
+    }
     
+    // if cannot find mac addr in arp cache, then send a arp request 
+    if (pArpCon == NULL) {
+        if (isDefaultAddr(pIphdr->daddr)) {
+            ARPReq(&pRtCon->nhop);
+        } else {
+            ARPReq(&pRtCon->dest);
+        }
+        // TODO move message into a waiting queue
+        return false;
+    }
+    
+    // just send the message
+    struct sockaddr_ll sadll;
+    memset(&sadll, 0, sizeof(sadll));
+    
+    struct ifcon * pIntCon;
+    pIntCon = Interface::GetIfconById(pRtCon->ifid);
+    if (pIntCon == NULL)
+        return false;
+    
+    sadll.sll_ifindex = pIntCon->ifid;
+    sadll.sll_pkttype = PACKET_OUTGOING;
+    
+    memcpy(&pEthhdr->h_dest, pArpCon->mac, ETH_ALEN);
+    memcpy(&pEthhdr->h_source, pIntCon->mac, ETH_ALEN);
+    pIphdr->ttl --;
+    if (pIphdr->ttl <= 0) {
+        // ignore ... 
+        return false;
+    }
+    CalIpChecksum(pIphdr);
+    
+    // do send the message
+    if (g_wtc->GetMainSFD() < 0) {
+        g_log->Error("router detect watcher didnot set main socket fd");
+        return false;
+    }
+    
+    size_t nsend;
+    nsend = sendto(g_wtc->GetMainSFD(), pMsg->ReadPos(), pMsg->Length(), 0, (struct sockaddr *) &sadll, sizeof(sadll));
+    
+    if (nsend < 0) {
+        g_log->Warning("Arp send failed");
+        return false;
+    }
+    
+    return true;
 }
+
+bool Router::isDefaultAddr(u_int32_t ipaddr)
+{
+    return isDefaultAddr((struct in_addr *) & ipaddr);
+}
+
+
+bool 
+Router::isDefaultAddr(struct in_addr * pAd)
+{
+    struct in_addr default_addr;
+    memset(&default_addr, 0, sizeof(default_addr));
+    return (memcmp(&default_addr, pAd, sizeof(struct in_addr)) == 0);
+}
+
 
 struct rtcon *
 Router::LookupRoutingTable(u_int32_t ipaddr)
@@ -251,12 +323,29 @@ Router::ARPRos(Message * pMsg)
     
 }
 
+void
+Router::ARPReq(u_int32_t ipaddr)
+{
+    return ARPReq((struct in_addr *) &ipaddr);
+}
+
+
 void 
-Router::ARPReq(struct in_addr * pAd, struct ifcon * pIntCon)
+Router::ARPReq(struct in_addr * pAd)
 {
     struct arpcon * pArpCon;
     pArpCon = LookupARPCache(pAd);
     if (pArpCon != NULL) 
+        return;
+    
+    struct rtcon * pRtCon;
+    pRtCon = LookupRoutingTable(pAd);
+    if (pRtCon == NULL)
+        return;
+    
+    struct ifcon * pIntCon;
+    pIntCon = Interface::GetIfconById(pRtCon->ifid);
+    if (pIntCon == NULL)
         return;
     
     struct sockaddr_ll  sadll;

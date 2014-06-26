@@ -21,7 +21,7 @@ main(int argc, char const *argv[])
     g_int->LoadInfo();
     g_log->LogIntList();
     
-    g_rtr->LoadKernelRoute();
+    g_rtr->LoadKernelRouter();
     g_log->LogRouteList();
     
     
