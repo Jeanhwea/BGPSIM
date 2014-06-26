@@ -15,6 +15,13 @@ Watcher::~Watcher()
 {
 }
 
+sockfd
+Watcher::GetMainSFD()
+{
+    return sfd;
+}
+
+
 void * 
 Watcher::Run()
 {

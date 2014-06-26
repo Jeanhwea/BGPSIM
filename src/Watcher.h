@@ -24,9 +24,7 @@ class Watcher : public Thread {
         bool CheckInter(u_int32_t ipaddr);
         bool CheckInter(struct in_addr * pAd);
         
-        sockfd GetMainSFD() {
-            return sfd;
-        }
+        sockfd GetMainSFD();
 };
 
 #endif /* end of include guard: WATCHER_KPDU2Z6J */

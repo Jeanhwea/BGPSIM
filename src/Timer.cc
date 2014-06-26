@@ -1,5 +1,6 @@
 #include "Timer.h"
 #include "Simulator.h"
+#include "Router.h"
 
 using namespace std;
 
@@ -67,6 +68,7 @@ Timer::DoSchedule()
             pPeer->Unlock();
         }
     }
+    g_rtr->MsgQueueSend();
     g_sim->DoDispatch();
 }
 

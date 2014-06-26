@@ -13,7 +13,7 @@ int Router::rtseq = 0;
 
 Router::Router()
 {
-
+    msgMutex = PTHREAD_MUTEX_INITIALIZER;
 }
 
 
@@ -21,6 +21,23 @@ Router::~Router()
 {
 
 }
+
+
+void 
+Router::MsgQueueLock()
+{
+    pthread_mutex_lock(&msgMutex);
+    return ;
+}
+
+
+void 
+Router::MsgQueueUnlock()
+{
+    pthread_mutex_unlock(&msgMutex);
+}
+
+
 
 struct in_addr
 Router::MaskToAddr(int mask)
@@ -38,7 +55,6 @@ Router::MaskToAddr(int mask)
     
     return *(struct in_addr *) &u_addr;
 }
-
 
 
 #define BUFSIZE_MAXRT 8096
@@ -172,7 +188,10 @@ Router::PacketForward(Message * pMsg)
         } else {
             ARPReq(&pRtCon->dest);
         }
-        // TODO move message into a waiting queue
+        // move message into a waiting queue
+        MsgQueueLock();
+        qMessage.push(pMsg);
+        MsgQueueUnlock();
         return false;
     }
     
@@ -211,10 +230,13 @@ Router::PacketForward(Message * pMsg)
         return false;
     }
     
+    delete pMsg;
+    
     return true;
 }
 
-bool Router::isDefaultAddr(u_int32_t ipaddr)
+bool 
+Router::isDefaultAddr(u_int32_t ipaddr)
 {
     return isDefaultAddr((struct in_addr *) & ipaddr);
 }
@@ -235,8 +257,7 @@ Router::LookupRoutingTable(u_int32_t ipaddr)
     return LookupRoutingTable((struct in_addr *) &ipaddr);
 }
 
-
-struct rtcon *
+struct rtcon * 
 Router::LookupRoutingTable(struct in_addr * pAd)
 {
     vector<struct rtcon *>::iterator rit;
@@ -396,7 +417,7 @@ Router::ARPReq(struct in_addr * pAd)
 }
 
 struct arpcon * 
-Router::LookupARPCache(in_addr* pAd)
+Router::LookupARPCache(struct in_addr * pAd)
 {
     vector<arpcon *>::iterator ait;
     struct arpcon * pArpCon;
@@ -409,3 +430,20 @@ Router::LookupARPCache(in_addr* pAd)
     return NULL;
 }
 
+void
+Router::MsgQueueSend()
+{
+    MsgQueueLock();
+    queue<Message *> qMsgCopy(qMessage);
+    while (!qMessage.empty()) {
+        qMessage.pop();
+    }
+    MsgQueueUnlock();
+    
+    Message * pMsg;
+    while (!qMsgCopy.empty()) {
+        pMsg = qMsgCopy.front();
+        PacketForward(pMsg);
+        qMsgCopy.pop();
+    }
+}
