@@ -298,6 +298,7 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
         case OPENCONFIRM:
             break;
         case ESTABLISHED:
+            //SimUpdate();
             break;
     }
     g_log->LogStateChage(pPeer, state, eve);
@@ -792,6 +793,8 @@ Simulator::ParseNotification(Peer * pPeer)
     memcpy(&subcode, pos, sizeof(subcode));
     pos += sizeof(subcode);
     datalen -= sizeof(subcode);
+    
+    // TODO: do things after recv errcode and subcode
 
     return true;
 }
@@ -814,7 +817,98 @@ Simulator::ParseUpdate(Peer * pPeer)
     pos += MSGSIZE_HEADER;
     datalen -= MSGSIZE_HEADER;
     
-    // TODO :  anything you can do with update msg
+    
+    // parse withdraw router info
+    u_int16_t   wdLen; // withdraw router length
+    memcpy(&wdLen, pos, sizeof(wdLen));
+    wdLen = ntohs(wdLen);
+    pos += sizeof(wdLen);
+    datalen -= sizeof(wdLen);
+    if (wdLen > datalen)
+        g_log->Error("length of update message miss match");
+    else
+        datalen -= wdLen;
+    if ( wdLen > 0 ) {
+        vector<struct _prefix>    vPrefix;
+        struct _prefix          * pPre;
+        pPre = (struct _prefix *) malloc(sizeof(struct _prefix));
+        u_int16_t rLen = 0;
+        
+        while ( rLen < wdLen) {
+            memcpy(&pPre->mask, pos, 1);
+            pos ++;
+            u_int8_t octLen = (pPre->mask - 1) / 8 + 1;
+            memset(&pPre->ipaddr, 0, sizeof(pPre->ipaddr));
+            if ( octLen > 0 && octLen <= 4) 
+                memcpy(&pPre->ipaddr, pos, octLen);
+            else {
+                // TODO: send error
+            }
+            pos += octLen;
+            rLen += octLen + 1;
+            vPrefix.push_back(*pPre);
+        }
+    }
+    
+    
+    // parse path attribution info
+    u_int16_t   paLen; // path attribution length
+    memcpy(&paLen, pos, sizeof(paLen));
+    paLen = ntohs(paLen);
+    pos += sizeof(paLen);
+    datalen -= sizeof(paLen);
+    if (paLen > datalen)
+        g_log->Error("mismatch update message length");
+    else
+        datalen -= paLen;
+    if ( paLen > 0) {
+        u_int16_t           rLen = 0;
+        struct _path_attr_type * pPat;
+        pPat = (struct _path_attr_type *) malloc(sizeof(struct _path_attr_type));
+        memcpy(&pPat->flag, pos++, 1);
+        memcpy(&pPat->typecode, pos++, 1);
+        rLen += 2;
+        
+        /*     attr_flag        attr_typecode
+         *   0 1 2 3 4 5 6 7
+         *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         *  |0 0 0 0|E P T O|
+         *  +-+-+-+-+-+-+-+-+
+         * 
+         */
+        // attr len, depends on EXTENDED flag 
+        //      E = 0, 1 octet
+        //      E = 1, 2 octet
+        u_int16_t   para_len = 0;
+        if (pPat->flag & FLAG_EXTENDED ) {
+            u_int16_t len_tmp;
+            memcpy(&len_tmp, pos, 2);
+            para_len = ntohs(len_tmp);
+            pos += 2;
+            rLen += 2;
+        } else {
+            u_char len_tmp;
+            memcpy(&len_tmp, pos, 1);
+            para_len = len_tmp;
+            pos ++;
+            rLen ++;
+        }
+        switch (pPat->typecode) {
+            case PATHATTR_ORIGIN:
+                break;
+            case PATHATTR_ASPATH:
+                break;
+            case PATHATTR_NEXTHOP:
+                break;
+            case PATHATTR_MED:
+                break;
+            case PATHATTR_LOCALPREF:
+                break;
+            default:
+                g_log->Error("unknown path attribution in parse update");
+        }
+    } 
+    
     return true;
 }
 

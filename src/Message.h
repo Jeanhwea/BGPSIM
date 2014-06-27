@@ -46,6 +46,30 @@ typedef enum _suberr_open {
     ERR_OPEN_CAPA
 } suberr_open;
 
+#define FLAG_OPTIONAL   0x80
+#define FLAG_TRANSITIVE 0x40
+#define FLAG_PARTIAL    0x20
+#define FLAG_EXTENDED   0x10
+
+typedef enum _attr_code {
+    PATHATTR_ORIGIN     = 1,
+    PATHATTR_ASPATH     = 2,
+    PATHATTR_NEXTHOP    = 3,
+    PATHATTR_MED        = 4,
+    PATHATTR_LOCALPREF  = 5
+} attr_code;
+
+typedef enum _origin_type {
+    ORIGIN_IGP = 0,
+    ORIGIN_BGP ,
+    ORIGIN_INCOMPLETE 
+} origin_t;
+
+typedef enum _as_type {
+    AS_SET  = 0,
+    AS_SEQUENCE 
+} as_t;
+
 #pragma pack(push)  /* push current align to stack */
 #pragma pack(1)     /* set alignment to 1 byte */
 
@@ -66,7 +90,27 @@ struct openmsg {
     u_int8_t        optparamlen;          // Optional Parameters Length
 };
 
+struct _prefix {
+    u_int8_t        mask;
+    struct in_addr  ipaddr;
+};
 
+struct _path_attr_type {
+    u_char          flag;
+    u_char          typecode;
+};
+
+struct _path_attr_triple {
+    struct _path_attr_type   type;
+    u_int16_t                length;
+    Buffer                 * value;
+};
+
+struct _as_path_segment {
+    u_int8_t    type;
+    u_int8_t    length;
+    Buffer    * value; // list of 2-octet value
+};
 #pragma pack(pop)   /* restore original alignment */
 
 using namespace std;

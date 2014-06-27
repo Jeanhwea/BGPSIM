@@ -410,7 +410,7 @@ Router::ARPReq(struct in_addr * pAd)
     memcpy(&pArphdr->ar_tip, pAd, sizeof(pArphdr->ar_tip));
     
     size_t nsend;
-    nsend = sendto(sfd, buf.ReadPos(), 60, 0, (struct sockaddr *) &sadll, sizeof(sadll));
+    nsend = sendto(sfd, buf.ReadPos(), buf.Length(), 0, (struct sockaddr *) &sadll, sizeof(sadll));
     
     if (nsend < 0)
         g_log->Warning("Arp send failed");
