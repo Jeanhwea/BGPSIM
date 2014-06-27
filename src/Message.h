@@ -91,8 +91,8 @@ struct openmsg {
 };
 
 struct _prefix {
-    u_int8_t        mask;
-    struct in_addr  ipaddr;
+    u_int8_t        length;
+    struct in_addr  prefix;
 };
 
 struct _path_attr_type {
@@ -111,6 +111,13 @@ struct _as_path_segment {
     u_int8_t    length;
     Buffer    * value; // list of 2-octet value
 };
+
+struct _bgp_path_attr {
+    u_int8_t                            origin;
+    vector<struct _as_path_segment *>   as_path;
+    struct in_addr                      nexthop;
+};
+
 #pragma pack(pop)   /* restore original alignment */
 
 using namespace std;

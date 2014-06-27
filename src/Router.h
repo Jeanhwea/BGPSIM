@@ -39,7 +39,6 @@ class Router {
         pthread_mutex_t  msgMutex;  // waiting message queue mutex
         
         static int rtseq;
-        struct in_addr MaskToAddr(int mask);
         bool isDefaultAddr(u_int32_t ipaddr);
         bool isDefaultAddr(struct in_addr * pAd);
         void CalIpChecksum(struct iphdr * pIphdr);
@@ -48,6 +47,10 @@ class Router {
     public:
         Router();
         virtual ~Router();
+        
+        static struct in_addr MaskToAddr(int mask);
+        static u_int32_t AddrToMask(struct in_addr * pAd);
+        static u_int32_t AddrToMask(u_int32_t ipaddr);
         
         // message queue tools
         void MsgQueueLock();
@@ -68,8 +71,9 @@ class Router {
         struct arpcon * LookupARPCache(struct in_addr * pAd);
         
 };
+
+
 extern vector<struct arpcon *> vARPConf;    // arp cache
 extern vector<struct rtcon *> vRtConf;      // routing table
-
 
 #endif /* end of include guard: ROUTER_J2V5X69X */

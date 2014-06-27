@@ -56,6 +56,27 @@ Router::MaskToAddr(int mask)
     return *(struct in_addr *) &u_addr;
 }
 
+u_int32_t
+Router::AddrToMask(struct in_addr * pAd)
+{
+    u_int32_t ret;
+    u_int32_t ipaddr;
+    ret = 0;
+    ipaddr = htonl(pAd->s_addr);
+    while (ipaddr & 0x8000) {
+        ipaddr = ipaddr << 1;
+        ret ++;
+    }
+    return ret;
+}
+
+u_int32_t 
+Router::AddrToMask(u_int32_t ipaddr)
+{
+    return AddrToMask((struct in_addr *) &ipaddr);
+}
+
+
 
 #define BUFSIZE_MAXRT 8096
 void 
