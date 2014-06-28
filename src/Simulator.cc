@@ -848,6 +848,8 @@ Simulator::ParseUpdate(Peer * pPeer)
             rLen += octLen + 1;
             vPrefix.push_back(*pPre);
         }
+        
+        // TODO: you may delete route in routing table for profix in vProfix
     }
     
     
