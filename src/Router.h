@@ -58,6 +58,7 @@ class Router {
         void MsgQueueSend();
         
         void LoadKernelRouter();
+        bool LoadRouterConf(const char *);
         
         // ip packet toolkits
         bool PacketForward(Message * pMsg);

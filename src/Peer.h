@@ -18,7 +18,6 @@ struct peer_config {
     u_int16_t        remote_as;
     u_int32_t        remote_bgpid;
     u_int16_t        holdtime;
-    u_int16_t        min_holdtime;
 };
 
 class Peer : public Thread {

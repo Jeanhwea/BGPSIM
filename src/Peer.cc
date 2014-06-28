@@ -38,7 +38,7 @@ void *
 Peer::Run()
 {
     if (isDebug)
-        cout << "Peer_" << peer_id << " Runs ..." << endl;
+        g_log->Tips("Peer runs ...");
     if (mState == IDLE)
         g_sim->FSM(this, BGP_START);
     else

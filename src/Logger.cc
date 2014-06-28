@@ -238,14 +238,14 @@ Logger::LogRouteList()
 {
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
-    fprintf(out, "Destination\tNextHop\t\tNetMast\t\tInterface\n");
+    fprintf(out, "Destination\t\tNextHop\t\tNetMask\t\tInterface\n");
     for (rit = vRtConf.begin(); rit != vRtConf.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
         fprintf(out, "%-16s", AddrToStr(&pRtCon->dest));
-        fprintf(out, "%-16s", AddrToStr(&pRtCon->nhop));
-        fprintf(out, "%-16s", AddrToStr(&pRtCon->mask));
-        fprintf(out, "%-16s", Interface::GetIfNameById(pRtCon->ifid));
+        fprintf(out, "\t%-16s", AddrToStr(&pRtCon->nhop));
+        fprintf(out, "\t%-16s", AddrToStr(&pRtCon->mask));
+        fprintf(out, "\t%-16s", Interface::GetIfNameById(pRtCon->ifid));
         fprintf(out, "\n");
         fflush(out);
     }

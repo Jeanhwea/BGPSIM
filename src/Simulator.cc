@@ -684,7 +684,8 @@ Simulator::ParseOpen(Peer * pPeer)
     pBuf = pPeer->qBuf.front();
     assert(pBuf != NULL);
 
-    g_log->Tips("parse open msg");
+    if (isDebug)
+        g_log->Tips("parse open msg");
     g_log->LogDumpMsg(pBuf->data, pBuf->Length());
 
     pos = pBuf->ReadPos();
@@ -720,7 +721,7 @@ Simulator::ParseOpen(Peer * pPeer)
     memcpy(&oholdtime, pos, sizeof(oholdtime));
     pos += sizeof(oholdtime);
     holdtime = ntohs(oholdtime);
-    if (holdtime && holdtime < pPeer->conf.min_holdtime) {
+    if (holdtime > T_HOLD_INITIAL) {
         fprintf(errfd, "peer requests unacceptable holdtime %u\n", holdtime);
         SimNotification(pPeer, ERR_OPEN, ERR_OPEN_HOLDTIME, NULL, 0);
         ChangeState(pPeer, IDLE, RECV_OPEN_MSG);
@@ -758,6 +759,7 @@ Simulator::ParseOpen(Peer * pPeer)
         }
     }
 
+    delete pBuf;
     pPeer->qBuf.pop();
 
     return true;
@@ -786,6 +788,8 @@ Simulator::ParseNotification(Peer * pPeer)
     datalen -= MSGSIZE_HEADER;
 
 
+    if (isDebug)
+        g_log->Tips("parse notification msg");
     memcpy(&errcode, pos, sizeof(errcode));
     pos += sizeof(errcode);
     datalen -= sizeof(errcode);
@@ -796,6 +800,8 @@ Simulator::ParseNotification(Peer * pPeer)
     
     // TODO: do things after recv errcode and subcode
 
+    delete pBuf;
+    pPeer->qBuf.pop();
     return true;
 }
 
@@ -817,7 +823,9 @@ Simulator::ParseUpdate(Peer * pPeer)
     pos += MSGSIZE_HEADER;
     datalen -= MSGSIZE_HEADER;
     
-    
+
+    if (isDebug)
+        g_log->Tips("parse update msg");
     // to parse Withdrawn Routes
     u_int16_t   wdLen; // Unfeasible Routes Length
     memcpy(&wdLen, pos, sizeof(wdLen));
@@ -950,13 +958,24 @@ Simulator::ParseUpdate(Peer * pPeer)
         
         // add the nlri to routing table
     }
-    
+
+    delete pBuf;
+    pPeer->qBuf.pop();
     return true;
 }
 
 bool
 Simulator::ParseKeepalive(Peer * pPeer)
 {
+    if (isDebug)
+        g_log->Tips("parse keepalive msg");
+
+
+    Buffer * pBuf;
+    pBuf = pPeer->qBuf.front();
+    assert(pBuf != NULL);
+    delete pBuf;
+    pPeer->qBuf.pop();
     return true;
 }
 

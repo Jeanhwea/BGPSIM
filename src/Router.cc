@@ -76,6 +76,43 @@ Router::AddrToMask(u_int32_t ipaddr)
     return AddrToMask((struct in_addr *) &ipaddr);
 }
 
+bool
+Router::LoadRouterConf(const char * filename)
+{
+    struct rtcon * pRtCon;
+    char    des[32];
+    char    nexthop[32];
+    char    mask[32];
+    char    ifname[IFNAMSIZ+1];
+    struct in_addr addr_tmp;
+    FILE * ffd;
+
+    ffd = fopen(filename, "r");
+    if (ffd == NULL) {
+        g_log->Error("Cannot open routing table config file");
+        return false;
+    }
+
+    while (fscanf(ffd, "%s %s %s %s", des, nexthop, mask, ifname) != EOF) {
+        pRtCon = (struct rtcon *) malloc(sizeof(struct rtcon));
+
+        if (!inet_aton(des, &addr_tmp))
+            g_log->Warning("not a valid ip addr_tmp in load route conf");
+        memcpy(&pRtCon->dest, &addr_tmp, sizeof(pRtCon->dest));
+        if (!inet_aton(mask, &addr_tmp))
+            g_log->Warning("not a valid ip addr_tmp in load route conf");
+        memcpy(&pRtCon->mask, &addr_tmp, sizeof(pRtCon->mask));
+        if (!inet_aton(nexthop, &addr_tmp))
+            g_log->Warning("not a valid ip addr_tmp in load route conf");
+        memcpy(&pRtCon->nhop, &addr_tmp, sizeof(pRtCon->nhop));
+        pRtCon->ifid = Interface::GetIfidByName(ifname);
+        vRtConf.push_back(pRtCon);
+
+    }
+
+    fclose(ffd);
+    return true;
+}
 
 
 #define BUFSIZE_MAXRT 8096

@@ -22,13 +22,14 @@ class Interface {
     private:
 
     public:
-        
+ 
         Interface();
         virtual ~Interface();
         void LoadInfo();
-        
+
         static char * GetIfNameById(int ifid);
         static struct ifcon * GetIfconById(int ifid);
+        static int GetIfidByName(char *);
 };
 
 extern vector<struct ifcon *> vIntConf;

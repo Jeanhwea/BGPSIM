@@ -85,8 +85,8 @@ Watcher::StartListen()
         
         pEthhdr = (struct ethhdr *) buf;
         
-        //if (isDebug)
-        //   g_log->LogRecvedMsg(pEthhdr);
+        if (isDebug)
+           g_log->LogRecvedMsg(pEthhdr);
             
         switch (ntohs(pEthhdr->h_proto)) {
             case ETH_P_ARP:

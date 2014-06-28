@@ -100,11 +100,6 @@ Dispatcher::DispatchMsg(Peer * pPeer)
         return false;
     }
     
-    if (pBuf->isDispathed == true)
-        return false;
-    
-    pBuf->isDispathed = true;
-
     u_int16_t len;
     u_int8_t type;
 
@@ -154,20 +149,21 @@ Dispatcher::ReadMsg(Peer* pPeer)
     }
     
     u_int16_t len;
-    
-    if (! GetMsgLen(preBuf->ReadPos(), len) ) {
-        g_log->Tips("Dispatcher read error message length");
-        return false;
-    }
-
-
     Buffer    * pBuf;
-    pBuf = new Buffer(len);
-    assert(pBuf != NULL);
-    pBuf->Add(preBuf->ReadPos(), len);
-    preBuf->Skip(len);
+    while (preBuf->Length() >= MSGSIZE_HEADER) {
+        
+        if (! GetMsgLen(preBuf->ReadPos(), len) ) {
+            g_log->Error("Dispatcher read error message length");
+            return false;
+        }
+        
+        pBuf = new Buffer(len);
+        assert(pBuf != NULL);
+        pBuf->Add(preBuf->ReadPos(), len);
+        preBuf->Skip(len);
 
-    pPeer->qBuf.push(pBuf);
+        pPeer->qBuf.push(pBuf);
+    }
     return true;
 }
 

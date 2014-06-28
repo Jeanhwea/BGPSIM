@@ -48,6 +48,23 @@ Interface::GetIfconById(int ifid)
    return NULL;
 }
 
+int
+Interface::GetIfidByName(char * ifname)
+{
+   struct ifcon * pIntCon;
+   vector<struct ifcon *>::iterator iit;
+   
+   for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+       pIntCon = *iit;
+       if (strncmp(pIntCon->name, ifname, IFNAMSIZ-1) == 0) {
+           return pIntCon->ifid;
+       }
+   }
+
+   return -1;
+}
+
+
 #define BUFSIZE_MAXIF 8096
 void
 Interface::LoadInfo()
