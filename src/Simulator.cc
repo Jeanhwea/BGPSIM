@@ -9,8 +9,8 @@ Simulator::Simulator()
 {
     mQuit = false;
     conf_holdtime = T_HOLD_INITIAL;
-    LoadSimConf("/home/fuzl/.bgpconf/peer.conf");
-    //LoadListConf("/home/fuzl/.bgpconf/listen.conf");
+    LoadSimConf("./config/peer.conf");
+    //LoadListConf("./config/listen.conf");
     LoadListConf();
 
     // instantiation of listeners
