@@ -37,7 +37,7 @@ Dispatcher::Run()
     }
 
     DispatchMsg();
-    g_log->Tips("end of dispatcher run");
+    //g_log->Tips("end of dispatcher run");
     return NULL;
 }
 
@@ -91,12 +91,9 @@ Dispatcher::DispatchMsg(Peer * pPeer)
     assert(pPeer != NULL);
     Buffer * pBuf;
 
-    g_log->Tips("try to dispatch messages &&&&&&");
-
     pBuf = pPeer->qBuf.front();
 
     if (pBuf == NULL) {
-        g_log->Warning("no buf to dispatch");
         return false;
     }
 

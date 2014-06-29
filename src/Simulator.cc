@@ -588,12 +588,12 @@ Simulator::GetPeerBySockfd(sockfd fd)
 void
 Simulator::DoDispatch()
 {
-    g_log->Tips("do dispatch schedule in sim");
+    //g_log->Tips("do dispatch schedule in sim");
     vector<Peer *>::iterator vit;
     Peer * pPeer;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = * vit;
-        g_log->TraceSize("peer buffer size", pPeer->qBuf.size());
+        //g_log->TraceSize("peer buffer size", pPeer->qBuf.size());
         /*
         queue<Buffer *> tmpq(pPeer->qBuf);
         while (!tmpq.empty()) {
@@ -836,10 +836,15 @@ Simulator::ParseUpdate(Peer * pPeer)
     pos = pBuf->ReadPos();
     pos += MSGSIZE_HEADER;
     datalen -= MSGSIZE_HEADER;
-    
 
     if (isDebug)
         g_log->Tips("parse update msg");
+
+    struct _bgp_update_info * pUpInfo;
+    pUpInfo = (struct _bgp_update_info *) malloc(sizeof(struct _bgp_update_info));
+    assert(pUpInfo != NULL);
+    memset(pUpInfo, 0, sizeof(struct _bgp_update_info));
+
     // to parse Withdrawn Routes
     u_int16_t   wdLen; // Unfeasible Routes Length
     memcpy(&wdLen, pos, sizeof(wdLen));
@@ -850,27 +855,28 @@ Simulator::ParseUpdate(Peer * pPeer)
         g_log->Error("length of update message miss match");
     else
         datalen -= wdLen;
-    if ( wdLen > 0 ) {
-        vector<struct _prefix>    vPrefix;
+    if (isDebug)
+        g_log->TraceSize("withdraw length", wdLen);
+    while ( wdLen > 0 ) {
         struct _prefix          * pPre;
         pPre = (struct _prefix *) malloc(sizeof(struct _prefix));
+        assert(pPre != NULL);
         u_int16_t rLen = 0;
         
-        while ( rLen < wdLen) {
-            memcpy(&pPre->length, pos, 1);
-            pos ++;
-            u_int8_t octLen = (pPre->length - 1) / 8 + 1;
-            memset(&pPre->prefix, 0, sizeof(pPre->prefix));
-            if ( octLen > 0 && octLen <= 4) 
-                memcpy(&pPre->prefix, pos, octLen);
-            else {
-                // TODO: send error
-            }
-            pos += octLen;
-            rLen += octLen + 1;
-            vPrefix.push_back(*pPre);
+        memcpy(&pPre->length, pos, 1);
+        pos ++;
+        u_int8_t octLen = (pPre->length - 1) / 8 + 1;
+        memset(&pPre->prefix, 0, sizeof(pPre->prefix));
+        if ( octLen > 0 && octLen <= 4)
+            memcpy(&pPre->prefix, pos, octLen);
+        else {
+            g_log->Error("miss match size of prefix");
         }
+        pos += octLen;
+        rLen += octLen + 1;
+        pUpInfo->withdraw.push_back(pPre);
         
+        wdLen -= rLen;
         // TODO: you may delete route in routing table for profix in vProfix
     }
     
@@ -885,26 +891,34 @@ Simulator::ParseUpdate(Peer * pPeer)
         g_log->Error("mismatch update message length");
     else
         datalen -= paLen;
-    if ( paLen > 0) {
+    if (isDebug)
+        g_log->TraceSize("path attribute length", paLen);
+    
+    struct _bgp_path_attr   * pAttr = NULL;
+    if (paLen > 0) {
+        pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
+        assert(pAttr != NULL);
+    }  
+    while (paLen > 0) {
         u_int16_t           rLen = 0;
         struct _path_attr_type pat;
-        struct _bgp_path_attr   * pAttr;
-        pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
         memcpy(&pat.flag, pos++, 1);
         memcpy(&pat.typecode, pos++, 1);
         rLen += 2;
         
-        /*     attr_flag        attr_typecode
+        /*     attr_flag        attr_typecode     attr_value
          *   0 1 2 3 4 5 6 7
          *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
          *  |0 0 0 0|E P T O|
          *  +-+-+-+-+-+-+-+-+
          * 
          */
+        
+        u_int16_t   para_len = 0; // length of a single path attribution
+        
         // attr len, depends on EXTENDED flag 
         //      E = 0, 1 octet
         //      E = 1, 2 octet
-        u_int16_t   para_len = 0;
         if (pat.flag & FLAG_EXTENDED ) {
             u_int16_t len_tmp;
             memcpy(&len_tmp, pos, 2);
@@ -918,61 +932,81 @@ Simulator::ParseUpdate(Peer * pPeer)
             pos ++;
             rLen ++;
         }
+        
+        // printf("typecode = %d ////\n", pat.typecode);
+        // fflush(stdout);
+        
         switch (pat.typecode) {
             case PATHATTR_ORIGIN:
                 if (para_len != 1)
                     g_log->Error("pathattr origin length miss match");
-                pos ++;
                 memcpy(&pAttr->origin, pos, para_len);
+                pos ++;
                 break;
             case PATHATTR_ASPATH:
                 struct _as_path_segment * pAps;
                 pAps= (struct _as_path_segment *) malloc(sizeof(struct _as_path_segment));
                 memcpy(&pAps->type, pos++, 1);
                 memcpy(&pAps->length, pos++, 1);
-                pAps->value = new Buffer(pAps->length);
-                pAps->value->Add(pos, pAps->length);
-                pos += pAps->length;
+                // remember the as_length sugguest length of as_list in TWO-OCTETS
+                u_int16_t   asTotalLen;
+                asTotalLen = pAps->length * 2;
+                pAps->value = new Buffer(asTotalLen);
+                pAps->value->Add(pos, asTotalLen);
+                pos += asTotalLen;
                 pAttr->as_path.push_back(pAps);
                 break;
             case PATHATTR_NEXTHOP:
-                if (para_len != 4)
-                    g_log->Error("pathattr nexthop length miss match");
-                memcpy(&pAttr->nexthop, pos, 4);
-                pos += 4;
+                memset(&pAttr->nhop, 0, sizeof(pAttr->nhop));
+                if (para_len > 0 && para_len <= 4) {
+                    memcpy(&pAttr->nhop, pos, para_len);
+                } else {
+                    g_log->Error("miss match path attribution length of nexthop");
+                }
+                pos += para_len;
                 break;
             default:
                 g_log->Error("unknown path attribution in parse update");
+                printf("typecode = %d ////\n", pat.typecode);
+                fflush(stdout);
+                assert(false);
         }
-    } 
+        rLen += para_len;
+        paLen -= rLen;
+    }
+    pUpInfo->pathattr = pAttr;
     
     // to parse Network Layer Reachability Information
     u_int16_t nlriLen; // length of Network Layer Reachability Information
     nlriLen = datalen;
-    if (nlriLen > 0) {
+    while (nlriLen > 0) {
         
-        vector<struct _prefix>    vPrefix;
         struct _prefix          * pPre;
         pPre = (struct _prefix *) malloc(sizeof(struct _prefix));
+        assert(pPre != NULL);
         u_int16_t rLen = 0;
         
-        while ( rLen < nlriLen) {
-            memcpy(&pPre->length, pos, 1);
-            pos ++;
-            u_int8_t octLen = (pPre->length - 1) / 8 + 1;
-            memset(&pPre->prefix, 0, sizeof(pPre->prefix));
-            if ( octLen > 0 && octLen <= 4) 
-                memcpy(&pPre->prefix, pos, octLen);
-            else {
-            }
-            pos += octLen;
-            rLen += octLen + 1;
-            vPrefix.push_back(*pPre);
+        memcpy(&pPre->length, pos, 1);
+        pos ++;
+        u_int8_t octLen = (pPre->length - 1) / 8 + 1;
+        memset(&pPre->prefix, 0, sizeof(pPre->prefix));
+        if ( octLen > 0 && octLen <= 4)
+            memcpy(&pPre->prefix, pos, octLen);
+        else {
+            g_log->Error("miss match size of prefix");
         }
+        pos += octLen;
+        rLen += octLen + 1;
+        pUpInfo->nlri.push_back(pPre);
+
+        nlriLen -= rLen;
         
         // add the nlri to routing table
     }
 
+    if (isDebug)
+        g_log->LogUpdateInfo(pUpInfo);
+    
     delete pBuf;
     pPeer->qBuf.pop();
     return true;

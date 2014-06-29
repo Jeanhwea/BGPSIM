@@ -100,12 +100,6 @@ struct _path_attr_type {
     u_char          typecode;
 };
 
-struct _path_attr_triple {
-    struct _path_attr_type   type;
-    u_int16_t                length;
-    Buffer                 * value;
-};
-
 struct _as_path_segment {
     u_int8_t    type;
     u_int8_t    length;
@@ -115,7 +109,13 @@ struct _as_path_segment {
 struct _bgp_path_attr {
     u_int8_t                            origin;
     vector<struct _as_path_segment *>   as_path;
-    struct in_addr                      nexthop;
+    struct in_addr                      nhop;
+};
+
+struct _bgp_update_info {
+    vector<struct _prefix *>            withdraw;   // Withdrawn Routes
+    struct _bgp_path_attr             * pathattr;   // Path Attributes
+    vector<struct _prefix *>            nlri;       // Network Layer Reachability Information
 };
 
 #pragma pack(pop)   /* restore original alignment */

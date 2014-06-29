@@ -37,6 +37,7 @@ class Logger {
         void LogSimConf(int as, const char * ra);
         void LogDispatchMsg(u_int16_t len, u_int8_t type);
         void LogRecvedMsg(struct ethhdr * pEthhdr);
+        void LogUpdateInfo(struct _bgp_update_info * pUpInfo);
 
         void LogIntList();
         void LogPeerList();

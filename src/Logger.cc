@@ -261,3 +261,15 @@ Logger::LogRouteList()
     
 }
 
+void
+Logger::LogUpdateInfo(struct _bgp_update_info * pUpInfo)
+{
+    fprintf(out, "logged update msg info\n");
+    fflush(out);
+    if (pUpInfo == NULL)
+        return ;
+    fprintf(out, "update");
+    fprintf(out, "\t origin=%d\n", pUpInfo->pathattr->origin);
+}
+
+
