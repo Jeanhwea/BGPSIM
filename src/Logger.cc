@@ -22,7 +22,7 @@ void
 Logger::TraceSize(const char* msg, ssize_t siz)
 {
     if (msg != NULL)
-        fprintf(out, "Tips\t: %s = %d\n", msg, siz);
+        fprintf(out, "Tips\t: %s = %d\n", msg, (int)siz);
     fflush(out);
 }
 
