@@ -108,7 +108,7 @@ struct _as_path_segment {
 
 struct _bgp_path_attr {
     u_int8_t                            origin;
-    vector<struct _as_path_segment *>   as_path;
+    vector<struct _as_path_segment * >  as_path;
     struct in_addr                      nhop;
 };
 

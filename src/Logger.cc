@@ -247,8 +247,8 @@ Logger::LogRouteList()
 {
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
-    fprintf(out, "Destination\t\tNextHop\t\tNetMask\t\tInterface\n");
-    for (rit = vRtConf.begin(); rit != vRtConf.end(); ++rit) {
+    fprintf(out, "Destination\t\tNextHop\t\tNetMask\t\tInterface\t\tloc_RIB\n");
+    for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
         fprintf(out, "%-16s", AddrToStr(&pRtCon->dest));
@@ -259,6 +259,29 @@ Logger::LogRouteList()
         fflush(out);
     }
     
+    fprintf(out, "Destination\t\tNextHop\t\tNetMask\t\tInterface\t\tadj_RIB_in\n");
+    for (rit = adj_RIB_in.begin(); rit != adj_RIB_in.end(); ++rit) {
+        pRtCon = *rit;
+        assert(pRtCon != NULL);
+        fprintf(out, "%-16s", AddrToStr(&pRtCon->dest));
+        fprintf(out, "\t%-16s", AddrToStr(&pRtCon->nhop));
+        fprintf(out, "\t%-16s", AddrToStr(&pRtCon->mask));
+        fprintf(out, "\t%-16s", Interface::GetIfNameById(pRtCon->ifid));
+        fprintf(out, "\n");
+        fflush(out);
+    }
+    
+    fprintf(out, "Destination\t\tNextHop\t\tNetMask\t\tInterface\t\tadj_RIB_out\n");
+    for (rit = adj_RIB_out.begin(); rit != adj_RIB_out.end(); ++rit) {
+        pRtCon = *rit;
+        assert(pRtCon != NULL);
+        fprintf(out, "%-16s", AddrToStr(&pRtCon->dest));
+        fprintf(out, "\t%-16s", AddrToStr(&pRtCon->nhop));
+        fprintf(out, "\t%-16s", AddrToStr(&pRtCon->mask));
+        fprintf(out, "\t%-16s", Interface::GetIfNameById(pRtCon->ifid));
+        fprintf(out, "\n");
+        fflush(out);
+    }
 }
 
 void

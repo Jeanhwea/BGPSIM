@@ -54,7 +54,7 @@ Watcher::SetPromisc()
     for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
         pIntCon = *iit;
         assert(pIntCon != NULL);
-        
+
         strcpy(ifr.ifr_name, pIntCon->name);
         if (ioctl(sfd, SIOCGIFFLAGS, &ifr) != 0) {
             g_log->Fatal("cannot SetPromisc");

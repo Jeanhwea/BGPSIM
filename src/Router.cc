@@ -7,7 +7,9 @@
 using namespace std;
 
 vector<struct arpcon *> vARPConf;
-vector<struct rtcon *> vRtConf;
+vector<struct rtcon *>   loc_RIB;      // routing table
+vector<struct rtcon *>   adj_RIB_in;      // routing table
+vector<struct rtcon *>   adj_RIB_out;      // routing table
 
 int Router::rtseq = 0;
 
@@ -106,7 +108,7 @@ Router::LoadRouterConf(const char * filename)
             g_log->Warning("not a valid ip addr_tmp in load route conf");
         memcpy(&pRtCon->nhop, &addr_tmp, sizeof(pRtCon->nhop));
         pRtCon->ifid = Interface::GetIfidByName(ifname);
-        vRtConf.push_back(pRtCon);
+        adj_RIB_in.push_back(pRtCon);
 
     }
 
@@ -196,7 +198,7 @@ Router::LoadKernelRouter()
             }
             
             // add to route table
-            vRtConf.push_back(pRtCon);
+            loc_RIB.push_back(pRtCon);
             
             pNlhdr = NLMSG_NEXT(pNlhdr, nread);
         }
@@ -322,7 +324,7 @@ Router::LookupRoutingTable(struct in_addr * pAd)
     struct rtcon * pRtCon;
     struct rtcon * ret = NULL;
     u_int32_t flag_mask = 0;
-    for (rit = vRtConf.begin(); rit != vRtConf.end(); ++rit) {
+    for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
         u_int32_t src, des, mask;
@@ -340,6 +342,26 @@ Router::LookupRoutingTable(struct in_addr * pAd)
             }
         }
     }
+   /* 
+    for (rit = adj_RIB_in.begin(); rit != adj_RIB_in.end(); ++rit) {
+        pRtCon = *rit;
+        assert(pRtCon != NULL);
+        u_int32_t src, des, mask;
+        src = pAd->s_addr;
+        des = pRtCon->dest.s_addr;
+        mask = pRtCon->mask.s_addr;
+        src &= mask;
+        des &= mask;
+        if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
+            if (mask > flag_mask) {
+                ret = pRtCon;
+                flag_mask = mask;
+            } else if (mask == flag_mask) {
+                ret = pRtCon;
+            }
+        }
+    }
+    */
     
     return ret;
 }

@@ -75,6 +75,8 @@ class Router {
 
 
 extern vector<struct arpcon *> vARPConf;    // arp cache
-extern vector<struct rtcon *> vRtConf;      // routing table
+extern vector<struct rtcon *>   loc_RIB;      // routing table
+extern vector<struct rtcon *>   adj_RIB_in;      // routing table
+extern vector<struct rtcon *>   adj_RIB_out;      // routing table
 
 #endif /* end of include guard: ROUTER_J2V5X69X */

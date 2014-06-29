@@ -603,7 +603,7 @@ Simulator::DoDispatch()
         */
         // if peer in refuse message state
         if (pPeer->RefuseMsg()) {
-            g_log->Tips("peer in a refuse state");
+            //g_log->Tips("peer in a refuse state");
             continue;
         }
         if (pPeer->pDis == NULL)
@@ -895,10 +895,9 @@ Simulator::ParseUpdate(Peer * pPeer)
         g_log->TraceSize("path attribute length", paLen);
     
     struct _bgp_path_attr   * pAttr = NULL;
-    if (paLen > 0) {
-        pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
-        assert(pAttr != NULL);
-    }  
+    pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
+    assert(pAttr != NULL);
+    memset(pAttr, 0, sizeof(struct _bgp_path_attr));
     while (paLen > 0) {
         u_int16_t           rLen = 0;
         struct _path_attr_type pat;
@@ -933,8 +932,8 @@ Simulator::ParseUpdate(Peer * pPeer)
             rLen ++;
         }
         
-        // printf("typecode = %d ////\n", pat.typecode);
-        // fflush(stdout);
+         printf("typecode = %d ////\n", pat.typecode);
+         fflush(stdout);
         
         switch (pat.typecode) {
             case PATHATTR_ORIGIN:
@@ -946,12 +945,16 @@ Simulator::ParseUpdate(Peer * pPeer)
             case PATHATTR_ASPATH:
                 struct _as_path_segment * pAps;
                 pAps= (struct _as_path_segment *) malloc(sizeof(struct _as_path_segment));
+                assert(pAps != NULL);
                 memcpy(&pAps->type, pos++, 1);
                 memcpy(&pAps->length, pos++, 1);
                 // remember the as_length sugguest length of as_list in TWO-OCTETS
                 u_int16_t   asTotalLen;
                 asTotalLen = pAps->length * 2;
-                pAps->value = new Buffer(asTotalLen);
+                pAps->value = new Buffer((int)asTotalLen);
+                assert(pAps->value != NULL);
+                if (isDebug)
+                    g_log->TraceSize("asTotalLen", asTotalLen);
                 pAps->value->Add(pos, asTotalLen);
                 pos += asTotalLen;
                 pAttr->as_path.push_back(pAps);
@@ -979,6 +982,8 @@ Simulator::ParseUpdate(Peer * pPeer)
     // to parse Network Layer Reachability Information
     u_int16_t nlriLen; // length of Network Layer Reachability Information
     nlriLen = datalen;
+    if (isDebug)
+        g_log->TraceSize("nlriLen", nlriLen);
     while (nlriLen > 0) {
         
         struct _prefix          * pPre;
