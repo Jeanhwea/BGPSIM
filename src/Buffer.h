@@ -15,8 +15,6 @@ class Buffer {
         ssize_t     wpos;
         ssize_t     rpos;
         
-        bool        isDispathed;
-
         Buffer(int len);
         virtual ~Buffer();
 
@@ -25,6 +23,8 @@ class Buffer {
         bool Skip(ssize_t);
         ssize_t Length();
         u_char * ReadPos();
+        ssize_t LeftSize();
+        void Clear();
 };
 
 #endif /* end of include guard: BUFFER_3NKWNENG */

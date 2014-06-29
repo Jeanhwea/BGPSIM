@@ -2,7 +2,7 @@
 #include "Logger.h"
 
 Buffer::Buffer(int len)
-: wpos(0), rpos(0), isDispathed(false)
+: wpos(0), rpos(0) 
 {
     data = (u_char *) malloc(len * sizeof(u_char));
     wpos = 0;
@@ -61,3 +61,16 @@ Buffer::ReadPos()
     return (data + rpos);
 }
 
+ssize_t
+Buffer::LeftSize()
+{
+    return (size - wpos);
+}
+
+
+void 
+Buffer::Clear()
+{
+    rpos = 0;
+    wpos = 0;
+}
