@@ -684,9 +684,10 @@ Simulator::ParseOpen(Peer * pPeer)
     pBuf = pPeer->qBuf.front();
     assert(pBuf != NULL);
 
-    if (isDebug)
+    if (isDebug) {
         g_log->Tips("parse open msg");
-    g_log->LogDumpMsg(pBuf->data, pBuf->Length());
+        //g_log->LogDumpMsg(pBuf->data, pBuf->Length());
+    }
 
     pos = pBuf->ReadPos();
     pos += MSGSIZE_HEADER_MARKER;

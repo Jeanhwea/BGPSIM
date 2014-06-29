@@ -1,0 +1,15 @@
+system
+sysname R1
+interface e0/1 
+ip address 192.168.2.1 24
+quit
+int e0/0
+ip address 192.168.1.1 24
+quit
+bgp 300
+group nice_r1 external
+peer nice_r1 as-number 200
+peer 192.168.4.2 group nice_r1
+quit
+
+

@@ -99,6 +99,9 @@ Dispatcher::DispatchMsg(Peer * pPeer)
         g_log->Warning("dispatch a message with len less than message header");
         return false;
     }
+
+    g_log->Tips("try to dispatch msg");
+    g_log->LogDumpMsg(pBuf->ReadPos(), pBuf->Length());
     
     u_int16_t len;
     u_int8_t type;
@@ -142,8 +145,6 @@ Dispatcher::ReadMsg(Peer* pPeer)
     nread = read(pPeer->sfd, buf, MSGSIZE_MAX);
     if (nread <= 0 || nread > MSGSIZE_MAX)
         return false;
-    g_log->Tips("dispatcher recv msg");
-    g_log->LogDumpMsg(buf, nread);
     assert(nread <= preBuf->LeftSize());
     preBuf->Add(buf, nread);
     
@@ -161,6 +162,8 @@ Dispatcher::ReadMsg(Peer* pPeer)
         pBuf->Add(preBuf->ReadPos(), len);
         preBuf->Skip(len);
 
+        g_log->Tips("dispatcher recv msg");
+        g_log->LogDumpMsg(pBuf->ReadPos(), pBuf->Length());
         pPeer->qBuf.push(pBuf);
     }
     
