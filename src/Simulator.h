@@ -53,7 +53,8 @@ class Simulator : public Thread {
         // message handler
         void SimOpen(Peer *);
         void SimKeepalive(Peer *);
-        void SimUpdate(u_int32_t, void *, size_t);
+        void SimUpdate(Peer *, struct _bgp_update_info *);
+        void SimUpdate(Peer *, void *, size_t);
         void SimNotification(Peer *, u_int8_t, u_int8_t, void *, ssize_t);
         // message parser
         bool ParseHeader(Peer *, u_char *, u_int16_t &, u_int8_t &);

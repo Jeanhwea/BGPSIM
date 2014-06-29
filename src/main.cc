@@ -24,7 +24,8 @@ main(int argc, char const *argv[])
     g_rtr->LoadKernelRouter();
     g_rtr->LoadRouterConf("./config/route.conf");
     g_log->LogRouteList();
-    
+
+    g_log->LogARPCache();
     
     g_sim = new Simulator;
     g_wtc->Start();

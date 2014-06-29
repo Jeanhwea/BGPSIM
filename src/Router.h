@@ -32,6 +32,8 @@ struct eth_arphdr {
 #pragma pack(pop)
 
 class Message;
+struct _bgp_update_info;
+struct _prefix;
 
 class Router {
     private:
@@ -64,6 +66,10 @@ class Router {
         bool PacketForward(Message * pMsg);
         struct rtcon * LookupRoutingTable(u_int32_t ipaddr);
         struct rtcon * LookupRoutingTable(struct in_addr * pAd);
+        struct rtcon * LookupRoutingTable(struct _prefix * pPre);
+
+        // routing table update
+        void UpdateRt(struct _bgp_update_info * pUpInfo);
         
         // arp utils
         void ARPRos(Message * pMsg);
@@ -74,9 +80,9 @@ class Router {
 };
 
 
-extern vector<struct arpcon *> vARPConf;    // arp cache
-extern vector<struct rtcon *>   loc_RIB;      // routing table
-extern vector<struct rtcon *>   adj_RIB_in;      // routing table
-extern vector<struct rtcon *>   adj_RIB_out;      // routing table
+extern vector<struct arpcon *> vARPConf;            // arp cache
+extern vector<struct rtcon *>   loc_RIB;            // 本地BGP发言者使用的路由
+extern vector<struct rtcon *>   adj_RIB_in;         // 别的BGP发言者收到的路由信息
+extern vector<struct rtcon *>   adj_RIB_out;        // 被广播到别的BGP发言者的路由
 
 #endif /* end of include guard: ROUTER_J2V5X69X */

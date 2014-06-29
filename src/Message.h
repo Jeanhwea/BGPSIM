@@ -46,6 +46,31 @@ typedef enum _suberr_open {
     ERR_OPEN_CAPA
 } suberr_open;
 
+// 1 - malformed attribute list.
+// 2 - unrecognized well-known attribute.
+// 3 - missing well-known attribute.
+// 4 - attribute flags error.
+// 5 - attribute length error.
+// 6 - invalid origin attribute
+// 7 - as routing loop.
+// 8 - invalid next_hop attribute.
+// 9 - optional attribute error.
+// 10 - invalid network field.
+// 11 - malformed as_path.
+typedef enum _suberr_update {
+    ERR_UPDATE_MALATTRLIST = 1,
+    ERR_UPDATE_URECOWELLKNOWNATTR,
+    ERR_UPDATE_MISSWELLKONWATTR,
+    ERR_UPDATE_ATTRFLAGERROR,
+    ERR_UPDATE_ATTRLENERROR,
+    ERR_UPDATE_INVALIDORIGIN,
+    ERR_UPDATE_ASROUTINGLOOP,
+    ERR_UPDATE_INVALIDNEXTLOOP,
+    ERR_UPDATE_OPTIONALATTRERROR,
+    ERR_UPDATE_INVALIDNETWORKFIELD,
+    ERR_UPDATE_MALASPATH
+} suberr_update;
+
 #define FLAG_OPTIONAL   0x80
 #define FLAG_TRANSITIVE 0x40
 #define FLAG_PARTIAL    0x20
@@ -102,14 +127,14 @@ struct _path_attr_type {
 
 struct _as_path_segment {
     u_int8_t    type;
-    u_int8_t    length;
-    Buffer    * value; // list of 2-octet value
+    u_int8_t    length;     // number of AS
+    Buffer    * value;      // list of 2-octet value, in network order
 };
 
 struct _bgp_path_attr {
-    u_int8_t                            origin;
-    vector<struct _as_path_segment * >  as_path;
-    struct in_addr                      nhop;
+    u_int8_t                    origin;
+    struct _as_path_segment     as_path;
+    struct in_addr              nhop;
 };
 
 struct _bgp_update_info {

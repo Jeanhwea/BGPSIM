@@ -91,6 +91,7 @@ Watcher::StartListen()
         switch (ntohs(pEthhdr->h_proto)) {
             case ETH_P_ARP:
                 pArphdr = (struct eth_arphdr *) (buf + sizeof(struct ethhdr));
+                g_log->LogARPCache();
                 if (!CheckInter(pArphdr->ar_tip)) {
                     // send arp request is the mac is unknown
                     Message * pMsg;
@@ -119,6 +120,7 @@ Watcher::StartListen()
 bool
 Watcher::CheckInter(u_char mac[])
 {
+// return true, if find a mac in arp cache
     vector<struct ifcon *>::iterator iit;
     struct ifcon * pIntCon;
     for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
@@ -134,6 +136,7 @@ Watcher::CheckInter(u_char mac[])
 bool
 Watcher::CheckInter(u_int32_t ipaddr)
 {
+// return true, if find a arp cache for given ip address.
     return CheckInter((struct in_addr *)&ipaddr);
 }
 

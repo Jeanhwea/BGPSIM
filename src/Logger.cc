@@ -247,6 +247,7 @@ Logger::LogRouteList()
 {
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
+    fprintf(out, "Routing Table ...\n");
     fprintf(out, "Destination\t\tNextHop\t\tNetMask\t\tInterface\t\tloc_RIB\n");
     for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
@@ -283,6 +284,24 @@ Logger::LogRouteList()
         fflush(out);
     }
 }
+
+void
+Logger::LogARPCache()
+{
+    vector<struct arpcon *>::iterator ait;
+    struct arpcon * pArpCon;
+    fprintf(out, "ARP Cache ...\n");
+    fprintf(out, "IP\t\tMAC\n");
+    fflush(out);
+    for (ait = vARPConf.begin(); ait != vARPConf.end(); ++ait) {
+        pArpCon = *ait;
+        fprintf(out, "%-16s", AddrToStr(&pArpCon->ipadd));
+        fprintf(out, "%s", MacToStr(pArpCon->mac));
+        fprintf(out, "\n");
+        fflush(out);
+    }
+}
+
 
 void
 Logger::LogUpdateInfo(struct _bgp_update_info * pUpInfo)

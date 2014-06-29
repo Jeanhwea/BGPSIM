@@ -43,6 +43,7 @@ class Logger {
         void LogPeerList();
         void LogListenerList();
         void LogRouteList();
+        void LogARPCache();
 };
 
 #endif /* end of include guard: LOGGER_6S0KXYMJ */

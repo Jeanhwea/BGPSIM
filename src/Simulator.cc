@@ -1,5 +1,6 @@
 #include "Simulator.h"
 #include "Interface.h"
+#include "Router.h"
 
 #define INIT_MSG_LEN 65535
 using namespace std;
@@ -450,10 +451,8 @@ Simulator::SimKeepalive(Peer * pPeer)
 }
 
 void
-Simulator::SimUpdate(u_int32_t bgpid, void * data, size_t datalen)
+Simulator::SimUpdate(Peer * pPeer, void * data, size_t datalen)
 {
-    Peer          * pPeer;
-    pPeer = GetPeerByAddr(bgpid);
     if (pPeer == NULL) {
         g_log->Warning("Cannot find peer in sim update");
         return ;
@@ -483,6 +482,99 @@ Simulator::SimUpdate(u_int32_t bgpid, void * data, size_t datalen)
     }
     g_log->Tips("Sim update msg send successful");
     pPeer->StartTimerKeepalive();
+    delete pMsg;
+}
+
+void
+Simulator::SimUpdate(Peer * pPeer,struct _bgp_update_info * pUpInfo)
+{
+    Buffer * pBuf;
+    pBuf = new Buffer(MSGSIZE_MAX);
+
+    vector<struct _prefix *>::iterator pit;
+    struct _prefix * pPre;
+
+    // add withdraw list
+    u_int16_t wdLen = 0;
+    u_char * resv = pBuf->Reserve(sizeof(wdLen));
+    for (pit = pUpInfo->withdraw.begin(); pit != pUpInfo->withdraw.end(); ++pit) {
+        pPre = *pit;
+        int octLen;
+        if (pPre->length > 0)
+            octLen = (pPre->length - 1) / 8 + 1;
+        else
+            octLen = 0;
+        pBuf->Add(&pPre->length, sizeof(pPre->length));
+        pBuf->Add(&pPre->prefix, octLen);
+        wdLen += octLen + sizeof(pPre->length);
+    }
+    wdLen = htons(wdLen);
+    memcpy(resv, &wdLen, sizeof(wdLen));
+
+    // add path attributions
+    u_int16_t paLen = 0;
+    resv = pBuf->Reserve(sizeof(paLen));
+    
+    // fill origin attribution
+    struct _path_attr_type pat;
+    pat.flag = FLAG_TRANSITIVE;
+    pat.typecode = PATHATTR_ORIGIN;
+    u_int8_t alen = 1;
+    pBuf->Add(&pat.flag, 1);
+    pBuf->Add(&pat.typecode, 1);
+    pBuf->Add(&alen, 1);
+    pBuf->Add(&pUpInfo->pathattr->origin, 1);
+    paLen += 3 + alen;
+    
+    // fill as path attribution
+    vector<struct _as_path_segment *>::iterator ait;
+    pat.flag = FLAG_TRANSITIVE;
+    pat.typecode = PATHATTR_ASPATH;
+    pBuf->Add(&pat.flag, 1);
+    pBuf->Add(&pat.typecode, 1);
+    alen = pUpInfo->pathattr->as_path.length * 2 + 2;
+    pBuf->Add(&alen, 1);
+    pBuf->Add(&pUpInfo->pathattr->as_path.type, 1);
+    pBuf->Add(&pUpInfo->pathattr->as_path.length, 1);
+    assert(pUpInfo->pathattr->as_path.length * 2
+                == pUpInfo->pathattr->as_path.value->Length());
+    pBuf->Add(pUpInfo->pathattr->as_path.value->ReadPos(),
+                pUpInfo->pathattr->as_path.value->Length());
+    paLen += 3 + alen;
+
+    // fill nexthop
+    pat.flag = FLAG_TRANSITIVE;
+    pat.typecode = PATHATTR_NEXTHOP;
+    pBuf->Add(&pat.flag, 1);
+    pBuf->Add(&pat.typecode, 1);
+    alen = 4;
+    pBuf->Add(&alen, 1);
+    struct in_addr * pAd;
+    if (pPeer->conf.remote_as != conf_as) {
+        // dealing with the same as number TODO ...
+    }
+    pBuf->Add(&pUpInfo->pathattr->nhop, sizeof(struct in_addr));
+    paLen += 3 + alen;
+
+    paLen = htons(paLen);
+    memcpy(resv, &paLen, sizeof(paLen));
+
+
+    // fill network layer reachability infomation
+    for (pit = pUpInfo->nlri.begin(); pit != pUpInfo->nlri.end(); ++pit) {
+        pPre = *pit;
+        int octLen;
+        if (pPre->length > 0)
+            octLen = (pPre->length - 1) / 8 + 1;
+        else
+            octLen = 0;
+        pBuf->Add(&pPre->length, sizeof(pPre->length));
+        pBuf->Add(&pPre->prefix, octLen);
+        wdLen += octLen + sizeof(pPre->length);
+    }
+
+    SimUpdate(pPeer, pBuf->ReadPos(), pBuf->Length());
+    delete pBuf;
 }
 
 void
@@ -941,10 +1033,14 @@ Simulator::ParseUpdate(Peer * pPeer)
                     g_log->Error("pathattr origin length miss match");
                 memcpy(&pAttr->origin, pos, para_len);
                 pos ++;
+                if (pAttr->origin > 2) {
+                    SimNotification(pPeer, ERR_UPDATE, ERR_UPDATE_INVALIDORIGIN, NULL, 0);
+                    ChangeState(pPeer, IDLE, RECV_UPDATE_MSG);
+                }
                 break;
             case PATHATTR_ASPATH:
                 struct _as_path_segment * pAps;
-                pAps= (struct _as_path_segment *) malloc(sizeof(struct _as_path_segment));
+                pAps = & pUpInfo->pathattr->as_path;
                 assert(pAps != NULL);
                 memcpy(&pAps->type, pos++, 1);
                 memcpy(&pAps->length, pos++, 1);
@@ -957,7 +1053,6 @@ Simulator::ParseUpdate(Peer * pPeer)
                     g_log->TraceSize("asTotalLen", asTotalLen);
                 pAps->value->Add(pos, asTotalLen);
                 pos += asTotalLen;
-                pAttr->as_path.push_back(pAps);
                 break;
             case PATHATTR_NEXTHOP:
                 memset(&pAttr->nhop, 0, sizeof(pAttr->nhop));
@@ -1011,6 +1106,8 @@ Simulator::ParseUpdate(Peer * pPeer)
 
     if (isDebug)
         g_log->LogUpdateInfo(pUpInfo);
+
+    g_rtr->UpdateRt(pUpInfo);
     
     delete pBuf;
     pPeer->qBuf.pop();

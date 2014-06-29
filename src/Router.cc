@@ -108,7 +108,8 @@ Router::LoadRouterConf(const char * filename)
             g_log->Warning("not a valid ip addr_tmp in load route conf");
         memcpy(&pRtCon->nhop, &addr_tmp, sizeof(pRtCon->nhop));
         pRtCon->ifid = Interface::GetIfidByName(ifname);
-        adj_RIB_in.push_back(pRtCon);
+        loc_RIB.push_back(pRtCon);
+        //adj_RIB_in.push_back(pRtCon);
 
     }
 
@@ -342,14 +343,28 @@ Router::LookupRoutingTable(struct in_addr * pAd)
             }
         }
     }
-   /* 
-    for (rit = adj_RIB_in.begin(); rit != adj_RIB_in.end(); ++rit) {
+    
+    return ret;
+}
+
+struct rtcon *
+Router::LookupRoutingTable(struct _prefix * pPre)
+{
+    if(pPre == NULL)
+        return NULL;
+    
+    vector<struct rtcon *>::iterator rit;
+    struct rtcon * pRtCon;
+    struct rtcon * ret = NULL;
+    u_int32_t flag_mask = 0;
+    for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
         u_int32_t src, des, mask;
-        src = pAd->s_addr;
+        src = pPre->prefix.s_addr;
         des = pRtCon->dest.s_addr;
-        mask = pRtCon->mask.s_addr;
+        memset(&mask, 0xff, sizeof(mask));
+        mask = mask << (32 - pPre->length);
         src &= mask;
         des &= mask;
         if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
@@ -361,10 +376,10 @@ Router::LookupRoutingTable(struct in_addr * pAd)
             }
         }
     }
-    */
-    
+
     return ret;
 }
+
 
 void
 Router::CalIpChecksum(struct iphdr * pIphdr)
@@ -421,7 +436,7 @@ Router::ARPRos(Message * pMsg)
     // set target hardware address
     memcpy(&pArpCon->mac, &pArphdr->ar_sha, ETH_ALEN);
     vARPConf.push_back(pArpCon);
-    
+    g_log->LogARPCache();
 }
 
 void
@@ -525,5 +540,19 @@ Router::MsgQueueSend()
         pMsg = qMsgCopy.front();
         PacketForward(pMsg);
         qMsgCopy.pop();
+    }
+}
+
+void
+Router::UpdateRt(struct _bgp_update_info * pUpInfo)
+{
+    g_log->Tips("updating routing table");
+    struct rtcon * pRtCon;
+    pRtCon = (struct rtcon *) malloc(sizeof(struct rtcon));
+    for (vector<struct _prefix *>::iterator pIt = pUpInfo->nlri.begin();
+        pIt != pUpInfo->nlri.end();
+            ++ pIt) {
+        struct _prefix  * pPre = *pIt;
+        pRtCon = LookupRoutingTable(pPre);
     }
 }
