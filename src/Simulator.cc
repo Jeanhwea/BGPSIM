@@ -1040,7 +1040,7 @@ Simulator::ParseUpdate(Peer * pPeer)
                 break;
             case PATHATTR_ASPATH:
                 struct _as_path_segment * pAps;
-                pAps = & pUpInfo->pathattr->as_path;
+                pAps = & pAttr->as_path;
                 assert(pAps != NULL);
                 memcpy(&pAps->type, pos++, 1);
                 memcpy(&pAps->length, pos++, 1);
