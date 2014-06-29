@@ -207,7 +207,11 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     break;
                 case RECV_KEEPALIVE_MSG :
                     pPeer->StartTimerHoldtime();
-                    ChangeState(pPeer, ESTABLISHED, eve);
+                    if (!ParseKeepalive(pPeer)) {
+                        ChangeState(pPeer, IDLE, eve);
+                    } else {
+                        ChangeState(pPeer, ESTABLISHED, eve);
+                    }
                     break;
                 case RECV_NOTIFICATION_MSG :
                     ParseNotification(pPeer);
@@ -241,6 +245,10 @@ Simulator::FSM(Peer * pPeer, event_t eve)
                     break;
                 case RECV_KEEPALIVE_MSG :
                     pPeer->StartTimerHoldtime();
+                    if (! ParseKeepalive(pPeer))
+                        ChangeState(pPeer, IDLE, eve);
+                    else
+                        pPeer->StartTimerHoldtime();
                     break;
                 case RECV_UPDATE_MSG :
                     pPeer->StartTimerHoldtime();
@@ -580,24 +588,29 @@ Simulator::GetPeerBySockfd(sockfd fd)
 void
 Simulator::DoDispatch()
 {
+    g_log->Tips("do dispatch schedule in sim");
     vector<Peer *>::iterator vit;
     Peer * pPeer;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = * vit;
-        if (pPeer->sfd == -1) {
-            if (pPeer->pDis != NULL) {
-            }
+        g_log->TraceSize("peer buffer size", pPeer->qBuf.size());
+        /*
+        queue<Buffer *> tmpq(pPeer->qBuf);
+        while (!tmpq.empty()) {
+            g_log->LogDumpMsg(tmpq.front()->ReadPos(), tmpq.front()->Length());
+            tmpq.pop();
+        }
+        */
+        // if peer in refuse message state
+        if (pPeer->RefuseMsg()) {
+            g_log->Tips("peer in a refuse state");
             continue;
         }
-        if (pPeer->RefuseMsg())
-            continue;
         if (pPeer->pDis == NULL)
             pPeer->pDis = new Dispatcher;
         assert(pPeer->pDis != NULL);
-        pPeer->pDis->Lock();
         pPeer->pDis->SetReadFd(pPeer->sfd);
         pPeer->pDis->Start();
-        pPeer->pDis->Unlock();
     }
 }
 

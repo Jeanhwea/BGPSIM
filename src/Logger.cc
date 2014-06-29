@@ -19,6 +19,15 @@ Logger::~Logger()
 }
 
 void
+Logger::TraceSize(const char* msg, ssize_t siz)
+{
+    if (msg != NULL)
+        fprintf(out, "Tips\t: %s = %d\n", msg, siz);
+    fflush(out);
+}
+
+
+void
 Logger::Tips(const char * emsg)
 {
     if (emsg != NULL)

@@ -11,7 +11,8 @@ class Peer;
 class Dispatcher : public Thread {
     private:
         sockfd              sfd;
-        pthread_mutex_t     isReading;
+        pthread_mutex_t     mutex; // reading flag mutex
+        bool                isReading;
         Buffer            * preBuf;
 
     public:

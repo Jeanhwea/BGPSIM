@@ -8,9 +8,10 @@
 #define BUFSIZE_MAX 65536
 
 Dispatcher::Dispatcher()
-: sfd(-1)
 {
-    isReading = PTHREAD_MUTEX_INITIALIZER;
+    sfd = -1;
+    isReading = false;
+    pthread_mutex_init(&mutex, NULL);
     preBuf = new Buffer(BUFSIZE_MAX);
 }
 
@@ -23,28 +24,34 @@ Dispatcher::~Dispatcher()
 void *
 Dispatcher::Run()
 {
-    if (sfd == -1) {
-        g_log->Error("dispatcher's sfd is -1, no valid, STOP");
-        return NULL;
+    if (!isReading) {
+        Lock();
+        isReading = true;
+        Unlock();
+        
+        ReadMsg();
+        
+        Lock();
+        isReading = false;
+        Unlock();
     }
-    
-    ReadMsg();
-    DispatchMsg();
 
+    DispatchMsg();
+    g_log->Tips("end of dispatcher run");
     return NULL;
 }
 
 void 
 Dispatcher::Lock()
 {
-    pthread_mutex_lock(&isReading);
+    pthread_mutex_lock(&mutex);
 }
 
 
 void 
 Dispatcher::Unlock()
 {
-    pthread_mutex_unlock(&isReading);
+    pthread_mutex_unlock(&mutex);
 }
 
 
@@ -73,10 +80,6 @@ Dispatcher::DispatchMsg()
         g_log->Warning("dispatch cannot get a peer with given sockfd");
         return false;
     }
-    
-    if (pPeer->qBuf.empty()) {
-        return false;
-    }
 
     return DispatchMsg(pPeer);
 }
@@ -87,6 +90,8 @@ Dispatcher::DispatchMsg(Peer * pPeer)
 {
     assert(pPeer != NULL);
     Buffer * pBuf;
+
+    g_log->Tips("try to dispatch messages &&&&&&");
 
     pBuf = pPeer->qBuf.front();
 
@@ -102,7 +107,7 @@ Dispatcher::DispatchMsg(Peer * pPeer)
 
     g_log->Tips("try to dispatch msg");
     g_log->LogDumpMsg(pBuf->ReadPos(), pBuf->Length());
-    
+
     u_int16_t len;
     u_int8_t type;
 
@@ -129,7 +134,7 @@ Dispatcher::DispatchMsg(Peer * pPeer)
             g_log->Error("dispatch non-valid message type");
     }
     pPeer->Unlock();
-
+    
     return true;
 }
 
