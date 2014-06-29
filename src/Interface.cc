@@ -64,6 +64,28 @@ Interface::GetIfidByName(char * ifname)
    return -1;
 }
 
+struct ifcon *
+Interface::GetIfByDest(struct in_addr * pAd)
+{
+   struct ifcon * pIntCon;
+   vector<struct ifcon *>::iterator iit;
+   
+   for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+       pIntCon = *iit;
+       u_int32_t src, des, mask;
+       src = pAd->s_addr;
+       des = pIntCon->ipaddr.s_addr;
+       mask = pIntCon->netmask.s_addr; 
+       src &= mask;
+       des &= mask;
+       if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
+           return pIntCon;
+       }
+   }
+   
+   return NULL;
+}
+
 
 #define BUFSIZE_MAXIF 8096
 void

@@ -30,6 +30,7 @@ class Interface {
         static char * GetIfNameById(int ifid);
         static struct ifcon * GetIfconById(int ifid);
         static int GetIfidByName(char *);
+        static struct ifcon * GetIfByDest(struct in_addr * pAd);
 };
 
 extern vector<struct ifcon *> vIntConf;

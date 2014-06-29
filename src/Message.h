@@ -116,8 +116,8 @@ struct openmsg {
 };
 
 struct _prefix {
-    u_int8_t        length;
-    struct in_addr  prefix;
+    u_int8_t        maskln;
+    struct in_addr  ipaddr;
 };
 
 struct _path_attr_type {

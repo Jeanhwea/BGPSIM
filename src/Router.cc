@@ -361,10 +361,10 @@ Router::LookupRoutingTable(struct _prefix * pPre)
         pRtCon = *rit;
         assert(pRtCon != NULL);
         u_int32_t src, des, mask;
-        src = pPre->prefix.s_addr;
+        src = pPre->ipaddr.s_addr;
         des = pRtCon->dest.s_addr;
         memset(&mask, 0xff, sizeof(mask));
-        mask = mask << (32 - pPre->length);
+        mask = mask << (32 - pPre->maskln);
         src &= mask;
         des &= mask;
         if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
