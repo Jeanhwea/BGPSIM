@@ -86,10 +86,28 @@ Interface::GetIfByDest(struct in_addr * pAd)
    return NULL;
 }
 
+struct ifcon *
+Interface::GetIfByDest(struct _prefix * pPre)
+{
+    struct ifcon * pIntCon;
+    vector<struct ifcon *>::iterator iit;
+
+    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
+        pIntCon = *iit;
+
+        if (Router::InAddrCmp(&pIntCon->ipaddr, pPre)) {
+            return pIntCon;
+        }
+    }
+
+    return NULL;
+}
+
+
 
 #define BUFSIZE_MAXIF 8096
 void
-Interface::LoadInfo()
+Interface::LoadInterface()
 {
     sockfd          sfd;
     struct ifconf * ifc;

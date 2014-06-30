@@ -72,6 +72,7 @@ class Router {
 
         // routing table update
         void UpdateRt(struct _bgp_update_info * pUpInfo);
+        struct rtcon * AddRoutingItem(struct _prefix * pPre, struct in_addr * pNhop);
         
         // arp utils
         void ARPRos(Message * pMsg);

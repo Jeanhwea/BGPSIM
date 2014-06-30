@@ -360,17 +360,17 @@ Router::LookupRoutingTable(struct in_addr * pAd)
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
     struct rtcon * ret = NULL;
-    u_int32_t flag_mask = 0;
+    u_int32_t longest_mask= 0;
     for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
         u_int32_t mask;
         mask = pRtCon->mask.s_addr;
         if (InAddrCmp(pAd, &pRtCon->dest, &pRtCon->mask)) {
-            if (mask > flag_mask) {
+            if (mask > longest_mask) {
                 ret = pRtCon;
-                flag_mask = mask;
-            } else if (mask == flag_mask) {
+                longest_mask= mask;
+            } else if (mask == longest_mask) {
                 ret = pRtCon;
             }
         }
@@ -388,7 +388,7 @@ Router::LookupRoutingTable(struct _prefix * pPre)
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
     struct rtcon * ret = NULL;
-    u_int32_t flag_mask = 0;
+    u_int32_t longest_mask= 0;
     for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
@@ -396,10 +396,10 @@ Router::LookupRoutingTable(struct _prefix * pPre)
         mask = 0xffffffff;
         mask = mask << (32 - pPre->maskln);
         if (InAddrCmp(&pRtCon->dest, pPre)) {
-            if (mask > flag_mask) {
+            if (mask > longest_mask) {
                 ret = pRtCon;
-                flag_mask = mask;
-            } else if (mask == flag_mask) {
+                longest_mask= mask;
+            } else if (mask == longest_mask) {
                 ret = pRtCon;
             }
         }
@@ -505,10 +505,11 @@ Router::ARPReq(struct in_addr * pAd)
     
     sockfd sfd;
     sfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-    if ( setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, &timev, sizeof(timev)) != 0) {
-        g_log->Error("failed set socket optine in arp");
-        return;
-    }
+    //if ( setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO,
+            //&timev, sizeof(timev)) != 0) {
+        //g_log->Error("failed set socket optine in arp");
+        //return;
+    //}
     
     struct ethhdr * pEthhdr;
     pEthhdr = (struct ethhdr *) buf.ReadPos();
@@ -561,6 +562,7 @@ Router::MsgQueueSend()
     while (!qMessage.empty()) {
         qMessage.pop();
     }
+    
     MsgQueueUnlock();
     
     Message * pMsg;
@@ -576,12 +578,44 @@ Router::UpdateRt(struct _bgp_update_info * pUpInfo)
 {
     g_log->Tips("updating routing table");
     struct rtcon * pRtCon;
-    pRtCon = (struct rtcon *) malloc(sizeof(struct rtcon));
     for (vector<struct _prefix *>::iterator pIt = pUpInfo->nlri.begin();
         pIt != pUpInfo->nlri.end();
             ++ pIt) {
         struct _prefix  * pPre = *pIt;
         pRtCon = LookupRoutingTable(pPre);
+
+        // if no routing item find, we may try to add routing item
+        if (pRtCon == NULL) {
+            pRtCon = AddRoutingItem(pPre, & pUpInfo->pathattr->nhop);
+        } else {
+            g_log->Tips("route already in routing table");
+        }
     }
     g_log->LogRouteList();
+}
+
+struct rtcon *
+Router::AddRoutingItem(struct _prefix * pPre, struct in_addr * pNhop)
+{
+    struct rtcon * pRtCon;
+    struct ifcon * pIntCon;
+
+    pIntCon = Interface::GetIfByDest(pNhop);
+
+    if (pIntCon == NULL) {
+        g_log->Warning("network unreachable in adding routing item");
+        pRtCon = NULL;
+    } else {
+        pRtCon = (struct rtcon *) malloc(sizeof(struct rtcon));
+        assert(pRtCon != NULL);
+        memset(pRtCon, 0, sizeof(struct rtcon));
+        pRtCon->mask = MaskToAddr(pPre->maskln);
+        pRtCon->dest = pPre->ipaddr;
+        pRtCon->nhop = *pNhop;
+        pRtCon->ifid = pIntCon->ifid;
+        loc_RIB.push_back(pRtCon);
+        adj_RIB_in.push_back(pRtCon);
+    }
+
+    return pRtCon;
 }

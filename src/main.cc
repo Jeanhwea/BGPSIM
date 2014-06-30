@@ -18,7 +18,7 @@ main(int argc, char const *argv[])
     g_rtr = new Router;
     g_wtc = new Watcher;
     
-    g_int->LoadInfo();
+    g_int->LoadInterface();
     g_log->LogIntList();
     
     g_rtr->LoadKernelRouter();

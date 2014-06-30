@@ -148,13 +148,7 @@ Watcher::CheckInter(struct in_addr * pAd)
     for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
         pIntCon = * iit;
         assert(pIntCon != NULL);
-        u_int32_t src, des, mask;
-        mask = pIntCon->netmask.s_addr;
-        src  = pIntCon->ipaddr.s_addr;
-        des  = pAd->s_addr;
-        src  &= mask;
-        des  &= mask;
-        if (memcmp(&des, &src, sizeof(src)) == 0)
+        if (memcmp(pAd, &pIntCon->ipaddr, sizeof(struct in_addr)) == 0)
             return true;
     }
     return false;

@@ -474,6 +474,7 @@ Simulator::AdvertUpdate(Peer * pPeer)
         // check if network reacheable
         if (!Router::InAddrCmp(&pPeer->conf.remote_addr,
                 &pRtCon->dest, &pRtCon->mask)) {
+            // if can not reach the network, then advertise the <nlri> 
             struct _bgp_update_info * pUpInfo;
             pUpInfo = (struct _bgp_update_info *) malloc(sizeof(struct _bgp_update_info));
             assert(pUpInfo != NULL);
@@ -499,6 +500,7 @@ Simulator::AdvertUpdate(Peer * pPeer)
             pUpInfo->nlri.push_back(pPre);
             
             SimUpdate(pPeer, pUpInfo);
+            adj_RIB_out.push_back(pRtCon);
         }
     }
 

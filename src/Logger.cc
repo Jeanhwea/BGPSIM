@@ -87,7 +87,9 @@ char *
 Logger::AddrToStr(struct in_addr * pAd)
 {
     assert(pAd != NULL);
-    return inet_ntoa(*pAd);
+    char * ret = (char *) malloc(16);
+    sprintf(ret, "%s", inet_ntoa(*pAd));
+    return ret;
 }
 
 char *
