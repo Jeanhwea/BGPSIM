@@ -22,9 +22,18 @@ void
 Logger::TraceSize(const char* msg, ssize_t siz)
 {
     if (msg != NULL)
-        fprintf(out, "Tips\t: %s = %d\n", msg, (int)siz);
+        fprintf(out, "TraceSize: %s = %d\n", msg, (int)siz);
     fflush(out);
 }
+
+void
+Logger::TraceIpAddr(const char * msg, struct in_addr * pAd)
+{
+    if (msg != NULL)
+        fprintf(out, "TraceIP : %s = %s\n", msg, AddrToStr(pAd));
+    fflush(out);
+}
+
 
 
 void
@@ -310,8 +319,34 @@ Logger::LogUpdateInfo(struct _bgp_update_info * pUpInfo)
     fflush(out);
     if (pUpInfo == NULL)
         return ;
+    vector<struct _prefix *>::iterator pit;
+    for (pit = pUpInfo->withdraw.begin();
+        pit != pUpInfo->withdraw.end(); ++pit) {
+        fprintf(out, "withdraw route: length=%d, ip=%s\n",
+                (*pit)->maskln, AddrToStr(& ((*pit)->ipaddr)) );
+        fflush(out);
+    }
     fprintf(out, "update");
-    fprintf(out, "\t origin=%d\n", pUpInfo->pathattr->origin);
+    fprintf(out, "\torigin=%d\n", pUpInfo->pathattr->origin);
+    u_int8_t len = pUpInfo->pathattr->as_path.length;
+    fprintf(out, "\tas_path_type=%d, as_path_length=%d, as_num_list=",
+            pUpInfo->pathattr->as_path.type, len);
+    for (u_int8_t i = 0; i < len; ++i) {
+        u_int16_t as_num;
+        memcpy(&as_num, pUpInfo->pathattr->as_path.value->ReadPos()+2*i, 2);
+        fprintf(out, "%d ", ntohs(as_num));
+    }
+    fprintf(out, "\n");
+    fflush(out);
+    fprintf(out, "\tnexthop=%s\n", AddrToStr(&pUpInfo->pathattr->nhop));
+    for (pit = pUpInfo->nlri.begin();
+        pit != pUpInfo->nlri.end(); ++pit) {
+        fprintf(out, "nlri route: length=%d, ip=%s\n",
+                (*pit)->maskln, AddrToStr(& ((*pit)->ipaddr)) );
+        fflush(out);
+    }
+
+    fflush(out);
 }
 
 

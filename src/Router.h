@@ -53,6 +53,8 @@ class Router {
         static struct in_addr MaskToAddr(int mask);
         static u_int32_t AddrToMask(struct in_addr * pAd);
         static u_int32_t AddrToMask(u_int32_t ipaddr);
+        static bool InAddrCmp(struct in_addr * pSrc, struct in_addr * pDes, struct in_addr * pMask);
+        static bool InAddrCmp(struct in_addr * pSrc, struct _prefix * pPre);
         
         // message queue tools
         void MsgQueueLock();

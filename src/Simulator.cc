@@ -281,6 +281,7 @@ Simulator::FSM(Peer * pPeer, Event * pEve)
 void
 Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
 {
+    g_log->LogStateChage(pPeer, state, eve);
     switch (state) {
         case IDLE:
             if (pPeer->GetPeerState() != IDLE) {
@@ -311,7 +312,6 @@ Simulator::ChangeState(Peer * pPeer, state_t state, event_t eve)
             AdvertUpdate(pPeer);
             break;
     }
-    g_log->LogStateChage(pPeer, state, eve);
     pPeer->SetPeerState(state);
 }
 
@@ -332,10 +332,12 @@ Simulator::SimTCPEstablished(Peer * pPeer)
 
     assert(pPeer->sfd != -1);
     len = sizeof(pPeer->sa_local);
-    if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local, &len) == -1)
+    if (getsockname(pPeer->sfd, (struct sockaddr *) & pPeer->sa_local,
+            &len) == -1)
         g_log->Warning("getsockname failed");
     len = sizeof(pPeer->sa_remote);
-    if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote, &len) == -1)
+    if (getpeername(pPeer->sfd, (struct sockaddr *) & pPeer->sa_remote,
+            &len) == -1)
         g_log->Warning("getpeername failed");
 }
 
@@ -455,6 +457,7 @@ Simulator::SimKeepalive(Peer * pPeer)
 void
 Simulator::AdvertUpdate(Peer * pPeer)
 {
+    // 初始通告可达路由
     g_log->Tips("send init update advertise in AdvertUpdate");
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
@@ -464,21 +467,17 @@ Simulator::AdvertUpdate(Peer * pPeer)
         
         // find route's interface first
         struct ifcon * pIntCon;
-        pIntCon = Interface::GetIfByDest(&pRtCon->dest);
+        pIntCon = Interface::GetIfByDest(&pPeer->conf.remote_addr);
         if (pIntCon == NULL)
             continue;
         
         // check if network reacheable
-        u_int32_t src, des, mask;
-        src = pPeer->conf.remote_addr.s_addr;
-        des = pRtCon->dest.s_addr;
-        mask = pRtCon->mask.s_addr;
-        src &= mask;
-        des &= mask;
-        if (memcmp(&src, &des, sizeof(u_int32_t)) != 0) {
+        if (!Router::InAddrCmp(&pPeer->conf.remote_addr,
+                &pRtCon->dest, &pRtCon->mask)) {
             struct _bgp_update_info * pUpInfo;
             pUpInfo = (struct _bgp_update_info *) malloc(sizeof(struct _bgp_update_info));
             assert(pUpInfo != NULL);
+            memset(pUpInfo, 0, sizeof(struct _bgp_update_info));
             
             struct _bgp_path_attr   * pAttr;
             pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
@@ -493,15 +492,17 @@ Simulator::AdvertUpdate(Peer * pPeer)
             
             struct _prefix * pPre;
             pPre = (struct _prefix *) malloc(sizeof(struct _prefix));
+            memset(pPre, 0, sizeof(struct _prefix));
             assert(pPre != NULL);
-            pPre->maskln = Router::AddrToMask(&pRtCon->mask);
+            pPre->maskln = (u_int8_t)Router::AddrToMask(&pRtCon->mask);
             pPre->ipaddr = pRtCon->dest;
             pUpInfo->nlri.push_back(pPre);
             
             SimUpdate(pPeer, pUpInfo);
         }
     }
-    
+
+    g_log->Tips("end of advertise routing table");
 }
 
 void
@@ -536,7 +537,6 @@ Simulator::SimUpdate(Peer * pPeer, void * data, size_t datalen)
     }
     g_log->Tips("Sim update msg send successful");
     pPeer->StartTimerKeepalive();
-    delete pMsg;
 }
 
 void
@@ -551,7 +551,8 @@ Simulator::SimUpdate(Peer * pPeer, struct _bgp_update_info * pUpInfo)
     // add withdraw list
     u_int16_t wdLen = 0;
     u_char * resv = pBuf->Reserve(sizeof(wdLen));
-    for (pit = pUpInfo->withdraw.begin(); pit != pUpInfo->withdraw.end(); ++pit) {
+    for (pit = pUpInfo->withdraw.begin();
+            pit != pUpInfo->withdraw.end(); ++pit) {
         pPre = *pit;
         int octLen;
         if (pPre->maskln > 0)
@@ -622,8 +623,14 @@ Simulator::SimUpdate(Peer * pPeer, struct _bgp_update_info * pUpInfo)
             octLen = (pPre->maskln - 1) / 8 + 1;
         else
             octLen = 0;
+        g_log->TraceSize("nlri length", pPre->maskln);
         pBuf->Add(&pPre->maskln, sizeof(pPre->maskln));
-        pBuf->Add(&pPre->ipaddr, octLen);
+        u_int32_t tipaddr;
+        tipaddr = 0;
+        memcpy(&tipaddr, &pPre->ipaddr, 4);
+        //tipaddr = htonl(tipaddr);
+        pBuf->Add(&tipaddr, octLen);
+        g_log->TraceIpAddr("nlri ipaddr", &pPre->ipaddr);
         wdLen += octLen + sizeof(pPre->maskln);
     }
 
@@ -1013,9 +1020,12 @@ Simulator::ParseUpdate(Peer * pPeer)
         pos ++;
         u_int8_t octLen = (pPre->maskln - 1) / 8 + 1;
         memset(&pPre->ipaddr, 0, sizeof(pPre->ipaddr));
-        if ( octLen > 0 && octLen <= 4)
+        if ( octLen > 0 && octLen <= 4) {
+            // u_int32_t tipaddr;
+            // memcpy(& tipaddr, pos, octLen);
+            // tipaddr = ntohl(tipaddr);
             memcpy(&pPre->ipaddr, pos, octLen);
-        else {
+        } else {
             g_log->Error("miss match size of prefix");
         }
         pos += octLen;
@@ -1103,14 +1113,18 @@ Simulator::ParseUpdate(Peer * pPeer)
                 asTotalLen = pAps->length * 2;
                 pAps->value = new Buffer((int)asTotalLen);
                 assert(pAps->value != NULL);
-                if (isDebug)
-                    g_log->TraceSize("asTotalLen", asTotalLen);
+                // if (isDebug)
+                //   g_log->TraceSize("asTotalLen", asTotalLen);
                 pAps->value->Add(pos, asTotalLen);
                 pos += asTotalLen;
                 break;
             case PATHATTR_NEXTHOP:
                 memset(&pAttr->nhop, 0, sizeof(pAttr->nhop));
                 if (para_len > 0 && para_len <= 4) {
+                    //u_int32_t tipaddr;
+                    //tipaddr = 0;
+                    //memcpy(&tipaddr, pos, para_len);
+                    //tipaddr = ntohl(tipaddr);
                     memcpy(&pAttr->nhop, pos, para_len);
                 } else {
                     g_log->Error("miss match path attribution length of nexthop");
@@ -1144,9 +1158,12 @@ Simulator::ParseUpdate(Peer * pPeer)
         pos ++;
         u_int8_t octLen = (pPre->maskln - 1) / 8 + 1;
         memset(&pPre->ipaddr, 0, sizeof(pPre->ipaddr));
-        if ( octLen > 0 && octLen <= 4)
+        if ( octLen > 0 && octLen <= 4) {
+            // u_int32_t tipaddr;
+            // memcpy(& tipaddr, pos, octLen);
+            // tipaddr = ntohl(tipaddr);
             memcpy(&pPre->ipaddr, pos, octLen);
-        else {
+        } else {
             g_log->Error("miss match size of prefix");
         }
         pos += octLen;

@@ -1,5 +1,6 @@
 #include "Interface.h"
 #include "Logger.h"
+#include "Router.h"
 
 using namespace std;
 
@@ -72,13 +73,12 @@ Interface::GetIfByDest(struct in_addr * pAd)
    
    for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
        pIntCon = *iit;
-       u_int32_t src, des, mask;
-       src = pAd->s_addr;
-       des = pIntCon->ipaddr.s_addr;
-       mask = pIntCon->netmask.s_addr; 
-       src &= mask;
-       des &= mask;
-       if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
+       // g_log->ShowIPAddr(pAd);
+       // g_log->ShowIPAddr(&pIntCon->ipaddr);
+       // g_log->ShowIPAddr(&pIntCon->netmask);
+       // cout << "--------in the testing----------" << endl;
+       if (Router::InAddrCmp(pAd, &pIntCon->ipaddr, &pIntCon->netmask)) {
+       // cout << "-------bingo-----------" << endl;
            return pIntCon;
        }
    }

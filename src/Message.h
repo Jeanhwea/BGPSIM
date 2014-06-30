@@ -91,7 +91,7 @@ typedef enum _origin_type {
 } origin_t;
 
 typedef enum _as_type {
-    AS_SET  = 0,
+    AS_SET  = 1,
     AS_SEQUENCE 
 } as_t;
 
@@ -117,7 +117,7 @@ struct openmsg {
 
 struct _prefix {
     u_int8_t        maskln;
-    struct in_addr  ipaddr;
+    struct in_addr  ipaddr; // local host order
 };
 
 struct _path_attr_type {

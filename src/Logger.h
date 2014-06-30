@@ -27,6 +27,7 @@ class Logger {
         void Error(const char *);
         void Fatal(const char *);
         void TraceSize(const char * msg, ssize_t siz);
+        void TraceIpAddr(const char * msg, struct in_addr * pAd);
         void ShowErrno();
         void ShowIPAddr(struct in_addr * ad);
         void ShowIPAddr(struct sockaddr_in * sad);

@@ -65,7 +65,10 @@ Router::AddrToMask(struct in_addr * pAd)
     u_int32_t ipaddr;
     ret = 0;
     ipaddr = htonl(pAd->s_addr);
-    while (ipaddr & 0x8000) {
+    //g_log->TraceIpAddr("********mask=", pAd);
+    while (ipaddr & 0x80000000) {
+    //fprintf(stdout, "%08x ======\n", ipaddr);
+    //fflush(stdout);
         ipaddr = ipaddr << 1;
         ret ++;
     }
@@ -77,6 +80,39 @@ Router::AddrToMask(u_int32_t ipaddr)
 {
     return AddrToMask((struct in_addr *) &ipaddr);
 }
+
+bool
+Router::InAddrCmp(struct in_addr * pSrc, struct in_addr * pDes, struct in_addr * pMask)
+{
+    u_int32_t src, des, mask;
+    src = pSrc->s_addr;
+    des = pDes->s_addr;
+    mask = pMask->s_addr;
+    src &= mask;
+    des &= mask;
+
+    if (memcmp(&src, &des, sizeof(u_int32_t)) == 0)
+        return true;
+    else
+        return false;
+}
+
+bool
+Router::InAddrCmp(struct in_addr * pSrc, struct _prefix * pPre)
+{
+    u_int32_t src, des, mask;
+    src = pSrc->s_addr;
+    des = pPre->ipaddr.s_addr;
+    mask = 0xffffffff;
+    mask = mask << (32 - pPre->maskln);
+    
+    if (memcmp(&src, &des, sizeof(u_int32_t)) == 0)
+        return true;
+    else
+        return false;
+}
+
+
 
 bool
 Router::LoadRouterConf(const char * filename)
@@ -328,13 +364,9 @@ Router::LookupRoutingTable(struct in_addr * pAd)
     for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
-        u_int32_t src, des, mask;
-        src = pAd->s_addr;
-        des = pRtCon->dest.s_addr;
+        u_int32_t mask;
         mask = pRtCon->mask.s_addr;
-        src &= mask;
-        des &= mask;
-        if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
+        if (InAddrCmp(pAd, &pRtCon->dest, &pRtCon->mask)) {
             if (mask > flag_mask) {
                 ret = pRtCon;
                 flag_mask = mask;
@@ -360,14 +392,10 @@ Router::LookupRoutingTable(struct _prefix * pPre)
     for (rit = loc_RIB.begin(); rit != loc_RIB.end(); ++rit) {
         pRtCon = *rit;
         assert(pRtCon != NULL);
-        u_int32_t src, des, mask;
-        src = pPre->ipaddr.s_addr;
-        des = pRtCon->dest.s_addr;
-        memset(&mask, 0xff, sizeof(mask));
+        u_int32_t mask;
+        mask = 0xffffffff;
         mask = mask << (32 - pPre->maskln);
-        src &= mask;
-        des &= mask;
-        if (memcmp(&src, &des, sizeof(u_int32_t)) == 0) {
+        if (InAddrCmp(&pRtCon->dest, pPre)) {
             if (mask > flag_mask) {
                 ret = pRtCon;
                 flag_mask = mask;
@@ -555,4 +583,5 @@ Router::UpdateRt(struct _bgp_update_info * pUpInfo)
         struct _prefix  * pPre = *pIt;
         pRtCon = LookupRoutingTable(pPre);
     }
+    g_log->LogRouteList();
 }
