@@ -326,7 +326,8 @@ Router::PacketForward(Message * pMsg)
     
     ssize_t nsend;
     nsend = sendto(g_wtc->GetMainSFD(), pMsg->ReadPos(), pMsg->Length(), 0, &saddr, sizeof(saddr));
-    
+
+    g_log->TraceSize("forward size", nsend);
     if (nsend < 0) {
         g_log->Warning("Arp send failed");
         return false;

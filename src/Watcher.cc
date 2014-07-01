@@ -118,7 +118,7 @@ Watcher::StartListen()
                         g_rtr->PacketForward(pMsg);
                 } else {
                     if (isDebug) {
-                        g_log->Tips("ip packet reach dest... done");
+                        g_log->TraceIpAddr("packet from ip", (struct in_addr *)&pIphdr->saddr);
                     }
                 }
                 break;
