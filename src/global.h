@@ -91,6 +91,9 @@ extern Router * g_rtr;
 class Watcher;
 extern Watcher * g_wtc;
 
+class Timer;
+extern Timer * g_timer;
+
 class Simulator;
 extern Simulator * g_sim;
 #endif /* end of include guard: GLOBAL_H */

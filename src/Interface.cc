@@ -66,7 +66,7 @@ Interface::GetIfidByName(char * ifname)
 }
 
 struct ifcon *
-Interface::GetIfByDest(struct in_addr * pAd)
+Interface::GetIfByAddr(struct in_addr * pAd)
 {
    struct ifcon * pIntCon;
    vector<struct ifcon *>::iterator iit;
@@ -87,7 +87,7 @@ Interface::GetIfByDest(struct in_addr * pAd)
 }
 
 struct ifcon *
-Interface::GetIfByDest(struct _prefix * pPre)
+Interface::GetIfByAddr(struct _prefix * pPre)
 {
     struct ifcon * pIntCon;
     vector<struct ifcon *>::iterator iit;

@@ -10,6 +10,7 @@ bgp 100
 group nice_r1 external
 peer nice_r1 as-number 200
 peer 192.168.2.2 group nice_r1
+network 192.168.1.2 255.255.255.0
 quit
 
 

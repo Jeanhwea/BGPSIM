@@ -7,16 +7,19 @@ Interface * g_int = NULL;
 Router    * g_rtr = NULL;
 Simulator * g_sim = NULL;
 Watcher   * g_wtc = NULL;
+Timer     * g_timer = NULL;
 
 int
 main(int argc, char const *argv[])
 {
     if (isDebug)
         cout << "Debug is on ..." << endl;
+    
     g_log = new Logger;
     g_int = new Interface;
     g_rtr = new Router;
     g_wtc = new Watcher;
+    g_timer = new Timer();
     
     g_int->LoadInterface();
     g_log->LogIntList();
@@ -28,10 +31,11 @@ main(int argc, char const *argv[])
     g_log->LogARPCache();
     
     g_sim = new Simulator;
+
+    g_timer->Start();
     g_wtc->Start();
     g_sim->Start();
     g_wtc->Join();
-    g_sim->Join();
 
     if (g_sim != NULL)
         delete g_sim;

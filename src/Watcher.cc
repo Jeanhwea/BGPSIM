@@ -28,9 +28,7 @@ Watcher::Run()
     if (InitMainSocket())
         StartListen();
     else {
-        g_log->Error("failed to set main socket");
-        g_log->ShowErrno();
-        exit(-1);
+        g_log->Fatal("failed to set main socket");
     }
     return NULL;
 }
@@ -38,7 +36,7 @@ Watcher::Run()
 bool
 Watcher::InitMainSocket()
 {
-    sfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    sfd = socket(AF_PACKET, SOCK_PACKET, htons(ETH_P_ALL));
     if (sfd == -1)
         g_log->Fatal("failed to set main sfd");
     return true;
@@ -69,45 +67,59 @@ Watcher::SetPromisc()
     return true;
 }
 
-#define BUFSIZE_ETH 8096
 void
 Watcher::StartListen()
 {
     struct iphdr  * pIphdr;
     struct ethhdr * pEthhdr;
     struct eth_arphdr * pArphdr;
-    u_char          buf[BUFSIZE_ETH];
+    struct tcphdr * pTcphdr;
+    u_char          buf[ETH_DATA_LEN];
     
     while (true) {
-        size_t nread = read(sfd, buf, BUFSIZE_ETH);
+        size_t nread = read(sfd, buf, ETH_DATA_LEN);
         if (nread < 0)
             g_log->Error("cannot catch packet");
         
-        pEthhdr = (struct ethhdr *) buf;
+        
+        Message * pMsg;
+        pMsg = new Message(ETH_DATA_LEN);
+        pMsg->Add(buf, nread);
+        
+        pEthhdr = (struct ethhdr *) pMsg->ReadPos();
         
         if (isDebug)
            g_log->LogRecvedMsg(pEthhdr);
             
         switch (ntohs(pEthhdr->h_proto)) {
             case ETH_P_ARP:
-                pArphdr = (struct eth_arphdr *) (buf + sizeof(struct ethhdr));
-                g_log->LogARPCache();
-                if (!CheckInter(pArphdr->ar_tip)) {
+                pArphdr = (struct eth_arphdr *)
+                                (pMsg->ReadPos() + sizeof(struct ethhdr));
+                if (CheckInter(pArphdr->ar_tip)) {
                     // send arp request is the mac is unknown
-                    Message * pMsg;
-                    pMsg = new Message(BUFSIZE_ETH);
-                    pMsg->Add(buf, nread);
-                    g_rtr->ARPRos(pMsg);
+                    if (isDebug) {
+                        g_log->Tips("arp unknown");
+                    }
+                    g_rtr->ARPAdd(pMsg);
+                } else {
+                    if (isDebug) {
+                        g_log->Tips("arp already known");
+                    }
                 }
                 break;
             case ETH_P_IP:
-                pIphdr  = (struct iphdr *) (buf + sizeof(struct ethhdr));
+                pIphdr  = (struct iphdr *)
+                                (pMsg->ReadPos() + sizeof(struct ethhdr));
+                pTcphdr = (struct tcphdr *)
+                    (pMsg->ReadPos() + sizeof(struct ethhdr) + sizeof(struct iphdr) );
                 if (!CheckInter(pIphdr->daddr)) {
                     // try to forward packet, if ip des is not in my Interface
-                    Message * pMsg;
-                    pMsg = new Message(BUFSIZE_ETH); 
-                    pMsg->Add(buf, nread);
-                    g_rtr->PacketForward(pMsg);
+                    if (pTcphdr->dest != htons(BGP_PORT))
+                        g_rtr->PacketForward(pMsg);
+                } else {
+                    if (isDebug) {
+                        g_log->Tips("ip packet reach dest... done");
+                    }
                 }
                 break;
             default:
@@ -148,8 +160,13 @@ Watcher::CheckInter(struct in_addr * pAd)
     for (iit = vIntConf.begin(); iit != vIntConf.end(); ++iit) {
         pIntCon = * iit;
         assert(pIntCon != NULL);
-        if (memcmp(pAd, &pIntCon->ipaddr, sizeof(struct in_addr)) == 0)
+        // g_log->TraceIpAddr("target ip", pAd);
+        // g_log->TraceIpAddr("interface ip", &pIntCon->ipaddr);
+        if (memcmp(pAd, &pIntCon->ipaddr, sizeof(struct in_addr)) == 0) {
+            // cout << "+++++++++++ bingo ++++===" << endl;
+            // fflush(stdout);
             return true;
+        }
     }
     return false;
 }

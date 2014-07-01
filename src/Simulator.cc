@@ -43,7 +43,6 @@ Simulator::~Simulator()
 void *
 Simulator::Run()
 {
-    timer.Start();
     SimMain();
     return NULL;
 }
@@ -467,7 +466,7 @@ Simulator::AdvertUpdate(Peer * pPeer)
         
         // find route's interface first
         struct ifcon * pIntCon;
-        pIntCon = Interface::GetIfByDest(&pPeer->conf.remote_addr);
+        pIntCon = Interface::GetIfByAddr(&pPeer->conf.remote_addr);
         if (pIntCon == NULL)
             continue;
         
@@ -606,10 +605,6 @@ Simulator::SimUpdate(Peer * pPeer, struct _bgp_update_info * pUpInfo)
     pBuf->Add(&pat.typecode, 1);
     alen = 4;
     pBuf->Add(&alen, 1);
-    struct in_addr * pAd;
-    if (pPeer->conf.remote_as != conf_as) {
-        // dealing with the same as number TODO ...
-    }
     pBuf->Add(&pUpInfo->pathattr->nhop, sizeof(struct in_addr));
     paLen += 3 + alen;
 
@@ -693,7 +688,8 @@ Simulator::GetPeerByAddr(struct in_addr * pAd)
     ret = NULL;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++vit) {
         pPeer = *vit;
-        if (memcmp(&pPeer->conf.remote_addr.s_addr, &pAd->s_addr, sizeof(pAd->s_addr)) == 0) {
+        if (memcmp(&pPeer->conf.remote_addr.s_addr,
+                &pAd->s_addr, sizeof(pAd->s_addr)) == 0) {
             ret = pPeer;
             break;
         }
@@ -710,7 +706,8 @@ Simulator::GetPeerByAddr(u_int32_t bgpid)
     ret = NULL;
     for (vit = vPeers.begin(); vit != vPeers.end(); ++ vit) {
         pPeer = *vit;
-        if (memcpy(&pPeer->conf.remote_bgpid, &bgpid, sizeof(bgpid)) == 0) {
+        if (memcpy(&pPeer->conf.remote_bgpid,
+                &bgpid, sizeof(bgpid)) == 0) {
             ret = pPeer;
             break;
         }

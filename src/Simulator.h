@@ -34,8 +34,6 @@ class Simulator : public Thread {
         u_int32_t                   conf_bgpid;
         struct in_addr              lisaddr;
 
-        Timer                       timer;
-
     public:
         Simulator();
         virtual ~Simulator();
