@@ -370,41 +370,42 @@ Router::PacketForward(Message * pMsg)
     //      to let it be forwarded in next schedule
     struct arpcon * pArpCon;
     
-    if (isDefaultAddr(&pRtCon->dest)) {
-        pArpCon = LookupARPCache(&pRtCon->nhop);
-    } else {
+    if (isDefaultAddr(&pRtCon->nhop)) {
+        // if the nexthop = 0.0.0.0
         pArpCon = LookupARPCache(&pRtCon->dest);
+    } else {
+        pArpCon = LookupARPCache(&pRtCon->nhop);
     }
 
     // if cannot find mac addr in arp cache, then send a arp request 
     if (pArpCon == NULL) {
-        if (isDefaultAddr(pIphdr->daddr)) {
-            ARPReq(&pRtCon->nhop);
-        } else {
+        if (isDefaultAddr(&pRtCon->nhop)) {
             ARPReq(&pRtCon->dest);
+        } else {
+            ARPReq(&pRtCon->nhop);
         }
         // move message into a waiting queue
+        //      it will be forward later
         MsgQueueLock();
         qMessage.push(pMsg);
         MsgQueueUnlock();
         return false;
     }
     
+    // if find arp cache
     // just send the message
-    
     struct ifcon * pIntCon;
-    if (isDefaultAddr(&pRtCon->nhop)) {
-        pIntCon = Interface::GetIfByAddr(&pRtCon->dest);
-    } else {
-        pIntCon = Interface::GetIfByAddr(&pRtCon->nhop);
+    pIntCon = Interface::GetIfconById(pRtCon->ifid);
+
+    if (pIntCon == NULL) {
+        g_log->Fatal("cannot find a Interface by route ifid");
     }
-    if (pIntCon == NULL)
-        return false;
     
     
     pIphdr->ttl --;
     if (pIphdr->ttl <= 0) {
         // ignore ... 
+        g_log->Tips("recv a packet with TTL to 0, forget it");
         return false;
     } else {
         if (isDebug)
@@ -418,17 +419,36 @@ Router::PacketForward(Message * pMsg)
         return false;
     }
     
-    struct sockaddr saddr;
-    saddr.sa_family = AF_INET;
-    strcpy(saddr.sa_data, pIntCon->name);
+    memcpy(pEthhdr->h_source, pIntCon->mac, ETH_ALEN);
+    memcpy(pEthhdr->h_dest, pArpCon->mac, ETH_ALEN);
+    
+    /**
+     * struct sockaddr_ll {
+     *     unsigned short sll_family;  
+     *     unsigned short sll_protocol; 
+     *     int sll_ifindex; 
+     *     unsigned short sll_hatype; 
+     *     unsigned char sll_pkttype; 
+     *     unsigned char sll_halen; 
+     *     unsigned char sll_addr[8];
+     * };
+     * 
+     **/
+    struct sockaddr_ll sadll;
+    memset(&sadll, 0, sizeof(sadll));
+    // sadll.sll_family = AF_PACKET;
+    sadll.sll_ifindex = pIntCon->ifid;
+    sadll.sll_pkttype = PACKET_OUTGOING;
     
     ssize_t nsend;
-    nsend = sendto(g_wtc->GetMainSFD(), pMsg->ReadPos(), pMsg->Length(), 0, &saddr, sizeof(saddr));
+    nsend = sendto(g_wtc->GetMainSFD(), pMsg->ReadPos(), pMsg->Length(), 
+                    0, (struct sockaddr *)&sadll, sizeof(sadll));
 
-    g_log->TraceSize("forward size", nsend);
     if (nsend < 0) {
         g_log->Warning("Arp send failed");
         return false;
+    } else {
+        g_log->TraceSize("forward size", nsend);
     }
 
     
@@ -462,6 +482,10 @@ Router::LookupRoutingTable(u_int32_t ipaddr)
 struct rtcon * 
 Router::LookupRoutingTable(struct in_addr * pAd)
 {
+    // find a route item that 
+    //      the *pAd can match the destination of a Router
+    // to get the best fit route item 
+    //      we must find the longest mask
     vector<struct rtcon *>::iterator rit;
     struct rtcon * pRtCon;
     struct rtcon * ret = NULL;
