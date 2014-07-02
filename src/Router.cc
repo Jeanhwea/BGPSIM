@@ -244,6 +244,7 @@ Router::LoadKernelRouter()
             break;
     }
     
+    close(sfd);
 }
 
 
@@ -277,7 +278,7 @@ Router::PacketForward(Message * pMsg)
     // } else {
         // pArpCon = LookupARPCache(&pRtCon->dest);
     // }
-    
+
     // if cannot find mac addr in arp cache, then send a arp request 
     // if (pArpCon == NULL) {
         // if (isDefaultAddr(pIphdr->daddr)) {
@@ -542,6 +543,19 @@ Router::ARPReq(struct in_addr * pAd)
     }
 
     close(sfd);
+}
+
+
+void
+Router::ICMPRos(Message* pMsg)
+{
+    struct ethhdr * pEthhdr;
+    pEthhdr = (struct ethhdr *) pMsg->ReadPos();
+    struct iphdr * pIphdr;
+    pIphdr = (struct iphdr *) (pMsg->ReadPos() + sizeof(struct iphdr));
+    struct icmphdr Icmphdr;
+    pIphdr->protocol = IP_PROTO_ICMP;
+    g_log->Tips("TODO send a icmp");
 }
 
 struct arpcon *

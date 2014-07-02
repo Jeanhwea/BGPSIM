@@ -9,7 +9,7 @@ using namespace std;
 
 class Watcher : public Thread {
     private:
-        sockfd  sfd;
+        sockfd  main_sfd;
 
     public:
         Watcher();

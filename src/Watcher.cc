@@ -18,7 +18,7 @@ Watcher::~Watcher()
 sockfd
 Watcher::GetMainSFD()
 {
-    return sfd;
+    return main_sfd;
 }
 
 
@@ -36,8 +36,9 @@ Watcher::Run()
 bool
 Watcher::InitMainSocket()
 {
-    sfd = socket(AF_PACKET, SOCK_PACKET, htons(ETH_P_ALL));
-    if (sfd == -1)
+    // main_sfd = socket(AF_PACKET, SOCK_PACKET, htons(ETH_P_ALL));
+    main_sfd = socket(AF_INET, SOCK_RAW, htons(ETH_P_ALL));
+    if (main_sfd == -1)
         g_log->Fatal("failed to set main sfd");
     return true;
 }
@@ -54,12 +55,12 @@ Watcher::SetPromisc()
         assert(pIntCon != NULL);
 
         strcpy(ifr.ifr_name, pIntCon->name);
-        if (ioctl(sfd, SIOCGIFFLAGS, &ifr) != 0) {
+        if (ioctl(main_sfd, SIOCGIFFLAGS, &ifr) != 0) {
             g_log->Fatal("cannot SetPromisc");
         }
         
         ifr.ifr_flags |= IFF_PROMISC;
-        if (ioctl(sfd, SIOCSIFFLAGS, &ifr) == 0) {
+        if (ioctl(main_sfd, SIOCSIFFLAGS, &ifr) == 0) {
             g_log->Fatal("cannot SetPromisc *");
         }
     }
@@ -77,7 +78,7 @@ Watcher::StartListen()
     u_char          buf[ETH_DATA_LEN];
     
     while (true) {
-        size_t nread = read(sfd, buf, ETH_DATA_LEN);
+        size_t nread = read(main_sfd, buf, ETH_DATA_LEN);
         if (nread < 0)
             g_log->Error("cannot catch packet");
         
@@ -93,6 +94,7 @@ Watcher::StartListen()
             
         switch (ntohs(pEthhdr->h_proto)) {
             case ETH_P_ARP:
+                /*
                 pArphdr = (struct eth_arphdr *)
                                 (pMsg->ReadPos() + sizeof(struct ethhdr));
                 if (CheckInter(pArphdr->ar_tip)) {
@@ -106,6 +108,7 @@ Watcher::StartListen()
                         g_log->Tips("arp already known");
                     }
                 }
+                */
                 break;
             case ETH_P_IP:
                 pIphdr  = (struct iphdr *)

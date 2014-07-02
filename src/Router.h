@@ -4,6 +4,10 @@
 
 #include "global.h"
 
+#define IP_PROTO_ICMP    0x01
+#define IP_PROTO_TCP     0x06
+#define IP_PROTO_UDP     0x17
+
 using namespace std;
 
 #pragma pack(push)
@@ -80,6 +84,8 @@ class Router {
         void ARPReq(u_int32_t ipaddr);
         struct arpcon * LookupARPCache(struct in_addr * pAd);
         struct arpcon * LookupARPCache(u_int32_t ipaddr);
+        
+        void ICMPRos(Message * pMsg);
         
 };
 

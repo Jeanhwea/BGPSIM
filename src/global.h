@@ -21,6 +21,7 @@
 #include <linux/rtnetlink.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <linux/icmp.h>
 #include <netinet/tcp.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -92,7 +93,7 @@ class Watcher;
 extern Watcher * g_wtc;
 
 class Timer;
-extern Timer * g_timer;
+extern Timer * g_tmr;
 
 class Simulator;
 extern Simulator * g_sim;
