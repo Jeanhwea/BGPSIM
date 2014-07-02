@@ -546,27 +546,17 @@ Router::CalChechsum(short unsigned int* addr, unsigned int count)
 
 
 void
-Router::ARPAdd(Message * pMsg)
+Router::ARPRosHandle(struct eth_arphdr * pArphdr)
 {
-    if (pMsg == NULL)
-        return;
-    struct eth_arphdr * pArphdr;
-    pArphdr = (eth_arphdr *) pMsg->ReadPos();
     assert(pArphdr != NULL);
     
-    if (pArphdr->hdr.ar_op != htons(ARPOP_REPLY)) {
+    if (ntohs(pArphdr->hdr.ar_op) != ARPOP_REPLY) {
+        fprintf(stdout, "unknow op=%d\n", ntohs(pArphdr->hdr.ar_op));
         return ;
     }
     
-    struct arpcon * pArpCon;
-    pArpCon = (struct arpcon *) malloc( sizeof(struct arpcon));
-    assert(pArpCon != NULL);
     
-    // set target ip address
-    memcpy(&pArpCon->ipadd, &pArphdr->ar_sip, sizeof(pArpCon->ipadd));
-    // set target hardware address
-    memcpy(&pArpCon->mac, &pArphdr->ar_sha, ETH_ALEN);
-    vARPConf.push_back(pArpCon);
+    ARPAdd((struct in_addr *)&pArphdr->ar_sip, pArphdr->ar_sha);
     g_log->LogARPCache();
 }
 
@@ -651,6 +641,20 @@ Router::ICMPRos(Message* pMsg)
     struct icmphdr Icmphdr;
     pIphdr->protocol = IP_PROTO_ICMP;
     g_log->Tips("TODO send a icmp");
+}
+
+void
+Router::ARPAdd(struct in_addr * pAd, u_char * mac)
+{
+    struct arpcon * pArpCon;
+    pArpCon = (struct arpcon *) malloc(sizeof(struct arpcon));
+    assert(pArpCon);
+    
+    // set target ip address
+    memcpy(&pArpCon->ipadd, pAd, sizeof(struct in_addr));
+    // set hardware address
+    memcpy(&pArpCon->mac, mac, ETH_ALEN);
+    vARPConf.push_back(pArpCon);
 }
 
 struct arpcon *

@@ -165,9 +165,22 @@ Logger::LogRecvedMsg(struct ethhdr * pEthhdr)
         case ETH_P_ARP:
             struct eth_arphdr * pArphdr;
             pArphdr = (struct eth_arphdr *) ( ((u_char *)pEthhdr) + sizeof(struct ethhdr) );
-            fprintf(out, "ARP.fr[%s][%s] to[%s][%s]\n",
+            fprintf(out, "ARP.fr[%s][%s] to[%s][%s] ",
                     MacToStr(pArphdr->ar_sha), AddrToStr(pArphdr->ar_sip),
                         MacToStr(pArphdr->ar_tha), AddrToStr(pArphdr->ar_tip) );
+            switch (ntohs(pArphdr->hdr.ar_op)) {
+                case ARPOP_REPLY:
+                    fprintf(out, "ARPOP_REPLY");
+                    break;
+                case ARPOP_REQUEST:
+                    fprintf(out, "ARPOP_REQUEST");
+                    break;
+                default:
+                    fprintf(out, "unknow op=%d", ntohs(pArphdr->hdr.ar_op));
+                    break;
+            }
+            fprintf(out, "\n");
+            fflush(out);
             break;
         case ETH_P_IP:
             struct iphdr * pIphdr;
@@ -302,12 +315,12 @@ Logger::LogARPCache()
     vector<struct arpcon *>::iterator ait;
     struct arpcon * pArpCon;
     fprintf(out, "ARP Cache ...\n");
-    fprintf(out, "IP\t\tMAC\n");
+    fprintf(out, "MAC\t\tIP\n");
     fflush(out);
     for (ait = vARPConf.begin(); ait != vARPConf.end(); ++ait) {
         pArpCon = *ait;
+        fprintf(out, "%s\t", MacToStr(pArpCon->mac));
         fprintf(out, "%-16s", AddrToStr(&pArpCon->ipadd));
-        fprintf(out, "%s", MacToStr(pArpCon->mac));
         fprintf(out, "\n");
         fflush(out);
     }

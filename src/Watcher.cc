@@ -25,6 +25,7 @@ Watcher::GetMainSFD()
 void * 
 Watcher::Run()
 {
+    g_log->Tips("watcher runs ++++");
     if (InitMainSocket())
         StartListen();
     else {
@@ -36,8 +37,8 @@ Watcher::Run()
 bool
 Watcher::InitMainSocket()
 {
-    // main_sfd = socket(AF_PACKET, SOCK_PACKET, htons(ETH_P_ALL));
-    main_sfd = socket(AF_INET, SOCK_RAW, htons(ETH_P_ALL));
+    main_sfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    // main_sfd = socket(AF_INET, SOCK_PACKET, htons(ETH_P_ALL));
     if (main_sfd == -1)
         g_log->Fatal("failed to set main sfd");
     return true;
@@ -94,21 +95,19 @@ Watcher::StartListen()
             
         switch (ntohs(pEthhdr->h_proto)) {
             case ETH_P_ARP:
-                /*
                 pArphdr = (struct eth_arphdr *)
-                                (pMsg->ReadPos() + sizeof(struct ethhdr));
+                                ((u_char *)pEthhdr + sizeof(struct ethhdr));
                 if (CheckInter(pArphdr->ar_tip)) {
                     // send arp request is the mac is unknown
                     if (isDebug) {
                         g_log->Tips("arp unknown");
                     }
-                    g_rtr->ARPAdd(pMsg);
+                    g_rtr->ARPRosHandle(pArphdr);
                 } else {
                     if (isDebug) {
                         g_log->Tips("arp already known");
                     }
                 }
-                */
                 break;
             case ETH_P_IP:
                 pIphdr  = (struct iphdr *)

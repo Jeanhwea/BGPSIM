@@ -81,9 +81,11 @@ class Router {
         struct rtcon * AddRoutingItem(struct _prefix * pPre, struct in_addr * pNhop);
         
         // arp utils
-        void ARPAdd(Message * pMsg);
+        //void ARPRosHandle(Message * pMsg);
+        void ARPRosHandle(struct eth_arphdr * pMsg);
         void ARPReq(struct in_addr * pAd);
         void ARPReq(u_int32_t ipaddr);
+        void ARPAdd(struct in_addr * pAd, u_char * mac);
         struct arpcon * LookupARPCache(struct in_addr * pAd);
         struct arpcon * LookupARPCache(u_int32_t ipaddr);
         

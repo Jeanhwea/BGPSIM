@@ -29,12 +29,20 @@ main(int argc, char const *argv[])
     g_log->LogRouteList();
 
 
-    g_log->LogARPCache();
+    g_tmr->Start();
+    g_wtc->Start();
+    
+    struct in_addr * pAd;
+    in_addr_t      Adt;
+    Adt = inet_addr("192.168.4.1"),
+    pAd = (struct in_addr *) &Adt;
+    g_rtr->ARPReq(pAd);
+
+    //return 0; // test return
+
     
     g_sim = new Simulator;
 
-    g_tmr->Start();
-    g_wtc->Start();
     //g_sim->Start();
     g_wtc->Join();
     
