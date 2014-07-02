@@ -156,7 +156,7 @@ Router::LoadRouterConf(const char * filename)
 
 #define BUFSIZE_MAXRT 8096
 void 
-Router::LoadKernelRouter()
+Router::LoadKernelRoute()
 {
     // create kernel socket
     sockfd sfd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -165,19 +165,18 @@ Router::LoadKernelRouter()
         g_log->Error("cannot create kernel route socket");
     
     u_char  buf[BUFSIZE_MAXRT];
-    struct nlmsghdr * pNlhdr;
+    struct nlmsghdr Nlhdr;
     
     // fill socket data
     memset(buf, 0, sizeof(buf));
-    pNlhdr = (struct nlmsghdr *) buf;
-    pNlhdr->nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
-    pNlhdr->nlmsg_type = RTM_GETROUTE;
-    pNlhdr->nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
-    pNlhdr->nlmsg_seq = ++ rtseq;
-    pNlhdr->nlmsg_pid = getpid();
+    Nlhdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+    Nlhdr.nlmsg_type = RTM_GETROUTE;
+    Nlhdr.nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;
+    Nlhdr.nlmsg_seq = ++ rtseq;
+    Nlhdr.nlmsg_pid = getpid();
     
     // write kernel socket
-    int ret = write(sfd, pNlhdr, pNlhdr->nlmsg_len);
+    int ret = write(sfd, &Nlhdr, Nlhdr.nlmsg_len);
     
     if (ret < 0) {
         g_log->Error("cannot to read kernel socket");
@@ -192,12 +191,12 @@ Router::LoadKernelRouter()
         
         if (nread < 0)
             break;
-        
-        pNlhdr = (struct nlmsghdr *) buf;
-        
+
+        struct nlmsghdr * pNlhdr;
         struct rtmsg    * pRtmsg;
         struct rtattr   * pRtattr;
         
+        pNlhdr = (struct nlmsghdr *) buf;
         while (NLMSG_OK(pNlhdr, nread)) {
             
             pRtmsg = (struct rtmsg *) NLMSG_DATA(pNlhdr);
@@ -246,6 +245,102 @@ Router::LoadKernelRouter()
     
     close(sfd);
 }
+
+bool
+Router::AddKernelRoute(struct in_addr * pDest, struct in_addr * pNhop, struct in_addr* pMask, int ifid)
+{
+    // in_addr_t s, d, m;
+    // s = inet_addr("192.168.4.4"),
+    // d = inet_addr("192.168.4.1"),
+    // m = inet_addr("255.255.255.255"),
+    // g_rtr->AddKernelRoute((struct in_addr *)&s, (struct in_addr *)&d, (struct in_addr *)&m, 3);
+
+    
+    // g_log->TraceIpAddr("dest", pDest);
+    // g_log->TraceIpAddr("nhop", pNhop);
+    // g_log->TraceIpAddr("mask", pMask);
+    // g_log->TraceSize("mask size", AddrToMask(pMask));
+    
+    struct {
+        struct nlmsghdr Nlmsghdr;
+        struct rtmsg Rtmsg;
+        char buf[MSGSIZE_MAX];
+    } req;
+    
+    req.Rtmsg.rtm_family = AF_INET;
+    req.Rtmsg.rtm_table = RT_TABLE_MAIN;
+    req.Rtmsg.rtm_protocol = RTPROT_STATIC;
+    req.Rtmsg.rtm_scope = RT_SCOPE_UNIVERSE;
+    req.Rtmsg.rtm_type = RTN_UNICAST;
+    req.Rtmsg.rtm_dst_len = (u_char)AddrToMask(pMask);
+    req.Rtmsg.rtm_src_len = 0;
+    req.Rtmsg.rtm_tos = 0;
+    req.Rtmsg.rtm_flags = RT_TABLE_MAIN;
+    
+    req.Nlmsghdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
+    req.Nlmsghdr.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | NLM_F_CREATE | NLM_F_EXCL;
+    req.Nlmsghdr.nlmsg_type = RTM_NEWROUTE;
+    req.Nlmsghdr.nlmsg_pid = getpid();
+    req.Nlmsghdr.nlmsg_seq = ++ rtseq;
+
+    struct rtattr * pRtattr;
+
+    // set destination
+    pRtattr = (struct rtattr *)
+        (((char *)&req.Nlmsghdr) + NLMSG_ALIGN(req.Nlmsghdr.nlmsg_len));
+    pRtattr->rta_type = RTA_DST;
+    pRtattr->rta_len = RTA_LENGTH(sizeof(struct in_addr));
+    memcpy(RTA_DATA(pRtattr), pDest, 4);
+    req.Nlmsghdr.nlmsg_len = NLMSG_ALIGN(req.Nlmsghdr.nlmsg_len) + pRtattr->rta_len;
+
+    // set the nexthop (or gateway in linux)
+    pRtattr = (struct rtattr *)
+        (((char *)&req.Nlmsghdr) + NLMSG_ALIGN(req.Nlmsghdr.nlmsg_len));
+    pRtattr->rta_type = RTA_GATEWAY;
+    pRtattr->rta_len = RTA_LENGTH(sizeof(struct in_addr));
+    memcpy(RTA_DATA(pRtattr), pNhop, 4);
+    req.Nlmsghdr.nlmsg_len = NLMSG_ALIGN(req.Nlmsghdr.nlmsg_len) + pRtattr->rta_len;
+
+    // set the interface id, usaually 0 for lo; 1 for eth0, 2 for eth1
+    pRtattr = (struct rtattr *)
+        (((char *)&req.Nlmsghdr) + NLMSG_ALIGN(req.Nlmsghdr.nlmsg_len));
+    pRtattr->rta_type = RTA_OIF;
+    pRtattr->rta_len = RTA_LENGTH(sizeof(struct in_addr));
+    memcpy(RTA_DATA(pRtattr), &ifid, 4);
+    req.Nlmsghdr.nlmsg_len = NLMSG_ALIGN(req.Nlmsghdr.nlmsg_len) + pRtattr->rta_len;
+    
+    
+    sockfd sfd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    
+    if (sfd == -1) {
+        g_log->Error("failed create kernel route socket");
+        return false;
+    }
+
+    struct sockaddr_nl nlSad;
+    nlSad.nl_family = AF_NETLINK;
+    nlSad.nl_pad = 0;
+    nlSad.nl_pid = getpid();
+    nlSad.nl_groups = getgid();
+
+    if (bind(sfd, (struct sockaddr *)&nlSad, sizeof(nlSad)) < 0)
+        g_log->Error("cannot bind a socket in adding route");
+
+    ssize_t nwrite;
+    nwrite = write(sfd, &req, req.Nlmsghdr.nlmsg_len);
+
+    // g_log->TraceSize("nwrite size", nwrite);
+
+    if (nwrite < 0) {
+        g_log->Error("cannot add a kernel route");
+        return false;
+    }
+
+    close(sfd);
+
+    return true;
+}
+
 
 
 bool

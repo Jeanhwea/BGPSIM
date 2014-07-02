@@ -65,8 +65,10 @@ class Router {
         void MsgQueueUnlock();
         void MsgQueueSend();
         
-        void LoadKernelRouter();
+        void LoadKernelRoute();
         bool LoadRouterConf(const char *);
+
+        bool AddKernelRoute(struct in_addr * pSrc, struct in_addr * pNhop, struct in_addr * pMask, int ifid);
         
         // ip packet toolkits
         bool PacketForward(Message * pMsg);
