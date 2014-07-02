@@ -360,33 +360,35 @@ Router::PacketForward(Message * pMsg)
     struct rtcon * pRtCon;
     pRtCon = LookupRoutingTable(pIphdr->daddr);
     
-    if (pRtCon == NULL)
+    if (pRtCon == NULL) {
+        g_log->TraceIpAddr("network unreachable with ip", pIphdr->daddr);
         return false;
+    }
     
     // try to forward the packet
     // or just push the packet in the waiting message queue
     //      to let it be forwarded in next schedule
-    // struct arpcon * pArpCon;
+    struct arpcon * pArpCon;
     
-    // if (isDefaultAddr(pIphdr->daddr)) {
-        // pArpCon = LookupARPCache(&pRtCon->nhop);
-    // } else {
-        // pArpCon = LookupARPCache(&pRtCon->dest);
-    // }
+    if (isDefaultAddr(&pRtCon->dest)) {
+        pArpCon = LookupARPCache(&pRtCon->nhop);
+    } else {
+        pArpCon = LookupARPCache(&pRtCon->dest);
+    }
 
     // if cannot find mac addr in arp cache, then send a arp request 
-    // if (pArpCon == NULL) {
-        // if (isDefaultAddr(pIphdr->daddr)) {
-            // ARPReq(&pRtCon->nhop);
-        // } else {
-            // ARPReq(&pRtCon->dest);
-        // }
+    if (pArpCon == NULL) {
+        if (isDefaultAddr(pIphdr->daddr)) {
+            ARPReq(&pRtCon->nhop);
+        } else {
+            ARPReq(&pRtCon->dest);
+        }
         // move message into a waiting queue
-        // MsgQueueLock();
-        // qMessage.push(pMsg);
-        // MsgQueueUnlock();
-        // return false;
-    // }
+        MsgQueueLock();
+        qMessage.push(pMsg);
+        MsgQueueUnlock();
+        return false;
+    }
     
     // just send the message
     

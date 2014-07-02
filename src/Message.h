@@ -138,9 +138,9 @@ struct _bgp_path_attr {
 };
 
 struct _bgp_update_info {
-    vector<struct _prefix *>            withdraw;   // Withdrawn Routes
-    struct _bgp_path_attr             * pathattr;   // Path Attributes
-    vector<struct _prefix *>            nlri;       // Network Layer Reachability Information
+    vector<struct _prefix *>    withdraw;   // Withdrawn Routes
+    struct _bgp_path_attr     * pathattr;   // Path Attributes
+    vector<struct _prefix *>    nlri;       // Network Layer Reachability Information
 };
 
 #pragma pack(pop)   /* restore original alignment */

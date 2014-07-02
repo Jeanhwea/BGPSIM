@@ -34,6 +34,11 @@ Logger::TraceIpAddr(const char * msg, struct in_addr * pAd)
     fflush(out);
 }
 
+void
+Logger::TraceIpAddr(const char* msg, u_int32_t ipaddr)
+{
+    TraceIpAddr(msg, (struct in_addr *)&ipaddr);
+}
 
 
 void

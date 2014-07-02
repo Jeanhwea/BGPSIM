@@ -36,7 +36,7 @@ main(int argc, char const *argv[])
     in_addr_t      Adt;
     Adt = inet_addr("192.168.4.1"),
     pAd = (struct in_addr *) &Adt;
-    g_rtr->ARPReq(pAd);
+    // g_rtr->ARPReq(pAd);
 
     //return 0; // test return
 
