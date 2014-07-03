@@ -43,7 +43,7 @@ main(int argc, char const *argv[])
     
     g_sim = new Simulator;
 
-    //g_sim->Start();
+    g_sim->Start();
     g_wtc->Join();
     
 

@@ -482,11 +482,13 @@ Simulator::AdvertUpdate(Peer * pPeer)
             struct _bgp_path_attr   * pAttr;
             pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
             assert(pAttr != NULL);
+            memset(pAttr, 0, sizeof(struct _bgp_path_attr));
             pAttr->origin = ORIGIN_IGP;
             
             struct _as_path_segment * pSeg;
             pSeg = (struct _as_path_segment *) malloc(sizeof(struct _as_path_segment));
             assert(pSeg != NULL);
+            memset(pSeg, 0, sizeof(struct _as_path_segment));
             pSeg->type = AS_SEQUENCE;
             pSeg->length = 1;
             pSeg->value = new Buffer(2);

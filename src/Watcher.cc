@@ -112,15 +112,15 @@ Watcher::StartListen()
             case ETH_P_IP:
                 pIphdr  = (struct iphdr *)
                                 (pMsg->ReadPos() + sizeof(struct ethhdr));
-                pTcphdr = (struct tcphdr *)
-                    (pMsg->ReadPos() + sizeof(struct ethhdr) + sizeof(struct iphdr) );
+                pTcphdr = (struct tcphdr *) (pMsg->ReadPos() + 
+                        sizeof(struct ethhdr) + sizeof(struct iphdr) );
                 if (!CheckInter(pIphdr->daddr)) {
                     // try to forward packet, if ip des is not in my Interface
                     if (pTcphdr->dest != htons(BGP_PORT))
                         g_rtr->PacketForward(pMsg);
                 } else {
                     if (isDebug) {
-                        g_log->TraceIpAddr("packet from ip", (struct in_addr *)&pIphdr->saddr);
+                        g_log->TraceIpAddr("packet from ip", pIphdr->saddr);
                     }
                 }
                 break;
