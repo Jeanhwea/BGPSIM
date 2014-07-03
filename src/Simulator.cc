@@ -483,10 +483,16 @@ Simulator::AdvertUpdate(Peer * pPeer)
             pAttr = (struct _bgp_path_attr *) malloc(sizeof(struct _bgp_path_attr));
             assert(pAttr != NULL);
             pAttr->origin = ORIGIN_IGP;
-            pAttr->as_path.type = AS_SEQUENCE;
-            pAttr->as_path.length = 1;
-            pAttr->as_path.value = new Buffer(2);
-            pAttr->as_path.value->Add(&conf_as, 2);
+            
+            struct _as_path_segment * pSeg;
+            pSeg = (struct _as_path_segment *) malloc(sizeof(struct _as_path_segment));
+            assert(pSeg != NULL);
+            pSeg->type = AS_SEQUENCE;
+            pSeg->length = 1;
+            pSeg->value = new Buffer(2);
+            pSeg->value->Add(&conf_as, 2);
+            pAttr->aspath.push_back(pSeg);
+            
             pAttr->nhop = pIntCon->ipaddr;
             pUpInfo->pathattr = pAttr;
             
@@ -583,20 +589,22 @@ Simulator::SimUpdate(Peer * pPeer, struct _bgp_update_info * pUpInfo)
     paLen += 3 + alen;
     
     // fill as path attribution
-    vector<struct _as_path_segment *>::iterator ait;
-    pat.flag = FLAG_TRANSITIVE;
-    pat.typecode = PATHATTR_ASPATH;
-    pBuf->Add(&pat.flag, 1);
-    pBuf->Add(&pat.typecode, 1);
-    alen = pUpInfo->pathattr->as_path.length * 2 + 2;
-    pBuf->Add(&alen, 1);
-    pBuf->Add(&pUpInfo->pathattr->as_path.type, 1);
-    pBuf->Add(&pUpInfo->pathattr->as_path.length, 1);
-    assert(pUpInfo->pathattr->as_path.length * 2
-                == pUpInfo->pathattr->as_path.value->Length());
-    pBuf->Add(pUpInfo->pathattr->as_path.value->ReadPos(),
-                pUpInfo->pathattr->as_path.value->Length());
-    paLen += 3 + alen;
+    vector<struct _as_path_segment *>::iterator sit;
+    struct _as_path_segment * pSeg;
+    for (sit = pUpInfo->pathattr->aspath.begin(); sit != pUpInfo->pathattr->aspath.end(); ++sit) {
+        pSeg = *sit;
+        pat.flag = FLAG_TRANSITIVE;
+        pat.typecode = PATHATTR_ASPATH;
+        pBuf->Add(&pat.flag, 1);
+        pBuf->Add(&pat.typecode, 1);
+        alen = pSeg->length * 2 + 2;
+        pBuf->Add(&alen, 1);
+        pBuf->Add(&pSeg->type, 1);
+        pBuf->Add(&pSeg->length, 1);
+        assert(pSeg->length * 2 == pSeg->value->Length());
+        pBuf->Add(pSeg->value->ReadPos(), pSeg->value->Length());
+        paLen += 3 + alen;
+    }
 
     // fill nexthop
     pat.flag = FLAG_TRANSITIVE;
@@ -1102,20 +1110,21 @@ Simulator::ParseUpdate(Peer * pPeer)
                 }
                 break;
             case PATHATTR_ASPATH:
-                struct _as_path_segment * pAps;
-                pAps = & pAttr->as_path;
-                assert(pAps != NULL);
-                memcpy(&pAps->type, pos++, 1);
-                memcpy(&pAps->length, pos++, 1);
+                struct _as_path_segment * pSeg;
+                pSeg = (struct _as_path_segment *) malloc(sizeof(struct _as_path_segment));
+                assert(pSeg != NULL);
+                memcpy(&pSeg->type, pos++, 1);
+                memcpy(&pSeg->length, pos++, 1);
                 // remember the as_length sugguest length of as_list in TWO-OCTETS
                 u_int16_t   asTotalLen;
-                asTotalLen = pAps->length * 2;
-                pAps->value = new Buffer((int)asTotalLen);
-                assert(pAps->value != NULL);
+                asTotalLen = pSeg->length * 2;
+                pSeg->value = new Buffer((int)asTotalLen);
+                assert(pSeg != NULL);
                 // if (isDebug)
                 //   g_log->TraceSize("asTotalLen", asTotalLen);
-                pAps->value->Add(pos, asTotalLen);
+                pSeg->value->Add(pos, asTotalLen);
                 pos += asTotalLen;
+                pAttr->aspath.push_back(pSeg);
                 break;
             case PATHATTR_NEXTHOP:
                 memset(&pAttr->nhop, 0, sizeof(pAttr->nhop));

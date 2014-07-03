@@ -348,16 +348,21 @@ Logger::LogUpdateInfo(struct _bgp_update_info * pUpInfo)
     }
     fprintf(out, "update");
     fprintf(out, "\torigin=%d\n", pUpInfo->pathattr->origin);
-    u_int8_t len = pUpInfo->pathattr->as_path.length;
-    fprintf(out, "\tas_path_type=%d, as_path_length=%d, as_num_list=",
-            pUpInfo->pathattr->as_path.type, len);
-    for (u_int8_t i = 0; i < len; ++i) {
-        u_int16_t as_num;
-        memcpy(&as_num, pUpInfo->pathattr->as_path.value->ReadPos()+2*i, 2);
-        fprintf(out, "%d ", ntohs(as_num));
+    struct _as_path_segment * pSeg;
+    vector<struct _as_path_segment *>::iterator sit;
+    for (sit = pUpInfo->pathattr->aspath.begin(); sit != pUpInfo->pathattr->aspath.end(); ++sit) {
+        pSeg = *sit;
+        u_int8_t len = pSeg->length; 
+        fprintf(out, "\tas_path_type=%d, as_path_length=%d, as_num_list=", pSeg->type, len);
+        for (u_int8_t i = 0; i < len; ++i) {
+            u_int16_t as_num;
+            memcpy(&as_num, pSeg->value->ReadPos()+2*i, 2);
+            fprintf(out, "%d ", ntohs(as_num));
+        }
+        fprintf(out, "\n");
+        fflush(out);
     }
-    fprintf(out, "\n");
-    fflush(out);
+    
     fprintf(out, "\tnexthop=%s\n", AddrToStr(&pUpInfo->pathattr->nhop));
     for (pit = pUpInfo->nlri.begin();
         pit != pUpInfo->nlri.end(); ++pit) {
