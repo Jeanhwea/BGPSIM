@@ -43,6 +43,7 @@ class Peer : public Thread {
 
         queue<Message *>    qMsg; // messages to be sent to others
         queue<Buffer *>     qBuf; // messages recieved from others
+        queue<struct _bgp_update_info *> cachedUpinfo;
 
         Dispatcher        * pDis;
 

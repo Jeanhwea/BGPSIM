@@ -52,6 +52,7 @@ class Simulator : public Thread {
         void SimOpen(Peer *);
         void SimKeepalive(Peer *);
         void AdvertUpdate(Peer *);
+        void TransUpdate(struct _bgp_update_info *);
         void SimUpdate(Peer *, struct _bgp_update_info *);
         void SimUpdate(Peer *, void *, size_t);
         void SimNotification(Peer *, u_int8_t, u_int8_t, void *, ssize_t);

@@ -45,8 +45,6 @@ class Router {
         pthread_mutex_t  msgMutex;  // waiting message queue mutex
         
         static int rtseq;
-        bool isDefaultAddr(u_int32_t ipaddr);
-        bool isDefaultAddr(struct in_addr * pAd);
         void CalIpChecksum(struct iphdr * pIphdr);
         unsigned short CalChechsum(unsigned short * addr, unsigned int count);
 
@@ -59,6 +57,8 @@ class Router {
         static u_int32_t AddrToMask(u_int32_t ipaddr);
         static bool InAddrCmp(struct in_addr * pSrc, struct in_addr * pDes, struct in_addr * pMask);
         static bool InAddrCmp(struct in_addr * pSrc, struct _prefix * pPre);
+        static bool isDefaultAddr(u_int32_t ipaddr);
+        static bool isDefaultAddr(struct in_addr * pAd);
         
         // message queue tools
         void MsgQueueLock();

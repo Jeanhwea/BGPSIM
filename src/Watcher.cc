@@ -100,7 +100,7 @@ Watcher::StartListen()
                 if (CheckInter(pArphdr->ar_tip)) {
                     // send arp request is the mac is unknown
                     if (isDebug) {
-                        g_log->Tips("arp unknown");
+                        //g_log->Tips("arp unknown");
                     }
                     g_rtr->ARPRosHandle(pArphdr);
                 } else {
@@ -116,8 +116,10 @@ Watcher::StartListen()
                         sizeof(struct ethhdr) + sizeof(struct iphdr) );
                 if (!CheckInter(pIphdr->daddr)) {
                     // try to forward packet, if ip des is not in my Interface
-                    if (pTcphdr->dest != htons(BGP_PORT))
+                    if (pTcphdr->dest != htons(BGP_PORT)
+                        && pTcphdr->source != htons(BGP_PORT)) {
                         g_rtr->PacketForward(pMsg);
+                    }
                 } else {
                     if (isDebug) {
                         g_log->TraceIpAddr("packet from ip", pIphdr->saddr);
@@ -150,7 +152,7 @@ Watcher::CheckInter(u_char mac[])
 bool
 Watcher::CheckInter(u_int32_t ipaddr)
 {
-// return true, if find a arp cache for given ip address.
+    // return true, if find a arp cache for given ip address.
     return CheckInter((struct in_addr *)&ipaddr);
 }
 

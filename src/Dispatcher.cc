@@ -165,7 +165,7 @@ Dispatcher::ReadMsg(Peer* pPeer)
         preBuf->Skip(len);
 
         g_log->Tips("dispatcher recv msg");
-        g_log->LogDumpMsg(pBuf->ReadPos(), pBuf->Length());
+        // g_log->LogDumpMsg(pBuf->ReadPos(), pBuf->Length());
         pPeer->qBuf.push(pBuf);
     }
     

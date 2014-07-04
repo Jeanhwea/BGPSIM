@@ -67,6 +67,13 @@ Timer::DoSchedule()
             pPeer->Start();
             pPeer->Unlock();
         }
+
+        if (pPeer->GetPeerState() == ESTABLISHED) {
+            while (!pPeer->cachedUpinfo.empty()) {
+                g_sim->SimUpdate(pPeer, pPeer->cachedUpinfo.front());
+                pPeer->cachedUpinfo.pop();
+            }
+        }
     }
     g_rtr->MsgQueueSend();
     g_sim->DoDispatch();

@@ -19,6 +19,15 @@ Logger::~Logger()
 }
 
 void
+Logger::TraceVar(const char* msg, int val)
+{
+    if (msg != NULL)
+        fprintf(out, "TraceVar: %s = %d\n", msg, (int)val);
+    fflush(out);
+}
+
+
+void
 Logger::TraceSize(const char* msg, ssize_t siz)
 {
     if (msg != NULL)
@@ -165,7 +174,8 @@ Logger::LogDispatchMsg(u_int16_t len, u_int8_t type)
 
 void 
 Logger::LogRecvedMsg(struct ethhdr * pEthhdr)
-{    
+{
+#if 1
     switch (ntohs(pEthhdr->h_proto)) {
         case ETH_P_ARP:
             struct eth_arphdr * pArphdr;
@@ -197,6 +207,7 @@ Logger::LogRecvedMsg(struct ethhdr * pEthhdr)
             break;
     }
     fflush(out);
+#endif
 }
 
 
@@ -204,6 +215,7 @@ Logger::LogRecvedMsg(struct ethhdr * pEthhdr)
 void
 Logger::LogDumpMsg(u_char * data, size_t len)
 {
+#if 0
     fprintf(out, "MSG with %uBytes, Dump\n", (unsigned int)len);
     if (len > 4096) return;
     for (size_t i = 0; i < len; ++i) {
@@ -216,6 +228,7 @@ Logger::LogDumpMsg(u_char * data, size_t len)
     if (len%PRINT_ALIGN)
         fprintf(out, "\n");
     fflush(out);
+#endif
 }
 
 void

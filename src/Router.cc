@@ -3,6 +3,8 @@
 #include "Interface.h"
 #include "Message.h"
 #include "Watcher.h"
+#include "Peer.h"
+#include "Simulator.h"
 
 using namespace std;
 
@@ -421,19 +423,19 @@ Router::PacketForward(Message * pMsg)
     
     memcpy(pEthhdr->h_source, pIntCon->mac, ETH_ALEN);
     memcpy(pEthhdr->h_dest, pArpCon->mac, ETH_ALEN);
-    
-    /**
-     * struct sockaddr_ll {
-     *     unsigned short sll_family;  
-     *     unsigned short sll_protocol; 
-     *     int sll_ifindex; 
-     *     unsigned short sll_hatype; 
-     *     unsigned char sll_pkttype; 
-     *     unsigned char sll_halen; 
-     *     unsigned char sll_addr[8];
-     * };
-     * 
-     **/
+
+#if 0
+    struct sockaddr_ll {
+        unsigned short sll_family;  
+        unsigned short sll_protocol; 
+        int sll_ifindex; 
+        unsigned short sll_hatype; 
+        unsigned char sll_pkttype; 
+        unsigned char sll_halen; 
+        unsigned char sll_addr[8];
+    };
+#endif
+
     struct sockaddr_ll sadll;
     memset(&sadll, 0, sizeof(sadll));
     // sadll.sll_family = AF_PACKET;
@@ -664,7 +666,7 @@ Router::ICMPRos(Message* pMsg)
     pEthhdr = (struct ethhdr *) pMsg->ReadPos();
     struct iphdr * pIphdr;
     pIphdr = (struct iphdr *) (pMsg->ReadPos() + sizeof(struct iphdr));
-    struct icmphdr Icmphdr;
+    // struct icmphdr Icmphdr;
     pIphdr->protocol = IP_PROTO_ICMP;
     g_log->Tips("TODO send a icmp");
 }
@@ -672,6 +674,9 @@ Router::ICMPRos(Message* pMsg)
 void
 Router::ARPAdd(struct in_addr * pAd, u_char * mac)
 {
+    if (LookupARPCache(pAd) != NULL)
+        return ;
+    
     struct arpcon * pArpCon;
     pArpCon = (struct arpcon *) malloc(sizeof(struct arpcon));
     assert(pArpCon);
@@ -728,6 +733,9 @@ Router::UpdateRt(struct _bgp_update_info * pUpInfo)
 {
     g_log->Tips("updating routing table");
     struct rtcon * pRtCon;
+    
+
+    // update local infomation
     for (vector<struct _prefix *>::iterator pIt = pUpInfo->nlri.begin();
         pIt != pUpInfo->nlri.end();
             ++ pIt) {
@@ -741,6 +749,7 @@ Router::UpdateRt(struct _bgp_update_info * pUpInfo)
             g_log->Tips("route already in routing table");
         }
     }
+
     g_log->LogRouteList();
 }
 

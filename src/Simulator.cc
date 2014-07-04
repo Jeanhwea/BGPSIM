@@ -410,6 +410,7 @@ Simulator::SimOpen(Peer * pPeer)
     Message * pMsg;
     pMsg = new Message(MSGSIZE_MAX);
     if (pMsg == NULL) {
+        g_log->Warning("open msg malloc failed");
         g_sim->FSM(pPeer, BGP_TRANS_CONN_OPEN_FAILED);
         return ;
     }
@@ -513,6 +514,69 @@ Simulator::AdvertUpdate(Peer * pPeer)
 
     g_log->Tips("end of advertise routing table");
 }
+
+void
+Simulator::TransUpdate(struct _bgp_update_info * pUpInfo)
+{
+    u_int16_t asno;
+    u_int8_t  aslen;
+    struct _as_path_segment * pSeg;
+    pSeg = pUpInfo->pathattr->aspath.front();
+    assert(pSeg != NULL);
+    aslen = pSeg->length;
+    memcpy(&asno, pSeg->value->ReadPos(), 2);
+    if (isDebug) {
+        g_log->TraceVar("aslen", aslen);
+        g_log->TraceVar("asno", ntohs(asno));
+    }
+
+    // reset as path attributions
+    Buffer * tmpbuf;
+    tmpbuf = pSeg->value;
+    pSeg->length ++;
+    pSeg->value = new Buffer(2 * (aslen+1));
+    pSeg->value->Add(&conf_as, 2);
+    pSeg->value->Add(tmpbuf->ReadPos(), tmpbuf->Length());
+    delete tmpbuf;
+    
+    vector<Peer *>::iterator pit;
+    Peer * pPeer;
+    for (pit = vPeers.begin(); pit != vPeers.end(); ++pit) {
+        pPeer = *pit;
+        
+        if (pPeer->GetPeerState() != ESTABLISHED) {
+            pPeer->cachedUpinfo.push(pUpInfo);
+            continue;
+        }
+        
+        rtcon * pRtCon;
+        pRtCon = g_rtr->LookupRoutingTable(pPeer->conf.remote_bgpid);
+        if (pRtCon == NULL) {
+            g_log->Error("Peer unreacheable in trans update");
+            continue;
+        }
+        struct ifcon * pIntCon;
+        if (Router::isDefaultAddr(&pRtCon->nhop)) {
+            pIntCon = Interface::GetIfByAddr(& pRtCon->dest);
+        } else {
+            pIntCon = Interface::GetIfByAddr(& pRtCon->nhop);
+        }
+        if (pIntCon == NULL) {
+            g_log->Error("interface : no found in trans update");
+            continue;
+        }
+        if (pPeer->conf.remote_as == asno) {
+            continue;
+        }
+
+        pUpInfo->pathattr->nhop = pIntCon->ipaddr;
+
+        SimUpdate(pPeer, pUpInfo);
+    }
+
+
+}
+
 
 void
 Simulator::SimUpdate(Peer * pPeer, void * data, size_t datalen)
@@ -1188,7 +1252,11 @@ Simulator::ParseUpdate(Peer * pPeer)
     if (isDebug)
         g_log->LogUpdateInfo(pUpInfo);
 
+    // update self infomation
     g_rtr->UpdateRt(pUpInfo);
+
+    // trans update infomation to other peers
+    TransUpdate(pUpInfo);
     
     delete pBuf;
     pPeer->qBuf.pop();
