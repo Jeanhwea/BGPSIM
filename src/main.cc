@@ -32,13 +32,14 @@ main(int argc, char const *argv[])
     g_tmr->Start();
     g_wtc->Start();
     
+    
+#if 0
     struct in_addr * pAd;
     in_addr_t      Adt;
     Adt = inet_addr("192.168.4.1"),
     pAd = (struct in_addr *) &Adt;
-    // g_rtr->ARPReq(pAd);
-
-    //return 0; // test return
+    g_rtr->ARPReq(pAd);
+#endif
 
     
     g_sim = new Simulator;

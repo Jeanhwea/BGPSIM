@@ -662,13 +662,15 @@ Router::ARPReq(struct in_addr * pAd)
 void
 Router::ICMPRos(Message* pMsg)
 {
+#if 0
     struct ethhdr * pEthhdr;
     pEthhdr = (struct ethhdr *) pMsg->ReadPos();
     struct iphdr * pIphdr;
     pIphdr = (struct iphdr *) (pMsg->ReadPos() + sizeof(struct iphdr));
-    // struct icmphdr Icmphdr;
+    struct icmphdr Icmphdr;
     pIphdr->protocol = IP_PROTO_ICMP;
     g_log->Tips("TODO send a icmp");
+#endif
 }
 
 void
